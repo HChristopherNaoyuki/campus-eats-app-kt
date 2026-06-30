@@ -17,7 +17,7 @@ sealed interface Route : NavKey {
     data object ForgotPassword : Route
 
     @Serializable
-    data class Dashboard(val userId: String, val role: String) : Route
+    data class Main(val userId: String, val role: String) : Route
 
     @Serializable
     data class VendorMenuManagement(val vendorId: String) : Route

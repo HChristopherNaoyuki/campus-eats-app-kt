@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
                             LoginScreen(
                                 onLoginSuccess = { userId, role -> 
                                     backStack.clear()
-                                    backStack.add(Route.Dashboard(userId, role)) 
+                                    backStack.add(Route.Main(userId, role)) 
                                 },
                                 onForgotPasswordClick = { backStack.add(Route.ForgotPassword) },
                                 onBackClick = { backStack.removeLastOrNull() },
@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity() {
                             RegistrationScreen(
                                 onRegistrationSuccess = { userId, role -> 
                                     backStack.clear()
-                                    backStack.add(Route.Dashboard(userId, role))
+                                    backStack.add(Route.Main(userId, role))
                                 },
                                 onBackClick = { backStack.removeLastOrNull() },
                                 viewModel = viewModel
@@ -96,53 +96,25 @@ class MainActivity : ComponentActivity() {
                                 viewModel = viewModel
                             )
                         }
-                        entry<Route.Dashboard> { route ->
-                            when (route.role) {
-                                "VENDOR" -> {
-                                    val viewModel: VendorDashboardViewModel = viewModel(
-                                        factory = viewModelFactory {
-                                            initializer { VendorDashboardViewModel(orderRepository, route.userId) }
-                                        }
-                                    )
-                                    VendorDashboardScreen(
-                                        onManageMenu = { backStack.add(Route.VendorMenuManagement(route.userId)) },
-                                        onLogout = { 
-                                            backStack.clear()
-                                            backStack.add(Route.Landing) 
-                                        },
-                                        viewModel = viewModel
-                                    )
-                                }
-                                "ADMIN" -> {
-                                    val viewModel: AdminDashboardViewModel = viewModel(
-                                        factory = viewModelFactory {
-                                            initializer { AdminDashboardViewModel(adminRepository) }
-                                        }
-                                    )
-                                    AdminDashboardScreen(
-                                        onLogout = { 
-                                            backStack.clear()
-                                            backStack.add(Route.Landing) 
-                                        },
-                                        viewModel = viewModel
-                                    )
-                                }
-                                else -> {
-                                    val viewModel: StudentDashboardViewModel = viewModel(
-                                        factory = viewModelFactory {
-                                            initializer { StudentDashboardViewModel(orderRepository, route.userId) }
-                                        }
-                                    )
-                                    StudentDashboardScreen(
-                                        onBrowseVendors = { backStack.add(Route.CustomerVendorBrowse(route.userId)) },
-                                        onLogout = { 
-                                            backStack.clear()
-                                            backStack.add(Route.Landing) 
-                                        },
-                                        viewModel = viewModel
-                                    )
-                                }
-                            }
+                        entry<Route.Main> { route ->
+                            MainScreen(
+                                userId = route.userId,
+                                role = route.role,
+                                authRepository = authRepository,
+                                menuRepository = menuRepository,
+                                cartRepository = cartRepository,
+                                orderRepository = orderRepository,
+                                adminRepository = adminRepository,
+                                onLogout = { 
+                                    backStack.clear()
+                                    backStack.add(Route.Landing) 
+                                },
+                                onNavigateToCheckout = { backStack.add(Route.Checkout(route.userId)) },
+                                onNavigateToVendorMenu = { vendorId -> backStack.add(Route.VendorMenuManagement(vendorId)) },
+                                onNavigateToAddMenuItem = { vendorId, itemId -> backStack.add(Route.AddEditMenuItem(vendorId, itemId)) },
+                                onNavigateToCart = { backStack.add(Route.Cart(route.userId)) },
+                                onNavigateToMenuBrowse = { userId, vendorId -> backStack.add(Route.CustomerMenuBrowse(userId, vendorId)) }
+                            )
                         }
                         entry<Route.VendorMenuManagement> { route ->
                             val viewModel: VendorMenuViewModel = viewModel(
@@ -218,10 +190,7 @@ class MainActivity : ComponentActivity() {
                                 onBackClick = { backStack.removeLastOrNull() },
                                 onOrderPlaced = { 
                                     backStack.clear()
-                                    // In real app, we might want to pass the user role here properly.
-                                    // For now, let's just go back to Login or try to restore state.
-                                    // Best is to go back to Dashboard.
-                                    backStack.add(Route.Dashboard(route.userId, "STUDENT"))
+                                    backStack.add(Route.Main(route.userId, "STUDENT"))
                                 },
                                 viewModel = viewModel
                             )
