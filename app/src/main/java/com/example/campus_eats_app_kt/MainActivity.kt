@@ -104,9 +104,9 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                             RegistrationScreen(
-                                onRegistrationSuccess = { userId, role -> 
-                                    backStack.clear()
-                                    backStack.add(Route.Main(userId, role))
+                                onRegistrationSuccess = { userId, role ->
+                                    // Requirement: Registration successfully returns user to the Landing page.
+                                    backStack.removeLastOrNull()
                                 },
                                 onBackClick = { backStack.removeLastOrNull() },
                                 viewModel = viewModel

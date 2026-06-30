@@ -2,42 +2,38 @@ package com.example.campus_eats_app_kt.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Modern Minimalist Palette: Black, Orange, White
-val PrimaryOrange = Color(0xFFFF8C00) // Vibrant Orange
-val SecondaryOrange = Color(0xFFE67E22) // Burnt Orange
-val TertiaryOrange = Color(0xFFD35400) // Deep Orange
+// Minimalist High-Contrast Palette: Black, Orange, White
+val CampusOrange = Color(0xFFFF8C00) // Energetic Orange
+val CampusBlack = Color(0xFF000000)
+val CampusWhite = Color(0xFFFFFFFF)
 
-val Black = Color(0xFF121212)
-val White = Color(0xFFFFFFFF)
-val OffWhite = Color(0xFFF5F5F5)
+val PrimaryLight = CampusOrange
+val OnPrimaryLight = CampusWhite
+val PrimaryContainerLight = CampusBlack
+val OnPrimaryContainerLight = CampusOrange
 
-val PrimaryLight = PrimaryOrange
-val OnPrimaryLight = White
-val PrimaryContainerLight = Color(0xFFFFEBD6)
-val OnPrimaryContainerLight = Color(0xFF3E1F00)
+val SecondaryLight = CampusBlack
+val OnSecondaryLight = CampusWhite
+val SecondaryContainerLight = Color(0xFF1A1A1A)
+val OnSecondaryContainerLight = CampusWhite
 
-val SecondaryLight = Black
-val OnSecondaryLight = White
-val SecondaryContainerLight = Color(0xFFE0E0E0)
-val OnSecondaryContainerLight = Black
-
-val BackgroundLight = White
-val OnBackgroundLight = Black
-val SurfaceLight = White
-val OnSurfaceLight = Black
+val BackgroundLight = CampusWhite
+val OnBackgroundLight = CampusBlack
+val SurfaceLight = CampusWhite
+val OnSurfaceLight = CampusBlack
 
 // Dark Theme
-val PrimaryDark = PrimaryOrange
-val OnPrimaryDark = Black
-val PrimaryContainerDark = Color(0xFF663300)
-val OnPrimaryContainerDark = Color(0xFFFFEBD6)
+val PrimaryDark = CampusOrange
+val OnPrimaryDark = CampusBlack
+val PrimaryContainerDark = Color(0xFF333333)
+val OnPrimaryContainerDark = CampusOrange
 
-val SecondaryDark = Color(0xFF333333)
-val OnSecondaryDark = White
-val SecondaryContainerDark = Black
-val OnSecondaryContainerDark = White
+val SecondaryDark = CampusWhite
+val OnSecondaryDark = CampusBlack
+val SecondaryContainerDark = Color(0xFFEEEEEE)
+val OnSecondaryContainerDark = CampusBlack
 
-val BackgroundDark = Black
-val OnBackgroundDark = White
-val SurfaceDark = Color(0xFF1E1E1E)
-val OnSurfaceDark = White
+val BackgroundDark = CampusBlack
+val OnBackgroundDark = CampusWhite
+val SurfaceDark = Color(0xFF121212)
+val OnSurfaceDark = CampusWhite

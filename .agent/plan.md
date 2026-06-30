@@ -1,34 +1,57 @@
 # Project Plan
 
-Campus Eats is an offline-first Android mobile application for Rosebank International University College. It handles food ordering, vendor management, and administrative oversight using a local Room Database. It supports Student, Standard, Vendor, and Admin roles with a unique 16-character User ID system. UI must follow Material Design 3 and be adaptive.
+Implement the Campus Eats app strictly following the minimalist black, orange, and white theme and
+the role-based user journeys. Ensure 16-char ID generation, 4-tab bottom navigation (Home, Services,
+Activity, Settings), and the smart checkout logic.
+
+Key constraints:
+
+1. Returning to landing page after registration.
+2. Greeting "Hello, {Full Name}." on Home.
+3. Activity tab handles Receipts and Reports.
+4. Settings handles Profile Update, Logout, App Version.
+5. Strict RBAC.
+6. Offline-first with Room.
 
 ## Project Brief
 
 # Campus Eats Project Brief
 
-Campus Eats is an offline-first mobile solution designed for the Rosebank International University College ecosystem. It streamlines the food ordering process between students and vendors through a robust local management system, ensuring service availability even without active internet connectivity.
+Campus Eats is a specialized offline-first mobile application tailored for the Rosebank
+International University College community. It provides a robust, local-first infrastructure for
+food ordering and vendor management, characterized by a high-contrast minimalist aesthetic and
+strict role-based access control.
 
 ### Features
-*   **Secure Identity & Authentication**: A dedicated registration system that generates unique 16-character alphanumeric User IDs (XXXX-XXXX-XXXX-XXXX) for all roles (Student, Vendor, Admin), serving as the primary key for account recovery and identity.
-*   **Offline-First Ordering & Vendor Management**: Full CRUD capabilities for vendors to manage menus and for users to browse, add items to carts, and place orders locally.
-*   **Smart Checkout Engine**: Automated fee calculation system implementing specific business logic: 20% tax, dynamic service fees, a 2.5% student discount, and final price rounding to the next R5 increment.
-*   **Role-Based Dashboards**:
-    *   **Students/Standard**: Real-time order tracking and JSON transaction history exports.
-    *   **Vendors**: Order lifecycle management (Pending, Active, Completed) and sales analytics.
-    *   **Admins**: Comprehensive system oversight, user/vendor moderation, and credit wallet management.
+
+* **Secure Identity Management**: Registration system generating unique 16-character alphanumeric
+  User IDs (XXXX-XXXX-XXXX-XXXX) which serve as the primary credential for account recovery and
+  identification.
+* **Offline-First Architecture**: Utilizes a local Room database to ensure all features—from menu
+  management to order history—remain fully functional without an active internet connection.
+* **Role-Specific Dashboards**: A state-driven bottom navigation system (Home, Services, Activity,
+  Settings) that dynamically adjusts tools and statistics based on the user's role (Student,
+  Standard, Vendor, Admin).
+* **Advanced Checkout Logic**: A custom financial engine that automatically calculates a 20% tax,
+  tiered service fees, a 2.5% student discount, and rounds final totals to the nearest R5 increment.
+* **Activity Reporting**: Dedicated tracking of receipts and the ability to export transaction data
+  into standardized JSON reports for personal or business auditing.
 
 ### High-Level Technical Stack
-*   **Language**: Kotlin
-*   **UI Framework**: Jetpack Compose (Material Design 3)
-*   **Navigation**: Jetpack Navigation 3 (State-driven architecture)
-*   **Adaptive Layouts**: Compose Material 3 Adaptive library (supporting various screen sizes and foldables)
-*   **Local Persistence**: Room Database (Core architecture for offline-first functionality)
-*   **Asynchrony**: Kotlin Coroutines & Flow
-*   **Image Loading**: Coil
-*   **Serialization**: Kotlinx Serialization (for JSON reporting and data export)
+
+* **Language**: Kotlin with Coroutines for asynchronous operations.
+* **UI Framework**: Jetpack Compose (Material Design 3) with a strict Black, Orange, and White
+  minimalist theme.
+* **Navigation**: **Jetpack Navigation 3** (State-driven) for managing role-based destination
+  routing.
+* **Adaptive Strategy**: **Compose Material Adaptive** library to ensure a consistent experience
+  across different device form factors.
+* **Persistence**: Room Database to support the mandatory offline-first requirement.
+* **Data Handling**: Kotlinx Serialization for report generation and data export.
 
 ## Implementation Steps
-**Total Duration:** 32m 35s
+
+**Total Duration:** 1h 21m 52s
 
 ### Task_1_Foundation: Implement the Room database schema and Authentication system. This includes creating entities for Users, Menu Items, and Orders, and developing the registration logic to generate unique 16-character User IDs (XXXX-XXXX-XXXX-XXXX).
 - **Status:** COMPLETED
@@ -58,13 +81,31 @@ Campus Eats is an offline-first mobile solution designed for the Rosebank Intern
   - Admin Dashboard allows user/vendor moderation and wallet management.
 - **Duration:** 24m 43s
 
-### Task_4_Refinement_And_Verification: Refine the UI/UX using Material Design 3 and Adaptive layouts. Create the app icon and conduct final stability and requirement verification.
+### Task_4_Theme_And_Navigation: Implement the strict Black, Orange, and White minimalist theme and the state-driven 4-tab navigation (Home, Services, Activity, Settings). Refine the Home screen with personal greetings, the Activity tab for receipts/reports, and the Settings tab for user management. Ensure registration redirects back to the landing page.
+
+- **Status:** COMPLETED
+- **Updates:** Refined the UI with a strict Black, Orange, and White minimalist theme. Implemented
+  the persistent 4-tab bottom navigation (Home, Services, Activity, Settings) with role-based
+  routing. Added the personalized greeting "Hello, {Full Name}." to the Home screen. Consolidated
+  Receipts and JSON Reporting in the Activity tab. Fully implemented functional Settings (Profile
+  Update, Logout, App Version). Updated Registration to return to the Landing page after ID display.
+  Verified all RBAC logic and offline-first persistence. Project builds successfully.
+- **Acceptance Criteria:**
+  - Strict Black, Orange, and White minimalist theme is applied across all screens.
+  - 4-tab bottom navigation is functional and role-aware.
+  - Home screen displays 'Hello, {Full Name}.' correctly.
+  - Activity tab handles Receipts and JSON Report generation.
+  - Settings tab contains Profile Update, Logout, and App Version.
+  - Registration successfully returns user to the Landing page.
+- **Duration:** 49m 17s
+
+### Task_5_Final_Verification: Final stability and requirement verification. Run the application to ensure all features (Offline-first, RBAC, Checkout Engine, 16-char ID, Navigation) work harmoniously without crashes.
 - **Status:** IN_PROGRESS
 - **Acceptance Criteria:**
-  - The app uses Material Design 3 with a vibrant, energetic color scheme (light/dark themes).
-  - Layouts are adaptive for different screen sizes and foldables.
-  - Adaptive app icon matching Campus Eats branding is implemented.
-  - Application is stable, does not crash, and build passes.
-  - Critic agent confirms alignment with all project requirements (offline-first, unique IDs, checkout logic).
-- **StartTime:** 2026-06-30 15:07:56 SAST
+  - Application is stable and does not crash during end-to-end testing.
+  - Build passes successfully.
+  - All existing tests pass.
+  - Critic agent confirms alignment with all project requirements (theme, navigation, RBAC, smart
+    checkout).
+- **StartTime:** 2026-06-30 17:19:56 SAST
 

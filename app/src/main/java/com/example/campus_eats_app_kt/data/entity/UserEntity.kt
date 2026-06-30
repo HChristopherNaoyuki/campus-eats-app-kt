@@ -3,6 +3,9 @@ package com.example.campus_eats_app_kt.data.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class UserRole {
     STUDENT,
     STANDARD,
@@ -10,11 +13,13 @@ enum class UserRole {
     ADMIN
 }
 
+@Serializable
 enum class UserStatus {
     ACTIVE,
     SUSPENDED
 }
 
+@Serializable
 @Entity(tableName = "users")
 data class UserEntity(
     @PrimaryKey

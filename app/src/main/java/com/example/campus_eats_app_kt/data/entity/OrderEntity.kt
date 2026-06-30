@@ -3,6 +3,9 @@ package com.example.campus_eats_app_kt.data.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class OrderStatus {
     PENDING,
     ACTIVE,
@@ -10,6 +13,7 @@ enum class OrderStatus {
     CANCELLED
 }
 
+@Serializable
 @Entity(tableName = "orders")
 data class OrderEntity(
     @PrimaryKey(autoGenerate = true)
