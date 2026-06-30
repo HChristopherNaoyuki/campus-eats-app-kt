@@ -8,18 +8,42 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import androidx.navigation3.runtime.*
+import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.example.campus_eats_app_kt.data.AdminRepository
 import com.example.campus_eats_app_kt.data.AuthRepository
-import com.example.campus_eats_app_kt.data.CartRepository
 import com.example.campus_eats_app_kt.data.CampusEatsDatabase
+import com.example.campus_eats_app_kt.data.CartRepository
+import com.example.campus_eats_app_kt.data.CouponRepository
+import com.example.campus_eats_app_kt.data.FeedbackRepository
 import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
+import com.example.campus_eats_app_kt.data.StatsRepository
 import com.example.campus_eats_app_kt.ui.navigation.Route
-import com.example.campus_eats_app_kt.ui.screens.*
+import com.example.campus_eats_app_kt.ui.screens.AddEditMenuItemScreen
+import com.example.campus_eats_app_kt.ui.screens.AddEditMenuViewModel
+import com.example.campus_eats_app_kt.ui.screens.CartScreen
+import com.example.campus_eats_app_kt.ui.screens.CartViewModel
+import com.example.campus_eats_app_kt.ui.screens.CheckoutScreen
+import com.example.campus_eats_app_kt.ui.screens.CheckoutViewModel
+import com.example.campus_eats_app_kt.ui.screens.CustomerMenuBrowseScreen
+import com.example.campus_eats_app_kt.ui.screens.CustomerVendorBrowseScreen
+import com.example.campus_eats_app_kt.ui.screens.ForgotPasswordScreen
+import com.example.campus_eats_app_kt.ui.screens.ForgotPasswordViewModel
+import com.example.campus_eats_app_kt.ui.screens.LandingScreen
+import com.example.campus_eats_app_kt.ui.screens.LoginScreen
+import com.example.campus_eats_app_kt.ui.screens.LoginViewModel
+import com.example.campus_eats_app_kt.ui.screens.MainScreen
+import com.example.campus_eats_app_kt.ui.screens.MenuBrowseViewModel
+import com.example.campus_eats_app_kt.ui.screens.RegistrationScreen
+import com.example.campus_eats_app_kt.ui.screens.RegistrationViewModel
+import com.example.campus_eats_app_kt.ui.screens.VendorBrowseViewModel
+import com.example.campus_eats_app_kt.ui.screens.VendorMenuManagementScreen
+import com.example.campus_eats_app_kt.ui.screens.VendorMenuViewModel
 import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -33,6 +57,10 @@ class MainActivity : ComponentActivity() {
         val cartRepository = CartRepository(database.cartDao())
         val orderRepository = OrderRepository(database.orderDao(), database.cartDao())
         val adminRepository = AdminRepository(database.userDao())
+        val statsRepository =
+            StatsRepository(database.userDao(), database.menuItemDao(), database.orderDao())
+        val feedbackRepository = FeedbackRepository(database.feedbackDao())
+        val couponRepository = CouponRepository(database.couponDao())
 
         setContent {
             CampusEatsAppTheme {
@@ -105,6 +133,9 @@ class MainActivity : ComponentActivity() {
                                 cartRepository = cartRepository,
                                 orderRepository = orderRepository,
                                 adminRepository = adminRepository,
+                                statsRepository = statsRepository,
+                                feedbackRepository = feedbackRepository,
+                                couponRepository = couponRepository,
                                 onLogout = { 
                                     backStack.clear()
                                     backStack.add(Route.Landing) 
