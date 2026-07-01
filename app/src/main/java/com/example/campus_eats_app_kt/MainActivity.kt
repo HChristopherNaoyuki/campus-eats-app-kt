@@ -19,6 +19,7 @@ import com.example.campus_eats_app_kt.data.AuthRepository
 import com.example.campus_eats_app_kt.data.CampusEatsDatabase
 import com.example.campus_eats_app_kt.data.CartRepository
 import com.example.campus_eats_app_kt.data.CouponRepository
+import com.example.campus_eats_app_kt.data.DebitCardRepository
 import com.example.campus_eats_app_kt.data.FeedbackRepository
 import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
@@ -62,6 +63,7 @@ class MainActivity : ComponentActivity() {
             StatsRepository(database.userDao(), database.menuItemDao(), database.orderDao())
         val feedbackRepository = FeedbackRepository(database.feedbackDao())
         val couponRepository = CouponRepository(database.couponDao())
+        val debitCardRepository = DebitCardRepository(database.debitCardDao())
 
         setContent {
             CampusEatsAppTheme {
@@ -138,6 +140,7 @@ class MainActivity : ComponentActivity() {
                                 statsRepository = statsRepository,
                                 feedbackRepository = feedbackRepository,
                                 couponRepository = couponRepository,
+                                debitCardRepository = debitCardRepository,
                                 onLogout = { 
                                     backStack.clear()
                                     backStack.add(Route.Landing) 

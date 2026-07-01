@@ -2,7 +2,6 @@ package com.example.campus_eats_app_kt.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -20,6 +19,15 @@ enum class UserStatus {
 }
 
 @Serializable
+enum class ShopStatus
+{
+    OPEN,
+    PREPARING_ORDERS,
+    BUSY,
+    CLOSED
+}
+
+@Serializable
 @Entity(tableName = "users")
 data class UserEntity(
     @PrimaryKey
@@ -29,5 +37,7 @@ data class UserEntity(
     val passwordHash: String,
     val role: UserRole,
     val status: UserStatus = UserStatus.ACTIVE,
-    val walletBalance: Double = 0.0
+    val walletBalance: Double = 0.0,
+    val shopName: String? = null,
+    val shopStatus: ShopStatus? = null
 )

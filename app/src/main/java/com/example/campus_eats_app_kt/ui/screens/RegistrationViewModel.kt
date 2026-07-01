@@ -20,15 +20,28 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
     private val _registrationState = MutableStateFlow<RegistrationState>(RegistrationState.Idle)
     val registrationState: StateFlow<RegistrationState> = _registrationState
 
-    fun register(fullName: String, email: String, password: String, role: UserRole) {
+    fun register(
+        fullName: String,
+        email: String,
+        password: String,
+        role: UserRole,
+        shopName: String? = null
+    )
+    {
         if (fullName.isBlank() || email.isBlank() || password.isBlank()) {
             _registrationState.value = RegistrationState.Error("Please fill in all fields")
+            return
+        }
+
+        if (role == UserRole.VENDOR && shopName.isNullOrBlank())
+        {
+            _registrationState.value = RegistrationState.Error("Shop name is required for vendors")
             return
         }
         
         viewModelScope.launch {
             _registrationState.value = RegistrationState.Loading
-            val result = authRepository.register(fullName, email, password, role)
+            val result = authRepository.register(fullName, email, password, role, shopName)
             result.onSuccess {
                 _registrationState.value = RegistrationState.Success(it)
             }.onFailure {

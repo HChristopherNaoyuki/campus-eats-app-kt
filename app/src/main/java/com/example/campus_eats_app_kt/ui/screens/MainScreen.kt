@@ -25,6 +25,7 @@ import com.example.campus_eats_app_kt.data.AdminRepository
 import com.example.campus_eats_app_kt.data.AuthRepository
 import com.example.campus_eats_app_kt.data.CartRepository
 import com.example.campus_eats_app_kt.data.CouponRepository
+import com.example.campus_eats_app_kt.data.DebitCardRepository
 import com.example.campus_eats_app_kt.data.FeedbackRepository
 import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
@@ -51,6 +52,7 @@ fun MainScreen(
     statsRepository: StatsRepository,
     feedbackRepository: FeedbackRepository,
     couponRepository: CouponRepository,
+    debitCardRepository: DebitCardRepository,
     onLogout: () -> Unit,
     onNavigateToCheckout: () -> Unit,
     onNavigateToVendorMenu: (String) -> Unit,
@@ -145,12 +147,13 @@ fun MainScreen(
                 )
 
                 3 -> SettingsScreenTab(
-                    userId = userId,
+                    userId = userId, 
                     role = userRole,
-                    authRepository = authRepository,
+                    authRepository = authRepository, 
                     feedbackRepository = feedbackRepository,
                     couponRepository = couponRepository,
                     adminRepository = adminRepository,
+                    debitCardRepository = debitCardRepository,
                     onLogout = onLogout
                 )
             }

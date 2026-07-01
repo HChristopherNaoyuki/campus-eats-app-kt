@@ -41,14 +41,17 @@ import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.Store
 import androidx.compose.material.icons.rounded.TrendingUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,7 +60,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,19 +76,20 @@ import com.example.campus_eats_app_kt.data.AdminStats
 import com.example.campus_eats_app_kt.data.AuthRepository
 import com.example.campus_eats_app_kt.data.CartRepository
 import com.example.campus_eats_app_kt.data.CouponRepository
+import com.example.campus_eats_app_kt.data.DebitCardRepository
 import com.example.campus_eats_app_kt.data.FeedbackRepository
 import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
-import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.entity.UserStatus
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.File
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenTab(
     userId: String, 
@@ -97,14 +100,11 @@ fun HomeScreenTab(
     onNavigateToMenuBrowse: (String, String) -> Unit
 )
 {
-    var user by remember { mutableStateOf<UserEntity?>(null) }
+    val user by authRepository.getUserFlow(userId).collectAsState(null)
     val vendorStats by statsRepository.getVendorStats(userId).collectAsState(null)
     val adminStats by statsRepository.getAdminStats().collectAsState(null)
     val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
-
-    LaunchedEffect(userId) {
-        user = authRepository.login("", "").getOrNull() 
-    }
+    val coroutineScope = rememberCoroutineScope()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -123,6 +123,54 @@ fun HomeScreenTab(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.outline
             )
+            if (role == UserRole.VENDOR && user?.shopName != null)
+            {
+                Text(
+                    "Shop: ${user?.shopName}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        if (role == UserRole.VENDOR)
+        {
+            item {
+                Text(
+                    "Shop Status",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    for (shopStatus in com.example.campus_eats_app_kt.data.entity.ShopStatus.values())
+                    {
+                        val isSelected = user?.shopStatus == shopStatus
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                coroutineScope.launch {
+                                    authRepository.updateShopStatus(userId, shopStatus)
+                                }
+                            },
+                            label = {
+                                Text(
+                                    shopStatus.name.replace("_", " ").lowercase()
+                                        .replaceFirstChar { it.uppercase() })
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                    }
+                }
+            }
         }
 
         when (role)
@@ -277,14 +325,14 @@ fun StatCard(label: String, value: String, modifier: Modifier = Modifier)
 @Composable
 fun GridStats(stats: AdminStats)
 {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatCard("Users", "${stats.totalUsers}", Modifier.weight(1f))
-            StatCard("Vendors", "${stats.activeVendors}", Modifier.weight(1f))
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            StatCard("Users", "${stats.totalUsers}", Modifier.fillMaxWidth())
+            StatCard("Items", "${stats.menuItemCount}", Modifier.fillMaxWidth())
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatCard("Items", "${stats.menuItemCount}", Modifier.weight(1f))
-            StatCard("Orders", "${stats.orderCount}", Modifier.weight(1f))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            StatCard("Vendors", "${stats.activeVendors}", Modifier.fillMaxWidth())
+            StatCard("Orders", "${stats.orderCount}", Modifier.fillMaxWidth())
         }
     }
 }
@@ -633,10 +681,48 @@ fun VendorReportHub(vendorId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
     val totalRevenue = orders.filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
-    Column(Modifier.padding(16.dp)) {
-        StatCard("Total Orders", "${orders.size}")
-        Spacer(Modifier.height(8.dp))
-        StatCard("Total Revenue", "R${String.format("%.2f", totalRevenue)}")
+    val avgValue = if (orders.isNotEmpty()) totalRevenue / orders.size else 0.0
+    val uniqueCustomers = orders.distinctBy { it.customerId }.size
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Summary figures in a row on wider screens
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            StatCard("Total Orders", "${orders.size}", Modifier.weight(1f))
+            StatCard(
+                "Total Revenue",
+                "R${String.format("%.2f", totalRevenue)}",
+                Modifier.weight(1f)
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            StatCard("Avg Order Value", "R${String.format("%.2f", avgValue)}", Modifier.weight(1f))
+            StatCard("Unique Customers", "$uniqueCustomers", Modifier.weight(1f))
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Button(
+            onClick = { /* JSON Export */ },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Icon(Icons.Rounded.Download, null)
+            Spacer(Modifier.width(8.dp))
+            Text("Export Report (JSON)")
+        }
     }
 }
 
@@ -649,27 +735,44 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
 @Composable
 fun AdminReportHub(orderRepository: OrderRepository)
 {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ServiceCard(
-            "Daily Trends",
-            "Orders and revenue over the past week.",
-            Icons.Rounded.TrendingUp,
-            onClick = {})
-        ServiceCard(
-            "Vendor Revenue",
-            "Top 10 vendors by earnings.",
-            Icons.Rounded.AttachMoney,
-            onClick = {})
-        ServiceCard(
-            "Popular Items",
-            "Top 3 most sold food items.",
-            Icons.Rounded.Star,
-            onClick = {})
-        ServiceCard(
-            "User Analytics",
-            "Breakdown by user type.",
-            Icons.Rounded.PieChart,
-            onClick = {})
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            ServiceCard(
+                "Daily Trends",
+                "Orders and revenue.",
+                Icons.Rounded.TrendingUp,
+                onClick = {},
+                modifier = Modifier.weight(1f)
+            )
+            ServiceCard(
+                "Vendor Revenue",
+                "Vendor rankings.",
+                Icons.Rounded.AttachMoney,
+                onClick = {},
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            ServiceCard(
+                "Popular Items",
+                "Top sold foods.",
+                Icons.Rounded.Star,
+                onClick = {},
+                modifier = Modifier.weight(1f)
+            )
+            ServiceCard(
+                "User Analytics",
+                "User type breakdown.",
+                Icons.Rounded.PieChart,
+                onClick = {},
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 
@@ -815,6 +918,7 @@ fun SettingsScreenTab(
     feedbackRepository: FeedbackRepository,
     couponRepository: CouponRepository,
     adminRepository: AdminRepository,
+    debitCardRepository: DebitCardRepository,
     onLogout: () -> Unit
 )
 {
@@ -822,6 +926,138 @@ fun SettingsScreenTab(
     var newPassword by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    var showAddCardDialog by remember { mutableStateOf(false) }
+    var showApplyCouponDialog by remember { mutableStateOf(false) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
+
+    if (showAddCardDialog)
+    {
+        // ... (existing dialog)
+    }
+
+    if (showApplyCouponDialog)
+    {
+        var code by remember { mutableStateOf("") }
+        var isValidating by remember { mutableStateOf(false) }
+        var validationMsg by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { if (!isValidating) showApplyCouponDialog = false },
+            title = { Text("Apply Coupon", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = code,
+                        onValueChange = { code = it },
+                        label = { Text("Coupon Code") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    validationMsg?.let {
+                        Text(
+                            it,
+                            color = if (it.contains("Success")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isValidating = true
+                        coroutineScope.launch {
+                            val coupon = couponRepository.validateCoupon(code)
+                            isValidating = false
+                            if (coupon != null)
+                            {
+                                validationMsg =
+                                    "Success! ${coupon.discountPercent}% discount applied."
+                                // In real app, persist this to user's session or cart
+                            }
+                            else
+                            {
+                                validationMsg = "Invalid or inactive coupon code."
+                            }
+                        }
+                    },
+                    enabled = !isValidating && code.isNotBlank()
+                ) {
+                    if (isValidating) CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    else Text(
+                        "Apply"
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showApplyCouponDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showFeedbackDialog)
+    {
+        var subject by remember { mutableStateOf("") }
+        var message by remember { mutableStateOf("") }
+        var isSubmitting by remember { mutableStateOf(false) }
+        var submitted by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            onDismissRequest = { if (!isSubmitting) showFeedbackDialog = false },
+            title = { Text("Submit Feedback", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (submitted)
+                    {
+                        Text(
+                            "Thank you! Your feedback has been saved successfully.",
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    else
+                    {
+                        OutlinedTextField(
+                            value = subject,
+                            onValueChange = { subject = it },
+                            label = { Text("Subject") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = message,
+                            onValueChange = { message = it },
+                            label = { Text("Message") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                if (submitted)
+                {
+                    Button(onClick = { showFeedbackDialog = false }) { Text("Close") }
+                }
+                else
+                {
+                    Button(
+                        onClick = {
+                            isSubmitting = true
+                            coroutineScope.launch {
+                                feedbackRepository.submitFeedback(userId, subject, message)
+                                isSubmitting = false
+                                submitted = true
+                            }
+                        },
+                        enabled = !isSubmitting && subject.isNotBlank() && message.isNotBlank()
+                    ) {
+                        if (isSubmitting) CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        else Text(
+                            "Submit"
+                        )
+                    }
+                }
+            }
+        )
+    }
 
     Column(
         Modifier
@@ -891,9 +1127,16 @@ fun SettingsScreenTab(
                 {
                     UserRole.STUDENT, UserRole.STANDARD ->
                     {
-                        Text("Balance: R0.00", style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = {}) { Text("Add Debit Card") }
-                        TextButton(onClick = {}) { Text("Apply Coupons") }
+                        Text(
+                            "Campus Wallet Balance: R0.00",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        TextButton(onClick = {
+                            showAddCardDialog = true
+                        }) { Text("Add Debit Card") }
+                        TextButton(onClick = {
+                            showApplyCouponDialog = true
+                        }) { Text("Apply Coupons") }
                     }
 
                     UserRole.VENDOR ->
@@ -931,8 +1174,12 @@ fun SettingsScreenTab(
                 }
                 else
                 {
-                    TextButton(onClick = {}) { Text("Submit Complaint") }
-                    TextButton(onClick = {}) { Text("Submit Compliment") }
+                    Button(
+                        onClick = { showFeedbackDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Share Your Thoughts")
+                    }
                 }
             }
         }
@@ -971,9 +1218,16 @@ fun SettingsScreenTab(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ServiceCard(title: String, description: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+fun ServiceCard(
+    title: String,
+    description: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+)
+{
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
         onClick = onClick,

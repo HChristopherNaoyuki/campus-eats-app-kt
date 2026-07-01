@@ -7,12 +7,14 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.campus_eats_app_kt.data.dao.CartDao
 import com.example.campus_eats_app_kt.data.dao.CouponDao
+import com.example.campus_eats_app_kt.data.dao.DebitCardDao
 import com.example.campus_eats_app_kt.data.dao.FeedbackDao
 import com.example.campus_eats_app_kt.data.dao.MenuItemDao
 import com.example.campus_eats_app_kt.data.dao.OrderDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.CouponEntity
+import com.example.campus_eats_app_kt.data.entity.DebitCardEntity
 import com.example.campus_eats_app_kt.data.entity.FeedbackEntity
 import com.example.campus_eats_app_kt.data.entity.MenuItemEntity
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
@@ -25,9 +27,10 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
         OrderEntity::class,
         CartItemEntity::class,
         FeedbackEntity::class,
-        CouponEntity::class
+        CouponEntity::class,
+        DebitCardEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -38,6 +41,7 @@ abstract class CampusEatsDatabase : RoomDatabase() {
     abstract fun cartDao(): CartDao
     abstract fun feedbackDao(): FeedbackDao
     abstract fun couponDao(): CouponDao
+    abstract fun debitCardDao(): DebitCardDao
 
     companion object {
         @Volatile

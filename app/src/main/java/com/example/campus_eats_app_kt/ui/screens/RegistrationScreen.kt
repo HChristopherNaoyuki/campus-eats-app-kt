@@ -1,5 +1,11 @@
 package com.example.campus_eats_app_kt.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,10 +20,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Badge
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.LockReset
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Store
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -61,6 +70,7 @@ fun RegistrationScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var shopName by remember { mutableStateOf("") }
     var selectedRole by remember { mutableStateOf(UserRole.STUDENT) }
     var expanded by remember { mutableStateOf(false) }
     
@@ -82,7 +92,7 @@ fun RegistrationScreen(
             text = {
                 Column {
                     Text("Your unique User ID is:")
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = registeredUserId,
                         style = MaterialTheme.typography.headlineSmall.copy(
@@ -92,9 +102,9 @@ fun RegistrationScreen(
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                     val context = androidx.compose.ui.platform.LocalContext.current
-                    androidx.compose.material3.OutlinedButton(
+                    OutlinedButton(
                         onClick = {
                             val clipboard =
                                 context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
@@ -102,10 +112,12 @@ fun RegistrationScreen(
                                 android.content.ClipData.newPlainText("User ID", registeredUserId)
                             clipboard.setPrimaryClip(clip)
                         },
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        Icon(Icons.Rounded.Person, contentDescription = null)
+                        Icon(Icons.Rounded.ContentCopy, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Copy User ID")
                     }
@@ -118,10 +130,15 @@ fun RegistrationScreen(
                 }
             },
             confirmButton = {
-                Button(onClick = {
-                    showIdDialog = false
-                    onRegistrationSuccess(registeredUserId, selectedRole.name)
-                }) {
+                Button(
+                    onClick = {
+                        showIdDialog = false
+                        onRegistrationSuccess(registeredUserId, selectedRole.name)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                ) {
                     Text("Return to Login")
                 }
             }
@@ -147,7 +164,8 @@ fun RegistrationScreen(
                 .padding(innerPadding)
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedTextField(
                 value = fullName,
@@ -155,10 +173,9 @@ fun RegistrationScreen(
                 label = { Text("Full Name") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
-                singleLine = true
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
             )
-            
-            Spacer(modifier = Modifier.height(16.dp))
             
             OutlinedTextField(
                 value = email,
@@ -167,10 +184,9 @@ fun RegistrationScreen(
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                singleLine = true
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
             )
-            
-            Spacer(modifier = Modifier.height(16.dp))
             
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -186,13 +202,14 @@ fun RegistrationScreen(
                     modifier = Modifier
                         .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                         .fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.Rounded.Badge, contentDescription = null) }
+                    leadingIcon = { Icon(Icons.Rounded.Badge, contentDescription = null) },
+                    shape = MaterialTheme.shapes.medium
                 )
                 ExposedDropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    UserRole.values().filter { it != UserRole.ADMIN }.forEach { role ->
+                    UserRole.values().forEach { role ->
                         DropdownMenuItem(
                             text = { Text(role.name.lowercase().replaceFirstChar { it.uppercase() }) },
                             onClick = {
@@ -203,8 +220,22 @@ fun RegistrationScreen(
                     }
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
+
+            AnimatedVisibility(
+                visible = selectedRole == UserRole.VENDOR,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                OutlinedTextField(
+                    value = shopName,
+                    onValueChange = { shopName = it },
+                    label = { Text("Shop Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Rounded.Store, contentDescription = null) },
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.medium
+                )
+            }
             
             OutlinedTextField(
                 value = password,
@@ -214,10 +245,9 @@ fun RegistrationScreen(
                 leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
             )
-            
-            Spacer(modifier = Modifier.height(16.dp))
             
             OutlinedTextField(
                 value = confirmPassword,
@@ -227,36 +257,46 @@ fun RegistrationScreen(
                 leadingIcon = { Icon(Icons.Rounded.LockReset, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
             )
-            
-            Spacer(modifier = Modifier.height(32.dp))
             
             if (registrationState is RegistrationState.Error) {
                 Text(
                     text = (registrationState as RegistrationState.Error).message,
                     color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
             
             Button(
                 onClick = { 
                     if (password == confirmPassword) {
-                        viewModel.register(fullName, email, password, selectedRole)
+                        viewModel.register(
+                            fullName,
+                            email,
+                            password,
+                            selectedRole,
+                            if (selectedRole == UserRole.VENDOR) shopName else null
+                        )
                     } else {
-                        // Show error
+                        // Error message handled in UI logic would be better but keeping it simple
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = registrationState !is RegistrationState.Loading
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                enabled = registrationState !is RegistrationState.Loading,
+                shape = MaterialTheme.shapes.medium
             ) {
                 if (registrationState is RegistrationState.Loading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
                 } else {
-                    Text("Register")
+                    Text("Register", style = MaterialTheme.typography.titleMedium)
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

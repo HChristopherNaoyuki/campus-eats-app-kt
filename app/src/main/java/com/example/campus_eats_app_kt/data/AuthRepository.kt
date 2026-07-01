@@ -1,13 +1,22 @@
 package com.example.campus_eats_app_kt.data
 
 import com.example.campus_eats_app_kt.data.dao.UserDao
+import com.example.campus_eats_app_kt.data.entity.ShopStatus
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.util.IdGenerator
+import kotlinx.coroutines.flow.Flow
 
 class AuthRepository(private val userDao: UserDao) {
 
-    suspend fun register(fullName: String, email: String, password: String, role: UserRole): Result<UserEntity> {
+    suspend fun register(
+        fullName: String,
+        email: String,
+        password: String,
+        role: UserRole,
+        shopName: String? = null
+    ): Result<UserEntity>
+    {
         val existingUser = userDao.getUserByEmail(email)
         if (existingUser != null) {
             return Result.failure(Exception("Email already registered"))
@@ -18,8 +27,10 @@ class AuthRepository(private val userDao: UserDao) {
             userId = userId,
             fullName = fullName,
             email = email,
-            passwordHash = password, // In a real app, hash this!
-            role = role
+            passwordHash = password,
+            role = role,
+            shopName = if (role == UserRole.VENDOR) shopName else null,
+            shopStatus = if (role == UserRole.VENDOR) ShopStatus.OPEN else null
         )
 
         return try {
@@ -47,6 +58,17 @@ class AuthRepository(private val userDao: UserDao) {
             Result.success(Unit)
         } else {
             Result.failure(Exception("Invalid User ID"))
+        }
+    }
+
+    fun getUserFlow(userId: String): Flow<UserEntity?> = userDao.getUserByIdFlow(userId)
+
+    suspend fun updateShopStatus(userId: String, status: ShopStatus)
+    {
+        val user = userDao.getUserById(userId)
+        if (user != null && user.role == UserRole.VENDOR)
+        {
+            userDao.updateUser(user.copy(shopStatus = status))
         }
     }
 }

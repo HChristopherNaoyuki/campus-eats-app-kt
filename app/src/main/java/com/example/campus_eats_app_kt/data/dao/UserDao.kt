@@ -1,6 +1,10 @@
 package com.example.campus_eats_app_kt.data.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserStatus
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +19,9 @@ interface UserDao {
 
     @Query("SELECT * FROM users WHERE userId = :userId LIMIT 1")
     suspend fun getUserById(userId: String): UserEntity?
+
+    @Query("SELECT * FROM users WHERE userId = :userId LIMIT 1")
+    fun getUserByIdFlow(userId: String): Flow<UserEntity?>
 
     @Update
     suspend fun updateUser(user: UserEntity)
