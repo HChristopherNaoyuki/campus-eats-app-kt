@@ -6,7 +6,6 @@ import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import kotlinx.coroutines.flow.Flow
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class OrderRepository(
@@ -18,7 +17,8 @@ class OrderRepository(
         vendorId: String,
         cartItems: List<CartItemEntity>,
         totalAmount: Double
-    ) {
+    ): Long
+    {
         val order = OrderEntity(
             customerId = userId,
             vendorId = vendorId,
@@ -26,8 +26,9 @@ class OrderRepository(
             totalAmount = totalAmount,
             status = OrderStatus.PENDING
         )
-        orderDao.insertOrder(order)
+        val id = orderDao.insertOrder(order)
         cartDao.clearCart(userId)
+        return id
     }
 
     fun getOrdersForUser(userId: String): Flow<List<OrderEntity>> =

@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +31,7 @@ import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 fun LandingScreen(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(modifier = modifier) { innerPadding ->
@@ -101,6 +103,17 @@ fun LandingScreen(
                 )
             }
 
+            TextButton(
+                onClick = onForgotPasswordClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    "Forgot Password?",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
             Spacer(modifier = Modifier.weight(1.5f))
         }
     }
@@ -110,6 +123,6 @@ fun LandingScreen(
 @Composable
 fun LandingScreenPreview() {
     CampusEatsAppTheme {
-        LandingScreen(onLoginClick = {}, onRegisterClick = {})
+        LandingScreen(onLoginClick = {}, onRegisterClick = {}, onForgotPasswordClick = {})
     }
 }

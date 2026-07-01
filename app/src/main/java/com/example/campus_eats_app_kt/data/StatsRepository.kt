@@ -21,7 +21,9 @@ data class AdminStats(
     val activeVendors: Int,
     val menuItemCount: Int,
     val orderCount: Int,
-    val todayRevenue: Double
+    val todayRevenue: Double,
+    val weekRevenue: Double,
+    val monthRevenue: Double
 )
 
 class StatsRepository(
@@ -55,10 +57,12 @@ class StatsRepository(
         return combine(
             userDao.getAllUsers(),
             menuItemDao.getAllMenuItems(),
-            orderDao.getOrdersByStatus(OrderStatus.COMPLETED) // This is just a sample DAO call
+            orderDao.getOrdersByStatus(OrderStatus.COMPLETED)
         ) { users, menuItems, completedOrders ->
             val now = System.currentTimeMillis()
             val startOfDay = now - (now % (24 * 60 * 60 * 1000))
+            val startOfWeek = now - (7L * 24 * 60 * 60 * 1000)
+            val startOfMonth = now - (30L * 24 * 60 * 60 * 1000)
 
             AdminStats(
                 allTimeEarnings = completedOrders.sumOf { it.totalAmount },
@@ -67,6 +71,10 @@ class StatsRepository(
                 menuItemCount = menuItems.size,
                 orderCount = completedOrders.size,
                 todayRevenue = completedOrders.filter { it.timestamp >= startOfDay }
+                    .sumOf { it.totalAmount },
+                weekRevenue = completedOrders.filter { it.timestamp >= startOfWeek }
+                    .sumOf { it.totalAmount },
+                monthRevenue = completedOrders.filter { it.timestamp >= startOfMonth }
                     .sumOf { it.totalAmount }
             )
         }

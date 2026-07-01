@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -91,8 +92,29 @@ fun RegistrationScreen(
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Please save this ID safely. You will need it for account recovery.", style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    androidx.compose.material3.OutlinedButton(
+                        onClick = {
+                            val clipboard =
+                                context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip =
+                                android.content.ClipData.newPlainText("User ID", registeredUserId)
+                            clipboard.setPrimaryClip(clip)
+                        },
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Icon(Icons.Rounded.Person, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Copy User ID")
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Please save this ID safely. You will need it for account recovery.",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
                 }
             },
             confirmButton = {

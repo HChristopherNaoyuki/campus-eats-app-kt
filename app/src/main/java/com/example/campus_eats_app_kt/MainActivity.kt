@@ -39,6 +39,7 @@ import com.example.campus_eats_app_kt.ui.screens.LoginScreen
 import com.example.campus_eats_app_kt.ui.screens.LoginViewModel
 import com.example.campus_eats_app_kt.ui.screens.MainScreen
 import com.example.campus_eats_app_kt.ui.screens.MenuBrowseViewModel
+import com.example.campus_eats_app_kt.ui.screens.OrderConfirmationScreen
 import com.example.campus_eats_app_kt.ui.screens.RegistrationScreen
 import com.example.campus_eats_app_kt.ui.screens.RegistrationViewModel
 import com.example.campus_eats_app_kt.ui.screens.VendorBrowseViewModel
@@ -78,7 +79,8 @@ class MainActivity : ComponentActivity() {
                         entry<Route.Landing> {
                             LandingScreen(
                                 onLoginClick = { backStack.add(Route.Login) },
-                                onRegisterClick = { backStack.add(Route.Register()) }
+                                onRegisterClick = { backStack.add(Route.Register()) },
+                                onForgotPasswordClick = { backStack.add(Route.ForgotPassword) }
                             )
                         }
                         entry<Route.Login> {
@@ -219,11 +221,30 @@ class MainActivity : ComponentActivity() {
                             )
                             CheckoutScreen(
                                 onBackClick = { backStack.removeLastOrNull() },
-                                onOrderPlaced = { 
+                                onOrderPlaced = { orderId -> 
                                     backStack.clear()
-                                    backStack.add(Route.Main(route.userId, "STUDENT"))
+                                    backStack.add(
+                                        Route.OrderConfirmation(
+                                            orderId,
+                                            route.userId,
+                                            "STUDENT"
+                                        )
+                                    )
                                 },
                                 viewModel = viewModel
+                            )
+                        }
+                        entry<Route.OrderConfirmation> { route ->
+                            OrderConfirmationScreen(
+                                orderId = route.orderId,
+                                onTrackOrder = {
+                                    backStack.clear()
+                                    backStack.add(Route.Main(route.userId, route.role))
+                                },
+                                onReturnHome = {
+                                    backStack.clear()
+                                    backStack.add(Route.Main(route.userId, route.role))
+                                }
                             )
                         }
                     }
