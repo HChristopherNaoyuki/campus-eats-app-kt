@@ -2,25 +2,34 @@ package com.example.campus_eats_app_kt.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-
 import kotlinx.serialization.Serializable
 
+/**
+ * OrderStatus defines the various stages of an order lifecycle.
+ */
 @Serializable
-enum class OrderStatus {
+enum class OrderStatus
+{
     PENDING,
-    ACTIVE,
+    ACCEPTED,
+    PREPARING,
+    READY,
     COMPLETED,
     CANCELLED
 }
 
+/**
+ * OrderEntity represents a customer's purchase from a specific vendor.
+ */
 @Serializable
 @Entity(tableName = "orders")
-data class OrderEntity(
+data class OrderEntity
+    (
     @PrimaryKey(autoGenerate = true)
     val orderId: Long = 0,
     val customerId: String,
     val vendorId: String,
-    val itemsJson: String, // Storing items as JSON string for simplicity in offline-first
+    val itemsJson: String,
     val totalAmount: Double,
     val status: OrderStatus,
     val timestamp: Long = System.currentTimeMillis()

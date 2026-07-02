@@ -45,7 +45,7 @@ class StatsRepository(
                 allTimeEarnings = orders.filter { it.status == OrderStatus.COMPLETED }
                     .sumOf { it.totalAmount },
                 menuItemCount = menuItems.size,
-                activeOrders = orders.count { it.status == OrderStatus.ACTIVE || it.status == OrderStatus.PENDING },
+                activeOrders = orders.count { it.status != OrderStatus.COMPLETED && it.status != OrderStatus.CANCELLED },
                 todayRevenue = orders.filter { it.status == OrderStatus.COMPLETED && it.timestamp >= startOfDay }
                     .sumOf { it.totalAmount }
             )

@@ -40,4 +40,6 @@ class OrderRepository(
     suspend fun updateOrderStatus(order: OrderEntity, status: OrderStatus) {
         orderDao.updateOrder(order.copy(status = status))
     }
+
+    fun getAllOrders(): Flow<List<OrderEntity>> = orderDao.getAllOrders()
 }

@@ -34,4 +34,7 @@ interface UserDao {
 
     @Query("UPDATE users SET status = :status WHERE userId = :userId")
     suspend fun updateStatus(userId: String, status: UserStatus)
+
+    @androidx.room.Delete
+    suspend fun deleteUser(user: UserEntity)
 }

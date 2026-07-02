@@ -24,4 +24,7 @@ interface OrderDao {
 
     @Query("SELECT * FROM orders WHERE status = :status")
     fun getOrdersByStatus(status: OrderStatus): Flow<List<OrderEntity>>
+
+    @Query("SELECT * FROM orders ORDER BY timestamp DESC")
+    fun getAllOrders(): Flow<List<OrderEntity>>
 }

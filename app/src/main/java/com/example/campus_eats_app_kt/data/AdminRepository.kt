@@ -19,4 +19,9 @@ class AdminRepository(private val userDao: UserDao) {
     suspend fun issueCredits(userId: String, amount: Double) {
         userDao.addCredits(userId, amount)
     }
+
+    suspend fun deleteUser(user: UserEntity)
+    {
+        userDao.deleteUser(user)
+    }
 }
