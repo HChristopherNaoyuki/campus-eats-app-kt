@@ -18,13 +18,20 @@ enum class OrderStatus
     CANCELLED
 }
 
+@Serializable
+enum class PaymentMethod
+{
+    DEBIT_CARD,
+    CAMPUS_WALLET,
+    COUPON
+}
+
 /**
  * OrderEntity represents a customer's purchase from a specific vendor.
  */
 @Serializable
 @Entity(tableName = "orders")
-data class OrderEntity
-    (
+data class OrderEntity(
     @PrimaryKey(autoGenerate = true)
     val orderId: Long = 0,
     val customerId: String,
@@ -32,5 +39,8 @@ data class OrderEntity
     val itemsJson: String,
     val totalAmount: Double,
     val status: OrderStatus,
+    val paymentMethod: PaymentMethod,
+    val pickupTime: String,
+    val specialRequests: String? = null,
     val timestamp: Long = System.currentTimeMillis()
 )

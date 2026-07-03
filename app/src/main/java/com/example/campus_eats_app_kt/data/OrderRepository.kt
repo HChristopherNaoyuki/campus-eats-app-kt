@@ -5,6 +5,7 @@ import com.example.campus_eats_app_kt.data.dao.OrderDao
 import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
+import com.example.campus_eats_app_kt.data.entity.PaymentMethod
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.Json
 
@@ -16,7 +17,10 @@ class OrderRepository(
         userId: String,
         vendorId: String,
         cartItems: List<CartItemEntity>,
-        totalAmount: Double
+        totalAmount: Double,
+        paymentMethod: PaymentMethod,
+        pickupTime: String,
+        specialRequests: String? = null
     ): Long
     {
         val order = OrderEntity(
@@ -24,7 +28,10 @@ class OrderRepository(
             vendorId = vendorId,
             itemsJson = Json.encodeToString(cartItems),
             totalAmount = totalAmount,
-            status = OrderStatus.PENDING
+            status = OrderStatus.PENDING,
+            paymentMethod = paymentMethod,
+            pickupTime = pickupTime,
+            specialRequests = specialRequests
         )
         val id = orderDao.insertOrder(order)
         cartDao.clearCart(userId)

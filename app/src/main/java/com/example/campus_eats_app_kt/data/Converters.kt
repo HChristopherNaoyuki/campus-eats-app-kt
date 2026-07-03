@@ -38,4 +38,12 @@ class Converters {
     @TypeConverter
     fun toFeedbackType(type: String): com.example.campus_eats_app_kt.data.entity.FeedbackType =
         com.example.campus_eats_app_kt.data.entity.FeedbackType.valueOf(type)
+
+    @TypeConverter
+    fun fromPaymentMethod(method: com.example.campus_eats_app_kt.data.entity.PaymentMethod): String =
+        method.name
+
+    @TypeConverter
+    fun toPaymentMethod(method: String): com.example.campus_eats_app_kt.data.entity.PaymentMethod =
+        com.example.campus_eats_app_kt.data.entity.PaymentMethod.valueOf(method)
 }

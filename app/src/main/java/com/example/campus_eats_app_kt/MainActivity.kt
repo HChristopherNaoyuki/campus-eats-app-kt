@@ -225,7 +225,14 @@ class MainActivity : ComponentActivity() {
                         entry<Route.Checkout> { route ->
                             val viewModel: CheckoutViewModel = viewModel(
                                 factory = viewModelFactory {
-                                    initializer { CheckoutViewModel(cartRepository, orderRepository, route.userId) }
+                                    initializer {
+                                        CheckoutViewModel(
+                                            cartRepository,
+                                            orderRepository,
+                                            authRepository,
+                                            route.userId
+                                        )
+                                    }
                                 }
                             )
                             CheckoutScreen(
