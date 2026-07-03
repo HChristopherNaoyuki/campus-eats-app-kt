@@ -130,6 +130,7 @@ fun MainScreen(
                     menuRepository = menuRepository,
                     adminRepository = adminRepository,
                     orderRepository = orderRepository,
+                    statsRepository = statsRepository,
                     onNavigateToVendorMenu = onNavigateToVendorMenu,
                     onNavigateToMenuBrowse = onNavigateToMenuBrowse,
                     onNavigateToCart = onNavigateToCart,
@@ -142,6 +143,7 @@ fun MainScreen(
                     role = role,
                     orderRepository = orderRepository,
                     cartRepository = cartRepository,
+                    statsRepository = statsRepository,
                     onNavigateToCheckout = onNavigateToCheckout,
                     onReturnHome = { selectedTab = 0 }
                 )

@@ -24,7 +24,6 @@ import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.Assessment
-import androidx.compose.material.icons.rounded.AttachMoney
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.History
@@ -33,14 +32,11 @@ import androidx.compose.material.icons.rounded.List
 import androidx.compose.material.icons.rounded.ListAlt
 import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.People
-import androidx.compose.material.icons.rounded.PieChart
 import androidx.compose.material.icons.rounded.Receipt
 import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.RemoveShoppingCart
 import androidx.compose.material.icons.rounded.ShoppingCart
-import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.Store
-import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -52,6 +48,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -113,7 +110,6 @@ fun HomeScreenTab(
     val user by authRepository.getUserFlow(userId).collectAsState(null)
     val vendorStats by statsRepository.getVendorStats(userId).collectAsState(null)
     val adminStats by statsRepository.getAdminStats().collectAsState(null)
-    val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
     val coroutineScope = rememberCoroutineScope()
 
     LazyColumn(
@@ -337,6 +333,7 @@ fun ServicesScreenTab(
     menuRepository: MenuRepository,
     adminRepository: AdminRepository,
     orderRepository: OrderRepository,
+    statsRepository: StatsRepository,
     onNavigateToVendorMenu: (String) -> Unit,
     onNavigateToMenuBrowse: (String, String) -> Unit,
     onNavigateToCart: () -> Unit,
@@ -513,6 +510,7 @@ fun ActivityScreenTab(
     role: String,
     orderRepository: OrderRepository,
     cartRepository: CartRepository,
+    statsRepository: StatsRepository,
     onNavigateToCheckout: () -> Unit,
     onReturnHome: () -> Unit
 )
@@ -641,7 +639,7 @@ fun ActivityScreenTab(
                     orderRepository = orderRepository
                 )
                 "AdminReceipts" -> AdminReceiptsHub(orderRepository = orderRepository)
-                "AdminReports" -> AdminReportHub(orderRepository = orderRepository)
+                "AdminReports" -> AdminReportHub(statsRepository = statsRepository)
             }
         }
     }
@@ -838,38 +836,123 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
 }
 
 @Composable
-fun AdminReportHub(orderRepository: OrderRepository)
+fun AdminReportHub(statsRepository: StatsRepository)
 {
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        ServiceCard(
-            title = "Daily Trends",
-            description = "Orders and revenue.",
-            icon = Icons.Rounded.TrendingUp,
-            onClick = {}
-        )
-        ServiceCard(
-            title = "Vendor Revenue",
-            description = "Vendor rankings.",
-            icon = Icons.Rounded.AttachMoney,
-            onClick = {}
-        )
-        ServiceCard(
-            title = "Popular Items",
-            description = "Top sold foods.",
-            icon = Icons.Rounded.Star,
-            onClick = {}
-        )
-        ServiceCard(
-            title = "User Analytics",
-            description = "User type breakdown.",
-            icon = Icons.Rounded.PieChart,
-            onClick = {}
-        )
+        item {
+            Text(
+                "Daily Trends",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(8.dp))
+            AdminDailyTrendsSection(statsRepository)
+        }
+        item {
+            HorizontalDivider()
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "Vendor Revenue",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(8.dp))
+            AdminVendorRevenueSection(statsRepository)
+        }
+        item {
+            HorizontalDivider()
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "Popular Items",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(8.dp))
+            AdminPopularItemsSection(statsRepository)
+        }
+    }
+}
+
+@Composable
+fun AdminDailyTrendsSection(statsRepository: StatsRepository)
+{
+    val trends by statsRepository.getDailyTrends().collectAsState(emptyList())
+    if (trends.isEmpty())
+    {
+        Text("No data available", style = MaterialTheme.typography.bodyMedium)
+    }
+    else
+    {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            trends.take(5).forEach { trend ->
+                Card(Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(16.dp), Arrangement.SpaceBetween) {
+                        Text(trend.date, fontWeight = FontWeight.Bold)
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("${trend.orderCount} Orders")
+                            Text(
+                                "R${String.format("%.2f", trend.revenue)}",
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AdminVendorRevenueSection(statsRepository: StatsRepository)
+{
+    val rankings by statsRepository.getVendorRevenueRankings().collectAsState(emptyList())
+    if (rankings.isEmpty())
+    {
+        Text("No data available", style = MaterialTheme.typography.bodyMedium)
+    }
+    else
+    {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            rankings.take(5).forEach { rank ->
+                Card(Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(16.dp), Arrangement.SpaceBetween) {
+                        Text(rank.vendorName, fontWeight = FontWeight.Bold)
+                        Text(
+                            "R${String.format("%.2f", rank.revenue)}",
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AdminPopularItemsSection(statsRepository: StatsRepository)
+{
+    val items by statsRepository.getPopularItems().collectAsState(emptyList())
+    if (items.isEmpty())
+    {
+        Text("No data available", style = MaterialTheme.typography.bodyMedium)
+    }
+    else
+    {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items.take(5).forEach { item ->
+                Card(Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(16.dp), Arrangement.SpaceBetween) {
+                        Text(item.itemName, fontWeight = FontWeight.Bold)
+                        Text("${item.quantitySold} sold", color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            }
+        }
     }
 }
 

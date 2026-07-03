@@ -3,10 +3,16 @@ package com.example.campus_eats_app_kt.data
 import com.example.campus_eats_app_kt.data.dao.MenuItemDao
 import com.example.campus_eats_app_kt.data.dao.OrderDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
+import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.Json
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class VendorStats(
     val allTimeEarnings: Double,
@@ -25,6 +31,10 @@ data class AdminStats(
     val weekRevenue: Double,
     val monthRevenue: Double
 )
+
+data class DailyTrend(val date: String, val orderCount: Int, val revenue: Double)
+data class VendorRevenue(val vendorName: String, val revenue: Double)
+data class PopularItem(val itemName: String, val quantitySold: Int)
 
 class StatsRepository(
     private val userDao: UserDao,
@@ -79,6 +89,54 @@ class StatsRepository(
                 monthRevenue = completedOrders.filter { it.timestamp >= startOfMonth }
                     .sumOf { it.totalAmount }
             )
+        }
+    }
+
+    fun getDailyTrends(): Flow<List<DailyTrend>>
+    {
+        return orderDao.getOrdersByStatus(OrderStatus.COMPLETED).map { orders ->
+            val df = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            orders.groupBy { df.format(Date(it.timestamp)) }
+                .map { (date, dayOrders) ->
+                    DailyTrend(date, dayOrders.size, dayOrders.sumOf { it.totalAmount })
+                }
+                .sortedByDescending { it.date }
+        }
+    }
+
+    fun getVendorRevenueRankings(): Flow<List<VendorRevenue>>
+    {
+        return combine(
+            userDao.getAllUsers(),
+            orderDao.getOrdersByStatus(OrderStatus.COMPLETED)
+        ) { users, orders ->
+            val vendors = users.filter { it.role == UserRole.VENDOR }
+            vendors.map { vendor ->
+                val revenue = orders.filter { it.vendorId == vendor.userId }
+                    .sumOf { it.totalAmount }
+                VendorRevenue(vendor.shopName ?: vendor.fullName, revenue)
+            }.sortedByDescending { it.revenue }
+        }
+    }
+
+    fun getPopularItems(): Flow<List<PopularItem>>
+    {
+        return orderDao.getOrdersByStatus(OrderStatus.COMPLETED).map { orders ->
+            val itemMap = mutableMapOf<String, Int>()
+            orders.forEach { order ->
+                try
+                {
+                    val items = Json.decodeFromString<List<CartItemEntity>>(order.itemsJson)
+                    items.forEach { item ->
+                        itemMap[item.name] = itemMap.getOrDefault(item.name, 0) + item.quantity
+                    }
+                }
+                catch (e: Exception)
+                {
+                }
+            }
+            itemMap.map { PopularItem(it.key, it.value) }
+                .sortedByDescending { it.quantitySold }
         }
     }
 }

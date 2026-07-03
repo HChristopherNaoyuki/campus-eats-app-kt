@@ -37,7 +37,12 @@ class CartRepository(private val cartDao: CartDao) {
     suspend fun incrementCartItem(cartItem: CartItemEntity) {
         cartDao.updateCartItem(cartItem.copy(quantity = cartItem.quantity + 1))
     }
-    
+
+    suspend fun deleteCartItem(cartItem: CartItemEntity)
+    {
+        cartDao.removeFromCart(cartItem)
+    }
+
     suspend fun clearCart(userId: String) {
         cartDao.clearCart(userId)
     }
