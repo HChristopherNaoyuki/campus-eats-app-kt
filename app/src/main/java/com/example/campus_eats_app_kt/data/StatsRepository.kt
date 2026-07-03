@@ -33,8 +33,14 @@ data class AdminStats(
 )
 
 data class DailyTrend(val date: String, val orderCount: Int, val revenue: Double)
-data class VendorRevenue(val vendorName: String, val revenue: Double)
-data class PopularItem(val itemName: String, val quantitySold: Int)
+data class VendorRevenue(
+    val vendorName: String,
+    val orderCount: Int,
+    val revenue: Double,
+    val percentage: Double
+)
+
+data class PopularItem(val itemName: String, val unitsSold: Int, val revenue: Double)
 
 class StatsRepository(
     private val userDao: UserDao,
@@ -96,7 +102,11 @@ class StatsRepository(
     {
         return orderDao.getOrdersByStatus(OrderStatus.COMPLETED).map { orders ->
             val df = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            orders.groupBy { df.format(Date(it.timestamp)) }
+            val now = System.currentTimeMillis()
+            val pastWeek = now - (7L * 24 * 60 * 60 * 1000)
+
+            orders.filter { it.timestamp >= pastWeek }
+                .groupBy { df.format(Date(it.timestamp)) }
                 .map { (date, dayOrders) ->
                     DailyTrend(date, dayOrders.size, dayOrders.sumOf { it.totalAmount })
                 }
@@ -110,33 +120,50 @@ class StatsRepository(
             userDao.getAllUsers(),
             orderDao.getOrdersByStatus(OrderStatus.COMPLETED)
         ) { users, orders ->
+            val totalRevenue = orders.sumOf { it.totalAmount }
             val vendors = users.filter { it.role == UserRole.VENDOR }
+
             vendors.map { vendor ->
-                val revenue = orders.filter { it.vendorId == vendor.userId }
-                    .sumOf { it.totalAmount }
-                VendorRevenue(vendor.shopName ?: vendor.fullName, revenue)
-            }.sortedByDescending { it.revenue }
+                val vendorOrders = orders.filter { it.vendorId == vendor.userId }
+                val revenue = vendorOrders.sumOf { it.totalAmount }
+                val percentage = if (totalRevenue > 0) (revenue / totalRevenue) * 100 else 0.0
+                VendorRevenue(
+                    vendor.shopName ?: vendor.fullName,
+                    vendorOrders.size,
+                    revenue,
+                    percentage
+                )
+            }.sortedByDescending { it.revenue }.take(10)
         }
     }
 
     fun getPopularItems(): Flow<List<PopularItem>>
     {
         return orderDao.getOrdersByStatus(OrderStatus.COMPLETED).map { orders ->
-            val itemMap = mutableMapOf<String, Int>()
+            val itemUnitsMap = mutableMapOf<String, Int>()
+            val itemRevenueMap = mutableMapOf<String, Double>()
+            
             orders.forEach { order ->
                 try
                 {
                     val items = Json.decodeFromString<List<CartItemEntity>>(order.itemsJson)
                     items.forEach { item ->
-                        itemMap[item.name] = itemMap.getOrDefault(item.name, 0) + item.quantity
+                        itemUnitsMap[item.name] =
+                            itemUnitsMap.getOrDefault(item.name, 0) + item.quantity
+                        itemRevenueMap[item.name] = itemRevenueMap.getOrDefault(
+                            item.name,
+                            0.0
+                        ) + (item.price * item.quantity)
                     }
                 }
                 catch (e: Exception)
                 {
                 }
             }
-            itemMap.map { PopularItem(it.key, it.value) }
-                .sortedByDescending { it.quantitySold }
+
+            itemUnitsMap.map {
+                PopularItem(it.key, it.value, itemRevenueMap[it.key] ?: 0.0)
+            }.sortedByDescending { it.unitsSold }.take(3)
         }
     }
 }

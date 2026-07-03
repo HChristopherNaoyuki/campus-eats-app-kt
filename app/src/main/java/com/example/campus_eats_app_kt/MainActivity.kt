@@ -207,7 +207,13 @@ class MainActivity : ComponentActivity() {
                         entry<Route.Cart> { route ->
                             val viewModel: CartViewModel = viewModel(
                                 factory = viewModelFactory {
-                                    initializer { CartViewModel(cartRepository, route.userId) }
+                                    initializer {
+                                        CartViewModel(
+                                            cartRepository,
+                                            authRepository,
+                                            route.userId
+                                        )
+                                    }
                                 }
                             )
                             CartScreen(

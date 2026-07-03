@@ -24,7 +24,9 @@ import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.Assessment
+import androidx.compose.material.icons.rounded.AttachMoney
 import androidx.compose.material.icons.rounded.BarChart
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Inventory
@@ -36,7 +38,11 @@ import androidx.compose.material.icons.rounded.Receipt
 import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.RemoveShoppingCart
 import androidx.compose.material.icons.rounded.ShoppingCart
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.Store
+import androidx.compose.material.icons.rounded.ThumbDown
+import androidx.compose.material.icons.rounded.ThumbUp
+import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -53,7 +59,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -68,6 +73,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.campus_eats_app_kt.data.AdminRepository
 import com.example.campus_eats_app_kt.data.AdminStats
@@ -639,7 +645,10 @@ fun ActivityScreenTab(
                     orderRepository = orderRepository
                 )
                 "AdminReceipts" -> AdminReceiptsHub(orderRepository = orderRepository)
-                "AdminReports" -> AdminReportHub(statsRepository = statsRepository)
+                "AdminReports" -> AdminReportHub(
+                    statsRepository = statsRepository,
+                    onReturnHome = onReturnHome
+                )
             }
         }
     }
@@ -836,71 +845,108 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
 }
 
 @Composable
-fun AdminReportHub(statsRepository: StatsRepository)
+fun AdminReportHub(statsRepository: StatsRepository, onReturnHome: () -> Unit)
 {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        item {
-            Text(
-                "Daily Trends",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+    var reportType by remember { mutableStateOf("Main") }
+
+    if (reportType == "Main")
+    {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            ServiceCard(
+                title = "Daily Trends",
+                description = "Orders and revenue (Past Week).",
+                icon = Icons.Rounded.TrendingUp,
+                onClick = { reportType = "DailyTrends" }
             )
-            Spacer(Modifier.height(8.dp))
-            AdminDailyTrendsSection(statsRepository)
+            ServiceCard(
+                title = "Vendor Revenue",
+                description = "Top 10 vendors by revenue.",
+                icon = Icons.Rounded.AttachMoney,
+                onClick = { reportType = "VendorRevenue" }
+            )
+            ServiceCard(
+                title = "Popular Items",
+                description = "Top 3 food items.",
+                icon = Icons.Rounded.Star,
+                onClick = { reportType = "PopularItems" }
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+            Button(
+                onClick = onReturnHome,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Text("Return Home")
+            }
         }
-        item {
-            HorizontalDivider()
-            Spacer(Modifier.height(16.dp))
-            Text(
-                "Vendor Revenue",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(8.dp))
-            AdminVendorRevenueSection(statsRepository)
-        }
-        item {
-            HorizontalDivider()
-            Spacer(Modifier.height(16.dp))
-            Text(
-                "Popular Items",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.height(8.dp))
-            AdminPopularItemsSection(statsRepository)
+    }
+    else
+    {
+        Column(Modifier.fillMaxSize()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                IconButton(onClick = { reportType = "Main" }) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
+                }
+                Text(
+                    text = when (reportType)
+                    {
+                        "DailyTrends" -> "Daily Trends (Past Week)"
+                        "VendorRevenue" -> "Top 10 Vendor Revenue"
+                        "PopularItems" -> "Top 3 Popular Items"
+                        else -> reportType
+                    },
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = onReturnHome) { Text("Home") }
+            }
+
+            Box(Modifier.weight(1f)) {
+                when (reportType)
+                {
+                    "DailyTrends" -> AdminDailyTrendsReport(statsRepository)
+                    "VendorRevenue" -> AdminVendorRevenueReport(statsRepository)
+                    "PopularItems" -> AdminPopularItemsReport(statsRepository)
+                }
+            }
         }
     }
 }
 
 @Composable
-fun AdminDailyTrendsSection(statsRepository: StatsRepository)
+fun AdminDailyTrendsReport(statsRepository: StatsRepository)
 {
     val trends by statsRepository.getDailyTrends().collectAsState(emptyList())
     if (trends.isEmpty())
     {
-        Text("No data available", style = MaterialTheme.typography.bodyMedium)
+        Box(Modifier.fillMaxSize(), Alignment.Center) { Text("No data available") }
     }
     else
     {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            trends.take(5).forEach { trend ->
-                Card(Modifier.fillMaxWidth()) {
-                    Row(Modifier.padding(16.dp), Arrangement.SpaceBetween) {
-                        Text(trend.date, fontWeight = FontWeight.Bold)
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("${trend.orderCount} Orders")
-                            Text(
-                                "R${String.format("%.2f", trend.revenue)}",
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
+        Column(Modifier
+            .fillMaxSize()
+            .padding(16.dp)) {
+            ReportHeader(listOf("Date", "Orders", "Revenue"))
+            HorizontalDivider()
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(trends) { trend ->
+                    ReportRow(
+                        listOf(
+                            trend.date,
+                            trend.orderCount.toString(),
+                            "R${String.format("%.2f", trend.revenue)}"
+                        )
+                    )
                 }
             }
         }
@@ -908,25 +954,30 @@ fun AdminDailyTrendsSection(statsRepository: StatsRepository)
 }
 
 @Composable
-fun AdminVendorRevenueSection(statsRepository: StatsRepository)
+fun AdminVendorRevenueReport(statsRepository: StatsRepository)
 {
     val rankings by statsRepository.getVendorRevenueRankings().collectAsState(emptyList())
     if (rankings.isEmpty())
     {
-        Text("No data available", style = MaterialTheme.typography.bodyMedium)
+        Box(Modifier.fillMaxSize(), Alignment.Center) { Text("No data available") }
     }
     else
     {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            rankings.take(5).forEach { rank ->
-                Card(Modifier.fillMaxWidth()) {
-                    Row(Modifier.padding(16.dp), Arrangement.SpaceBetween) {
-                        Text(rank.vendorName, fontWeight = FontWeight.Bold)
-                        Text(
+        Column(Modifier
+            .fillMaxSize()
+            .padding(16.dp)) {
+            ReportHeader(listOf("Vendor", "Orders", "Revenue", "%"))
+            HorizontalDivider()
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(rankings) { rank ->
+                    ReportRow(
+                        listOf(
+                            rank.vendorName,
+                            rank.orderCount.toString(),
                             "R${String.format("%.2f", rank.revenue)}",
-                            color = MaterialTheme.colorScheme.primary
+                            "${String.format("%.1f", rank.percentage)}%"
                         )
-                    }
+                    )
                 }
             }
         }
@@ -934,23 +985,70 @@ fun AdminVendorRevenueSection(statsRepository: StatsRepository)
 }
 
 @Composable
-fun AdminPopularItemsSection(statsRepository: StatsRepository)
+fun AdminPopularItemsReport(statsRepository: StatsRepository)
 {
     val items by statsRepository.getPopularItems().collectAsState(emptyList())
     if (items.isEmpty())
     {
-        Text("No data available", style = MaterialTheme.typography.bodyMedium)
+        Box(Modifier.fillMaxSize(), Alignment.Center) { Text("No data available") }
     }
     else
     {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items.take(5).forEach { item ->
-                Card(Modifier.fillMaxWidth()) {
-                    Row(Modifier.padding(16.dp), Arrangement.SpaceBetween) {
-                        Text(item.itemName, fontWeight = FontWeight.Bold)
-                        Text("${item.quantitySold} sold", color = MaterialTheme.colorScheme.primary)
-                    }
+        Column(Modifier
+            .fillMaxSize()
+            .padding(16.dp)) {
+            ReportHeader(listOf("Item Name", "Units Sold", "Revenue"))
+            HorizontalDivider()
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(items) { item ->
+                    ReportRow(
+                        listOf(
+                            item.itemName,
+                            item.unitsSold.toString(),
+                            "R${String.format("%.2f", item.revenue)}"
+                        )
+                    )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun ReportHeader(labels: List<String>)
+{
+    Row(Modifier
+        .fillMaxWidth()
+        .padding(vertical = 8.dp)) {
+        labels.forEach { label ->
+            Text(
+                text = label,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+fun ReportRow(values: List<String>)
+{
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(Modifier
+            .fillMaxWidth()
+            .padding(16.dp)) {
+            values.forEach { value ->
+                Text(
+                    text = value,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
@@ -1118,6 +1216,7 @@ fun SettingsScreenTab(
     var newEmail by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val user by authRepository.getUserFlow(userId).collectAsState(null)
 
     var showAddCardDialog by remember { mutableStateOf(false) }
     var showApplyCouponDialog by remember { mutableStateOf(false) }
@@ -1199,16 +1298,36 @@ fun SettingsScreenTab(
 
     if (showLinkBankDialog)
     {
-        var bankName by remember { mutableStateOf("") }
-        var accountNumber by remember { mutableStateOf("") }
+        var bankName by remember {
+            mutableStateOf(
+                user?.bankAccountInfo?.split(" - ")?.getOrNull(0) ?: ""
+            )
+        }
+        var accountNumber by remember {
+            mutableStateOf(
+                user?.bankAccountInfo?.split(" - ")?.getOrNull(1) ?: ""
+            )
+        }
+        var holderName by remember { mutableStateOf(user?.fullName ?: "") }
         var isSaving by remember { mutableStateOf(false) }
         var statusMsg by remember { mutableStateOf<String?>(null) }
 
         AlertDialog(
             onDismissRequest = { if (!isSaving) showLinkBankDialog = false },
-            title = { Text(text = "Link Bank Account", fontWeight = FontWeight.Bold) },
+            title = {
+                Text(
+                    text = if (user?.bankAccountInfo != null) "Edit Bank Account" else "Link Bank Account",
+                    fontWeight = FontWeight.Bold
+                )
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = holderName,
+                        onValueChange = { holderName = it },
+                        label = { Text("Account Holder Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     OutlinedTextField(
                         value = bankName,
                         onValueChange = { bankName = it },
@@ -1227,14 +1346,34 @@ fun SettingsScreenTab(
                             color = if (it.contains("Success")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                         )
                     }
+
+                    if (user?.bankAccountInfo != null)
+                    {
+                        TextButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    authRepository.linkBankAccount(userId, "")
+                                    showLinkBankDialog = false
+                                }
+                            },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text("Unlink Account")
+                        }
+                    }
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        if (bankName.isBlank() || accountNumber.isBlank())
+                        if (bankName.isBlank() || accountNumber.isBlank() || holderName.isBlank())
                         {
                             statusMsg = "All fields required"
+                            return@Button
+                        }
+                        if (accountNumber.length < 8)
+                        {
+                            statusMsg = "Invalid account number"
                             return@Button
                         }
                         isSaving = true
@@ -1257,7 +1396,7 @@ fun SettingsScreenTab(
                     enabled = !isSaving
                 ) {
                     if (isSaving) CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                    else Text(text = "Link Account")
+                    else Text(text = "Save Details")
                 }
             },
             dismissButton = {
@@ -1505,40 +1644,82 @@ fun SettingsScreenTab(
                 }
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     if (submitted)
                     {
-                        Text(
-                            text = "Thank you! Your feedback has been saved successfully.",
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                Icons.Rounded.CheckCircle,
+                                null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = "Thank you! Your feedback has been saved successfully.",
+                                color = MaterialTheme.colorScheme.primary,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                     else
                     {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Type: ")
-                            RadioButton(
-                                selected = type == FeedbackType.COMPLIMENT,
-                                onClick = { type = FeedbackType.COMPLIMENT })
-                            Text("Compliment")
-                            Spacer(Modifier.width(8.dp))
-                            RadioButton(
-                                selected = type == FeedbackType.COMPLAINT,
-                                onClick = { type = FeedbackType.COMPLAINT })
-                            Text("Complaint")
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "What kind of feedback is this?",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                FilterChip(
+                                    selected = type == FeedbackType.COMPLIMENT,
+                                    onClick = { type = FeedbackType.COMPLIMENT },
+                                    label = { Text("Compliment") },
+                                    leadingIcon = if (type == FeedbackType.COMPLIMENT)
+                                    {
+                                        { Icon(Icons.Rounded.ThumbUp, null, Modifier.size(16.dp)) }
+                                    }
+                                    else null
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                FilterChip(
+                                    selected = type == FeedbackType.COMPLAINT,
+                                    onClick = { type = FeedbackType.COMPLAINT },
+                                    label = { Text("Complaint") },
+                                    leadingIcon = if (type == FeedbackType.COMPLAINT)
+                                    {
+                                        {
+                                            Icon(
+                                                Icons.Rounded.ThumbDown,
+                                                null,
+                                                Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                    else null,
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.errorContainer,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                )
+                            }
                         }
+
                         OutlinedTextField(
                             value = subject,
                             onValueChange = { subject = it },
                             label = { Text(text = "Subject") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
                         )
                         OutlinedTextField(
                             value = message,
                             onValueChange = { message = it },
                             label = { Text(text = "Message") },
                             modifier = Modifier.fillMaxWidth(),
-                            minLines = 3
+                            minLines = 4
                         )
                     }
                 }
@@ -1546,12 +1727,16 @@ fun SettingsScreenTab(
             confirmButton = {
                 if (submitted)
                 {
-                    Button(onClick = { showFeedbackDialog = false }) { Text(text = "Close") }
+                    Button(
+                        onClick = { showFeedbackDialog = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(text = "Close") }
                 }
                 else
                 {
                     Button(
                         onClick = {
+                            if (subject.isBlank() || message.isBlank()) return@Button
                             isSubmitting = true
                             coroutineScope.launch {
                                 feedbackRepository.submitFeedback(userId, subject, message, type)
@@ -1559,10 +1744,14 @@ fun SettingsScreenTab(
                                 submitted = true
                             }
                         },
-                        enabled = !isSubmitting && subject.isNotBlank() && message.isNotBlank()
+                        enabled = !isSubmitting && subject.isNotBlank() && message.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        if (isSubmitting) CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                        else Text(text = "Submit")
+                        if (isSubmitting) CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        else Text(text = "Submit Feedback")
                     }
                 }
             }
@@ -1637,8 +1826,12 @@ fun SettingsScreenTab(
                     UserRole.STUDENT, UserRole.STANDARD ->
                     {
                         Text(
-                            text = "Campus Wallet Balance: R0.00",
-                            style = MaterialTheme.typography.bodyMedium
+                            text = "Campus Wallet Balance: R${
+                                String.format(
+                                    "%.2f",
+                                    user?.walletBalance ?: 0.0
+                                )
+                            }", style = MaterialTheme.typography.bodyMedium
                         )
                         TextButton(onClick = {
                             showAddCardDialog = true
@@ -1650,10 +1843,13 @@ fun SettingsScreenTab(
 
                     UserRole.VENDOR ->
                     {
-                        Text(text = "Payout Settings", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = if (user?.bankAccountInfo != null) "Linked: ${user?.bankAccountInfo}" else "No bank account linked.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                         TextButton(onClick = {
                             showLinkBankDialog = true
-                        }) { Text("Link Bank Account") }
+                        }) { Text(if (user?.bankAccountInfo != null) "Edit Payout Settings" else "Link Bank Account") }
                     }
 
                     UserRole.ADMIN ->
