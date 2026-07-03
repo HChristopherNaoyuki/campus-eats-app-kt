@@ -612,8 +612,10 @@ fun ActivityScreenTab(
                 }
                 Text(
                     text = currentHubView,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = DesignSystem.Typography.titleSize
+                    )
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Button(onClick = onReturnHome) { Text(text = "Home") }

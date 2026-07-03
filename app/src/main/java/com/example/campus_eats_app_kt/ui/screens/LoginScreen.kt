@@ -15,9 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
+import com.example.campus_eats_app_kt.ui.components.HIGButton
+import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
+import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,7 +27,7 @@ fun LoginScreen(
     onForgotPasswordClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel // I will define this soon
+    viewModel: LoginViewModel
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -43,8 +44,8 @@ fun LoginScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Login") },
+            HIGTopAppBar(
+                title = "Login",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
@@ -58,9 +59,12 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(DesignSystem.Spacing.large),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
+            
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -68,10 +72,9 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                singleLine = true
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
-            
-            Spacer(modifier = Modifier.height(16.dp))
             
             OutlinedTextField(
                 value = password,
@@ -89,37 +92,45 @@ fun LoginScreen(
                     }
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
             
             TextButton(
                 onClick = onForgotPasswordClick,
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Forgot Password?")
+                Text("Forgot Password?", color = MaterialTheme.colorScheme.primary)
             }
-            
-            Spacer(modifier = Modifier.height(32.dp))
+
+            Spacer(modifier = Modifier.weight(1f))
             
             if (loginState is LoginState.Error) {
                 Text(
                     text = (loginState as LoginState.Error).message,
                     color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = DesignSystem.Spacing.small),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
-            
-            Button(
+
+            HIGButton(
                 onClick = { viewModel.login(email, password) },
+                text = "Login",
                 modifier = Modifier.fillMaxWidth(),
                 enabled = loginState !is LoginState.Loading
-            ) {
-                if (loginState is LoginState.Loading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
-                } else {
-                    Text("Login")
-                }
+            )
+
+            if (loginState is LoginState.Loading)
+            {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 2.dp
+                )
             }
+
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
         }
     }
 }

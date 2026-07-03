@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -27,7 +28,6 @@ import androidx.compose.material.icons.rounded.LockReset
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Store
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,8 +40,8 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,7 +56,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.campus_eats_app_kt.data.entity.UserRole
+import com.example.campus_eats_app_kt.ui.components.HIGButton
+import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
+import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,21 +92,42 @@ fun RegistrationScreen(
     if (showIdDialog) {
         AlertDialog(
             onDismissRequest = { /* Don't dismiss without action */ },
-            title = { Text("Registration Successful!") },
+            shape = RoundedCornerShape(DesignSystem.CornerRadius.extraLarge),
+            title = {
+                Text(
+                    "Registration Successful!",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            },
             text = {
-                Column {
-                    Text("Your unique User ID is:")
-                    Spacer(modifier = Modifier.height(12.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = registeredUserId,
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier.fillMaxWidth(),
+                        "Your unique User ID is:",
+                        style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = registeredUserId,
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                letterSpacing = 2.sp
+                            ),
+                            modifier = Modifier
+                                .padding(DesignSystem.Spacing.medium)
+                                .fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
                     val context = androidx.compose.ui.platform.LocalContext.current
                     OutlinedButton(
                         onClick = {
@@ -114,41 +139,39 @@ fun RegistrationScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
-                        shape = MaterialTheme.shapes.medium
+                            .height(50.dp),
+                        shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
                     ) {
                         Icon(Icons.Rounded.ContentCopy, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
                         Text("Copy User ID")
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
                     Text(
                         "Please save this ID safely. You will need it for account recovery.",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline,
                         textAlign = TextAlign.Center
                     )
                 }
             },
             confirmButton = {
-                Button(
+                HIGButton(
                     onClick = {
                         showIdDialog = false
                         onRegistrationSuccess(registeredUserId, selectedRole.name)
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                ) {
-                    Text("Return to Login")
-                }
+                    text = "Return to Login",
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         )
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Create Account") },
+            HIGTopAppBar(
+                title = "Create Account",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
@@ -162,10 +185,10 @@ fun RegistrationScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp)
+                .padding(DesignSystem.Spacing.large)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
             OutlinedTextField(
                 value = fullName,
@@ -174,7 +197,7 @@ fun RegistrationScreen(
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
                 singleLine = true,
-                shape = MaterialTheme.shapes.medium
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
             
             OutlinedTextField(
@@ -185,7 +208,7 @@ fun RegistrationScreen(
                 leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
-                shape = MaterialTheme.shapes.medium
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
             
             ExposedDropdownMenuBox(
@@ -203,7 +226,7 @@ fun RegistrationScreen(
                         .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                         .fillMaxWidth(),
                     leadingIcon = { Icon(Icons.Rounded.Badge, contentDescription = null) },
-                    shape = MaterialTheme.shapes.medium
+                    shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
                 )
                 ExposedDropdownMenu(
                     expanded = expanded,
@@ -233,7 +256,7 @@ fun RegistrationScreen(
                     modifier = Modifier.fillMaxWidth(),
                     leadingIcon = { Icon(Icons.Rounded.Store, contentDescription = null) },
                     singleLine = true,
-                    shape = MaterialTheme.shapes.medium
+                    shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
                 )
             }
             
@@ -246,7 +269,7 @@ fun RegistrationScreen(
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
-                shape = MaterialTheme.shapes.medium
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
             
             OutlinedTextField(
@@ -258,18 +281,21 @@ fun RegistrationScreen(
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
-                shape = MaterialTheme.shapes.medium
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
+
+            Spacer(modifier = Modifier.weight(1f))
             
             if (registrationState is RegistrationState.Error) {
                 Text(
                     text = (registrationState as RegistrationState.Error).message,
                     color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    modifier = Modifier.padding(vertical = DesignSystem.Spacing.small),
+                    textAlign = TextAlign.Center
                 )
             }
-            
-            Button(
+
+            HIGButton(
                 onClick = { 
                     if (password == confirmPassword) {
                         viewModel.register(
@@ -279,24 +305,23 @@ fun RegistrationScreen(
                             selectedRole,
                             if (selectedRole == UserRole.VENDOR) shopName else null
                         )
-                    } else {
-                        // Error message handled in UI logic would be better but keeping it simple
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = registrationState !is RegistrationState.Loading,
-                shape = MaterialTheme.shapes.medium
-            ) {
-                if (registrationState is RegistrationState.Loading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
-                } else {
-                    Text("Register", style = MaterialTheme.typography.titleMedium)
-                }
+                text = "Register",
+                modifier = Modifier.fillMaxWidth(),
+                enabled = registrationState !is RegistrationState.Loading
+            )
+
+            if (registrationState is RegistrationState.Loading)
+            {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 2.dp
+                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
         }
     }
 }

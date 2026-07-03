@@ -31,6 +31,7 @@ import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
 import com.example.campus_eats_app_kt.data.entity.UserRole
+import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 
 class MainViewModel(
     private val authRepository: AuthRepository,
@@ -64,6 +65,16 @@ fun MainScreen(
     val userRole = remember(role) { UserRole.valueOf(role) }
 
     Scaffold(
+        topBar = {
+            val title = when (selectedTab)
+            {
+                0 -> "Home"
+                1 -> "Services"
+                2 -> "Activity"
+                else -> "Settings"
+            }
+            HIGTopAppBar(title = title)
+        },
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,

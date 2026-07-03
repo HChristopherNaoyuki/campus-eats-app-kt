@@ -92,9 +92,14 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                             LoginScreen(
-                                onLoginSuccess = { userId, role -> 
-                                    backStack.clear()
-                                    backStack.add(Route.Main(userId, role)) 
+                                onLoginSuccess = { userId, role ->
+                                    // Fix: Atomic update to backStack to avoid temporary empty state
+                                    val nextRoute = Route.Main(userId, role)
+                                    backStack.add(nextRoute)
+                                    while (backStack.size > 1)
+                                    {
+                                        backStack.removeAt(0)
+                                    }
                                 },
                                 onForgotPasswordClick = { backStack.add(Route.ForgotPassword) },
                                 onBackClick = { backStack.removeLastOrNull() },
@@ -237,15 +242,18 @@ class MainActivity : ComponentActivity() {
                             )
                             CheckoutScreen(
                                 onBackClick = { backStack.removeLastOrNull() },
-                                onOrderPlaced = { orderId -> 
-                                    backStack.clear()
-                                    backStack.add(
-                                        Route.OrderConfirmation(
-                                            orderId,
-                                            route.userId,
-                                            "STUDENT"
-                                        )
+                                onOrderPlaced = { orderId ->
+                                    // Fix: Atomic update to backStack to avoid temporary empty state
+                                    val nextRoute = Route.OrderConfirmation(
+                                        orderId,
+                                        route.userId,
+                                        "STUDENT"
                                     )
+                                    backStack.add(nextRoute)
+                                    while (backStack.size > 1)
+                                    {
+                                        backStack.removeAt(0)
+                                    }
                                 },
                                 viewModel = viewModel
                             )
