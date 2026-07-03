@@ -155,6 +155,7 @@ fun MainScreen(
                     orderRepository = orderRepository,
                     cartRepository = cartRepository,
                     statsRepository = statsRepository,
+                    adminRepository = adminRepository,
                     onNavigateToCheckout = onNavigateToCheckout,
                     onReturnHome = { selectedTab = 0 }
                 )

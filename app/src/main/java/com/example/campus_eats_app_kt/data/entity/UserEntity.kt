@@ -33,6 +33,7 @@ data class UserEntity(
     @PrimaryKey
     val userId: String, // 16-character alphanumeric (XXXX-XXXX-XXXX-XXXX)
     val fullName: String,
+    val username: String,
     val email: String,
     val passwordHash: String,
     val role: UserRole,
@@ -40,5 +41,6 @@ data class UserEntity(
     val walletBalance: Double = 0.0,
     val shopName: String? = null,
     val shopStatus: ShopStatus? = null,
-    val bankAccountInfo: String? = null
+    val bankAccountInfo: String? = null,
+    val registrationDate: Long = System.currentTimeMillis()
 )

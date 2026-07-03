@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -90,6 +91,13 @@ class CartViewModel(
             repository.deleteCartItem(item)
         }
     }
+
+    fun clearCart()
+    {
+        viewModelScope.launch {
+            repository.clearCart(userId)
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,6 +120,14 @@ fun CartScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (cartItems.isNotEmpty())
+                    {
+                        TextButton(onClick = { viewModel.clearCart() }) {
+                            Text("Clear Cart", color = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
             )

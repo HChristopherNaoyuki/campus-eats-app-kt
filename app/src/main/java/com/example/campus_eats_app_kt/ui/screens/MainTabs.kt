@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.List
 import androidx.compose.material.icons.rounded.ListAlt
 import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.People
+import androidx.compose.material.icons.rounded.PieChart
 import androidx.compose.material.icons.rounded.Receipt
 import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.RemoveShoppingCart
@@ -63,8 +64,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -91,10 +94,12 @@ import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.ShopStatus
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.entity.UserStatus
+import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -517,6 +522,7 @@ fun ActivityScreenTab(
     orderRepository: OrderRepository,
     cartRepository: CartRepository,
     statsRepository: StatsRepository,
+    adminRepository: AdminRepository,
     onNavigateToCheckout: () -> Unit,
     onReturnHome: () -> Unit
 )
@@ -587,6 +593,12 @@ fun ActivityScreenTab(
                         onClick = { currentHubView = "AdminReceipts" }
                     )
                     ServiceCard(
+                        title = "Global Summary",
+                        description = "Financial aggregates.",
+                        icon = Icons.Rounded.AccountBalance,
+                        onClick = { currentHubView = "AdminSummary" }
+                    )
+                    ServiceCard(
                         title = "System Reports",
                         description = "Revenue and user analytics.",
                         icon = Icons.Rounded.Assessment,
@@ -647,12 +659,43 @@ fun ActivityScreenTab(
                     orderRepository = orderRepository
                 )
                 "AdminReceipts" -> AdminReceiptsHub(orderRepository = orderRepository)
+                "AdminSummary" -> AdminGlobalSummary(orderRepository = orderRepository)
                 "AdminReports" -> AdminReportHub(
                     statsRepository = statsRepository,
+                    adminRepository = adminRepository,
                     onReturnHome = onReturnHome
                 )
             }
         }
+    }
+}
+
+@Composable
+fun AdminGlobalSummary(orderRepository: OrderRepository)
+{
+    val orders by orderRepository.getAllOrders().collectAsState(emptyList())
+    val completedOrders = orders.filter { it.status == OrderStatus.COMPLETED }
+    val totalTransactions = completedOrders.size
+    val totalRevenue = completedOrders.sumOf { it.totalAmount }
+    val pendingPayments =
+        orders.filter { it.status != OrderStatus.COMPLETED && it.status != OrderStatus.CANCELLED }
+            .sumOf { it.totalAmount }
+    val averageTransactionValue =
+        if (totalTransactions > 0) totalRevenue / totalTransactions else 0.0
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        StatCard(label = "Total Transactions", value = "$totalTransactions")
+        StatCard(label = "Total Revenue", value = "R${String.format("%.2f", totalRevenue)}")
+        StatCard(label = "Pending Payments", value = "R${String.format("%.2f", pendingPayments)}")
+        StatCard(
+            label = "Average Transaction Value",
+            value = "R${String.format("%.2f", averageTransactionValue)}"
+        )
     }
 }
 
@@ -723,10 +766,22 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
     var statusFilter by remember { mutableStateOf<OrderStatus?>(null) }
+    var selectedMonth by remember { mutableIntStateOf(-1) }
+    var selectedYear by remember { mutableIntStateOf(-1) }
 
-    val filteredOrders = remember(orders, statusFilter) {
-        if (statusFilter == null) orders
-        else orders.filter { it.status == statusFilter }
+    val filteredOrders = remember(orders, statusFilter, selectedMonth, selectedYear) {
+        orders.filter { order ->
+            val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
+            (statusFilter == null || order.status == statusFilter) &&
+                    (selectedMonth == -1 || cal.get(Calendar.MONTH) == selectedMonth) &&
+                    (selectedYear == -1 || cal.get(Calendar.YEAR) == selectedYear)
+        }
+    }
+
+    val years = remember(orders) {
+        orders.map {
+            Calendar.getInstance().apply { timeInMillis = it.timestamp }.get(Calendar.YEAR)
+        }.distinct().sortedDescending()
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -738,7 +793,7 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
         ) {
             FilterChip(
                 onClick = { statusFilter = null },
-                label = { Text(text = "All") },
+                label = { Text(text = "All Status") },
                 selected = statusFilter == null
             )
             OrderStatus.values().forEach { status ->
@@ -746,6 +801,43 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
                     selected = statusFilter == status,
                     onClick = { statusFilter = if (statusFilter == status) null else status },
                     label = { Text(text = status.name) }
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            years.forEach { year ->
+                FilterChip(
+                    selected = selectedYear == year,
+                    onClick = { selectedYear = if (selectedYear == year) -1 else year },
+                    label = { Text("$year") }
+                )
+            }
+
+            val months = listOf(
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec"
+            )
+            months.forEachIndexed { index, month ->
+                FilterChip(
+                    selected = selectedMonth == index,
+                    onClick = { selectedMonth = if (selectedMonth == index) -1 else index },
+                    label = { Text(month) }
                 )
             }
         }
@@ -815,8 +907,13 @@ fun VendorReportHub(vendorId: String, orderRepository: OrderRepository)
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        val context = LocalContext.current
         Button(
-            onClick = { /* JSON Export */ },
+            onClick = {
+                val json = Json.encodeToString(orders)
+                val file = File(context.getExternalFilesDir(null), "vendor_sales_report.json")
+                file.writeText(json)
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -837,9 +934,17 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
         items(orders) { order ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+                            .format(Date(order.timestamp)),
+                        style = MaterialTheme.typography.labelSmall
+                    )
                     Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
                     Text(text = "Customer: ${order.customerId}")
+                    Text(text = "Vendor: ${order.vendorId}")
                     Text(text = "Amount: R${String.format("%.2f", order.totalAmount)}")
+                    Text(text = "Payment: ${order.paymentMethod.name}")
+                    Text(text = "Status: ${order.status.name}")
                 }
             }
         }
@@ -847,7 +952,11 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
 }
 
 @Composable
-fun AdminReportHub(statsRepository: StatsRepository, onReturnHome: () -> Unit)
+fun AdminReportHub(
+    statsRepository: StatsRepository,
+    adminRepository: AdminRepository,
+    onReturnHome: () -> Unit
+)
 {
     var reportType by remember { mutableStateOf("Main") }
 
@@ -876,6 +985,12 @@ fun AdminReportHub(statsRepository: StatsRepository, onReturnHome: () -> Unit)
                 description = "Top 3 food items.",
                 icon = Icons.Rounded.Star,
                 onClick = { reportType = "PopularItems" }
+            )
+            ServiceCard(
+                title = "Analytics",
+                description = "User type breakdown.",
+                icon = Icons.Rounded.PieChart,
+                onClick = { reportType = "Analytics" }
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -919,9 +1034,32 @@ fun AdminReportHub(statsRepository: StatsRepository, onReturnHome: () -> Unit)
                     "DailyTrends" -> AdminDailyTrendsReport(statsRepository)
                     "VendorRevenue" -> AdminVendorRevenueReport(statsRepository)
                     "PopularItems" -> AdminPopularItemsReport(statsRepository)
+                    "Analytics" -> AdminAnalyticsReport(adminRepository)
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AdminAnalyticsReport(adminRepository: AdminRepository)
+{
+    val users by adminRepository.getAllUsers().collectAsState(emptyList())
+    val students = users.count { it.role == UserRole.STUDENT }
+    val standards = users.count { it.role == UserRole.STANDARD }
+    val vendors = users.count { it.role == UserRole.VENDOR }
+    val admins = users.count { it.role == UserRole.ADMIN }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        StatCard(label = "Students", value = "$students")
+        StatCard(label = "Standard Users", value = "$standards")
+        StatCard(label = "Vendors", value = "$vendors")
+        StatCard(label = "Admins", value = "$admins")
     }
 }
 
@@ -1067,6 +1205,7 @@ fun AdminUserManagement(adminRepository: AdminRepository)
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(text = "ID: ${user.userId}", style = MaterialTheme.typography.bodySmall)
                     Text(text = "Name: ${user.fullName}", fontWeight = FontWeight.Bold)
+                    Text(text = "Username: ${user.username}")
                     Text(text = "Email: ${user.email}")
                     Text(text = "Role: ${user.role.name} | Status: ${user.status.name}")
                     Row(
@@ -1084,6 +1223,17 @@ fun AdminUserManagement(adminRepository: AdminRepository)
                             }
                         ) {
                             Text(text = if (user.status == UserStatus.ACTIVE) "Suspend" else "Activate")
+                        }
+
+                        TextButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    adminRepository.deleteUser(user)
+                                }
+                            },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text("Delete")
                         }
                     }
                 }
@@ -1107,6 +1257,13 @@ fun AdminVendorManagement(adminRepository: AdminRepository)
                     )
                     Text(text = "Email: ${vendor.email}")
                     Text(text = "Status: ${vendor.status.name}")
+                    Text(
+                        text = "Registered: ${
+                            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                .format(Date(vendor.registrationDate))
+                        }",
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
         }
@@ -1126,7 +1283,15 @@ fun AdminOrderManagement(orderRepository: OrderRepository)
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
                     Text(text = "Customer: ${order.customerId}")
-                    Text(text = "Current Status: ${order.status.name}")
+                    Text(text = "Vendor: ${order.vendorId}")
+                    Text(text = "Total: R${String.format("%.2f", order.totalAmount)}")
+                    Text(text = "Status: ${order.status.name}")
+                    Text(
+                        text = "Placed: ${
+                            SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+                                .format(Date(order.timestamp))
+                        }"
+                    )
 
                     Box {
                         TextButton(onClick = { expanded = true }) {
@@ -1156,27 +1321,94 @@ fun AdminOrderManagement(orderRepository: OrderRepository)
 fun StudentReceipts(userId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(orders) { order ->
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
+    var sortAscending by remember { mutableStateOf(false) }
+    var selectedMonth by remember { mutableIntStateOf(-1) } // -1 for all
+    var selectedYear by remember { mutableIntStateOf(-1) } // -1 for all
+
+    val filteredOrders = remember(orders, sortAscending, selectedMonth, selectedYear) {
+        orders.filter { order ->
+            val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
+            (selectedMonth == -1 || cal.get(Calendar.MONTH) == selectedMonth) &&
+                    (selectedYear == -1 || cal.get(Calendar.YEAR) == selectedYear)
+        }.sortedBy { if (sortAscending) it.totalAmount else -it.totalAmount }
+    }
+
+    val years = remember(orders) {
+        orders.map {
+            Calendar.getInstance().apply { timeInMillis = it.timestamp }.get(Calendar.YEAR)
+        }.distinct().sortedDescending()
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = sortAscending,
+                onClick = { sortAscending = true },
+                label = { Text("Amount Asc") }
+            )
+            FilterChip(
+                selected = !sortAscending,
+                onClick = { sortAscending = false },
+                label = { Text("Amount Desc") }
+            )
+            years.forEach { year ->
+                FilterChip(
+                    selected = selectedYear == year,
+                    onClick = { selectedYear = if (selectedYear == year) -1 else year },
+                    label = { Text("$year") }
+                )
+            }
+
+            val months = listOf(
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec"
+            )
+            months.forEachIndexed { index, month ->
+                FilterChip(
+                    selected = selectedMonth == index,
+                    onClick = { selectedMonth = if (selectedMonth == index) -1 else index },
+                    label = { Text(month) }
+                )
+            }
+        }
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(filteredOrders) { order ->
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "Date: ${
+                                    SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                        .format(Date(order.timestamp))
+                                }"
+                            )
+                        }
                         Text(
-                            text = "Date: ${
-                                SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                                    .format(Date(order.timestamp))
-                            }"
+                            text = "R${String.format("%.2f", order.totalAmount)}",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    Text(
-                        text = "R${String.format("%.2f", order.totalAmount)}",
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
                 }
             }
         }
@@ -1214,11 +1446,18 @@ fun SettingsScreenTab(
 )
 {
     val scrollState = rememberScrollState()
-    var newPassword by remember { mutableStateOf("") }
-    var newEmail by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
     val user by authRepository.getUserFlow(userId).collectAsState(null)
+    var newPassword by remember { mutableStateOf("") }
+    var newEmail by remember { mutableStateOf(user?.email ?: "") }
+
+    LaunchedEffect(user) {
+        if (newEmail.isEmpty())
+        {
+            newEmail = user?.email ?: ""
+        }
+    }
+    
+    val coroutineScope = rememberCoroutineScope()
 
     var showAddCardDialog by remember { mutableStateOf(false) }
     var showApplyCouponDialog by remember { mutableStateOf(false) }
@@ -1802,8 +2041,9 @@ fun SettingsScreenTab(
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = {
                     coroutineScope.launch {
-                        authRepository.resetPassword(
+                        authRepository.updateProfile(
                             userId,
+                            newEmail,
                             newPassword
                         ); newPassword = ""
                     }

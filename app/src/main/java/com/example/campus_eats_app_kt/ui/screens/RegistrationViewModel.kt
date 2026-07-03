@@ -22,13 +22,15 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
 
     fun register(
         fullName: String,
+        username: String,
         email: String,
         password: String,
         role: UserRole,
         shopName: String? = null
     )
     {
-        if (fullName.isBlank() || email.isBlank() || password.isBlank()) {
+        if (fullName.isBlank() || username.isBlank() || email.isBlank() || password.isBlank())
+        {
             _registrationState.value = RegistrationState.Error("Please fill in all fields")
             return
         }
@@ -41,7 +43,8 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
         
         viewModelScope.launch {
             _registrationState.value = RegistrationState.Loading
-            val result = authRepository.register(fullName, email, password, role, shopName)
+            val result =
+                authRepository.register(fullName, username, email, password, role, shopName)
             result.onSuccess {
                 _registrationState.value = RegistrationState.Success(it)
             }.onFailure {

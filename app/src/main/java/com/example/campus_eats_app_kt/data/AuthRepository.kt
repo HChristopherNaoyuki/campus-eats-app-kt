@@ -11,6 +11,7 @@ class AuthRepository(private val userDao: UserDao) {
 
     suspend fun register(
         fullName: String,
+        username: String,
         email: String,
         password: String,
         role: UserRole,
@@ -26,6 +27,7 @@ class AuthRepository(private val userDao: UserDao) {
         val user = UserEntity(
             userId = userId,
             fullName = fullName,
+            username = username,
             email = email,
             passwordHash = password,
             role = role,
@@ -59,6 +61,26 @@ class AuthRepository(private val userDao: UserDao) {
         } else {
             Result.failure(Exception("Invalid User ID"))
         }
+    }
+
+    suspend fun updateProfile(userId: String, email: String, password: String): Result<Unit>
+    {
+        val user = userDao.getUserById(userId)
+        if (user == null) return Result.failure(Exception("User not found"))
+
+        if (user.email != email)
+        {
+            val existing = userDao.getUserByEmail(email)
+            if (existing != null) return Result.failure(Exception("Email already taken"))
+        }
+
+        var updatedUser = user.copy(email = email)
+        if (password.isNotBlank())
+        {
+            updatedUser = updatedUser.copy(passwordHash = password)
+        }
+        userDao.updateUser(updatedUser)
+        return Result.success(Unit)
     }
 
     fun getUserFlow(userId: String): Flow<UserEntity?> = userDao.getUserByIdFlow(userId)

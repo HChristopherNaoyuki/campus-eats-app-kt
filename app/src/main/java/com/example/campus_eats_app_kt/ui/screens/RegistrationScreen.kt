@@ -71,6 +71,7 @@ fun RegistrationScreen(
     viewModel: RegistrationViewModel
 ) {
     var fullName by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -199,6 +200,16 @@ fun RegistrationScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
+
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Username") },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+            )
             
             OutlinedTextField(
                 value = email,
@@ -300,6 +311,7 @@ fun RegistrationScreen(
                     if (password == confirmPassword) {
                         viewModel.register(
                             fullName,
+                            username,
                             email,
                             password,
                             selectedRole,
