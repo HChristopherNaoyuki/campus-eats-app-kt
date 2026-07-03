@@ -71,4 +71,18 @@ class AuthRepository(private val userDao: UserDao) {
             userDao.updateUser(user.copy(shopStatus = status))
         }
     }
+
+    suspend fun linkBankAccount(userId: String, bankInfo: String): Result<Unit>
+    {
+        val user = userDao.getUserById(userId)
+        return if (user != null)
+        {
+            userDao.updateUser(user.copy(bankAccountInfo = bankInfo))
+            Result.success(Unit)
+        }
+        else
+        {
+            Result.failure(Exception("User not found"))
+        }
+    }
 }

@@ -39,5 +39,6 @@ data class UserEntity(
     val status: UserStatus = UserStatus.ACTIVE,
     val walletBalance: Double = 0.0,
     val shopName: String? = null,
-    val shopStatus: ShopStatus? = null
+    val shopStatus: ShopStatus? = null,
+    val bankAccountInfo: String? = null
 )

@@ -56,6 +56,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -81,6 +82,7 @@ import com.example.campus_eats_app_kt.data.FeedbackRepository
 import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
+import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.ShopStatus
@@ -89,6 +91,9 @@ import com.example.campus_eats_app_kt.data.entity.UserStatus
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * HomeScreenTab provides the primary landing page for authenticated users,
@@ -180,51 +185,6 @@ fun HomeScreenTab(
 
         when (role)
         {
-            UserRole.STUDENT, UserRole.STANDARD ->
-            {
-                item {
-                    Text(
-                        text = "Top Vendors",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                items(vendors) { vendor ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onNavigateToMenuBrowse(userId, vendor.userId) },
-                        shape = MaterialTheme.shapes.large,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(20.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Surface(
-                                shape = MaterialTheme.shapes.medium,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(56.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Store,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(20.dp))
-                            Text(
-                                text = vendor.fullName,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-            }
-
             UserRole.VENDOR ->
             {
                 item {
@@ -283,6 +243,10 @@ fun HomeScreenTab(
                         }
                     }
                 }
+            }
+
+            else ->
+            {
             }
         }
     }
@@ -401,17 +365,20 @@ fun ServicesScreenTab(
                 UserRole.STUDENT, UserRole.STANDARD ->
                 {
                     ServiceCard(
+                        title = "Vendors",
+                        description = "Browse available campus vendors.",
+                        icon = Icons.Rounded.Store,
+                        onClick = { adminView = "VendorsList" })
+                    ServiceCard(
                         title = "Receipts",
                         description = "View all your past receipts.",
                         icon = Icons.Rounded.Receipt,
-                        onClick = { adminView = "Receipts" }
-                    )
+                        onClick = { adminView = "Receipts" })
                     ServiceCard(
                         title = "Total Spending",
                         description = "View your lifetime spending.",
                         icon = Icons.Rounded.AccountBalance,
-                        onClick = { adminView = "Spending" }
-                    )
+                        onClick = { adminView = "Spending" })
                 }
 
                 UserRole.VENDOR ->
@@ -420,14 +387,12 @@ fun ServicesScreenTab(
                         title = "Add New Item",
                         description = "Put a new meal on the menu.",
                         icon = Icons.Rounded.Add,
-                        onClick = { onNavigateToAddMenuItem(userId, null) }
-                    )
+                        onClick = { onNavigateToAddMenuItem(userId, null) })
                     ServiceCard(
                         title = "Manage Inventory",
                         description = "View and edit your items.",
                         icon = Icons.Rounded.Inventory,
-                        onClick = { onNavigateToVendorMenu(userId) }
-                    )
+                        onClick = { onNavigateToVendorMenu(userId) })
                 }
 
                 UserRole.ADMIN ->
@@ -436,20 +401,17 @@ fun ServicesScreenTab(
                         title = "User Management",
                         description = "View and moderate all users.",
                         icon = Icons.Rounded.People,
-                        onClick = { adminView = "Users" }
-                    )
+                        onClick = { adminView = "Users" })
                     ServiceCard(
                         title = "Vendor Management",
                         description = "View and moderate all vendors.",
                         icon = Icons.Rounded.Store,
-                        onClick = { adminView = "Vendors" }
-                    )
+                        onClick = { adminView = "Vendors" })
                     ServiceCard(
                         title = "Order Management",
                         description = "View and update all orders.",
                         icon = Icons.Rounded.List,
-                        onClick = { adminView = "Orders" }
-                    )
+                        onClick = { adminView = "Orders" })
                 }
             }
         }
@@ -485,6 +447,7 @@ fun ServicesScreenTab(
 
             when (adminView)
             {
+                "VendorsList" -> StudentVendorList(userId, menuRepository, onNavigateToMenuBrowse)
                 "Users" -> AdminUserManagement(adminRepository = adminRepository)
                 "Vendors" -> AdminVendorManagement(adminRepository = adminRepository)
                 "Orders" -> AdminOrderManagement(orderRepository = orderRepository)
@@ -493,6 +456,52 @@ fun ServicesScreenTab(
                     userId = userId,
                     orderRepository = orderRepository
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun StudentVendorList(
+    userId: String,
+    menuRepository: MenuRepository,
+    onNavigateToMenuBrowse: (String, String) -> Unit
+)
+{
+    val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        items(vendors) { vendor ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToMenuBrowse(userId, vendor.userId) },
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(56.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Rounded.Store,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(20.dp))
+                    Text(
+                        text = vendor.fullName,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
@@ -631,7 +640,6 @@ fun ActivityScreenTab(
                     vendorId = userId,
                     orderRepository = orderRepository
                 )
-
                 "AdminReceipts" -> AdminReceiptsHub(orderRepository = orderRepository)
                 "AdminReports" -> AdminReportHub(orderRepository = orderRepository)
             }
@@ -684,10 +692,7 @@ fun StudentActivityReports(userId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
     val context = LocalContext.current
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         Text(text = "Transaction Audit Report", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(24.dp))
         Button(
@@ -841,38 +846,30 @@ fun AdminReportHub(orderRepository: OrderRepository)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            ServiceCard(
-                title = "Daily Trends",
-                description = "Orders and revenue.",
-                icon = Icons.Rounded.TrendingUp,
-                onClick = {},
-                modifier = Modifier.weight(1f)
-            )
-            ServiceCard(
-                title = "Vendor Revenue",
-                description = "Vendor rankings.",
-                icon = Icons.Rounded.AttachMoney,
-                onClick = {},
-                modifier = Modifier.weight(1f)
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            ServiceCard(
-                title = "Popular Items",
-                description = "Top sold foods.",
-                icon = Icons.Rounded.Star,
-                onClick = {},
-                modifier = Modifier.weight(1f)
-            )
-            ServiceCard(
-                title = "User Analytics",
-                description = "User type breakdown.",
-                icon = Icons.Rounded.PieChart,
-                onClick = {},
-                modifier = Modifier.weight(1f)
-            )
-        }
+        ServiceCard(
+            title = "Daily Trends",
+            description = "Orders and revenue.",
+            icon = Icons.Rounded.TrendingUp,
+            onClick = {}
+        )
+        ServiceCard(
+            title = "Vendor Revenue",
+            description = "Vendor rankings.",
+            icon = Icons.Rounded.AttachMoney,
+            onClick = {}
+        )
+        ServiceCard(
+            title = "Popular Items",
+            description = "Top sold foods.",
+            icon = Icons.Rounded.Star,
+            onClick = {}
+        )
+        ServiceCard(
+            title = "User Analytics",
+            description = "User type breakdown.",
+            icon = Icons.Rounded.PieChart,
+            onClick = {}
+        )
     }
 }
 
@@ -921,7 +918,10 @@ fun AdminVendorManagement(adminRepository: AdminRepository)
         items(vendors) { vendor ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text(text = "Shop: ${vendor.fullName}", fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Shop: ${vendor.shopName ?: vendor.fullName}",
+                        fontWeight = FontWeight.Bold
+                    )
                     Text(text = "Email: ${vendor.email}")
                     Text(text = "Status: ${vendor.status.name}")
                 }
@@ -984,8 +984,8 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
                         Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
                         Text(
                             text = "Date: ${
-                                java.text.SimpleDateFormat("dd/MM/yyyy")
-                                    .format(java.util.Date(order.timestamp))
+                                SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                    .format(Date(order.timestamp))
                             }"
                         )
                     }
@@ -1032,16 +1032,155 @@ fun SettingsScreenTab(
 {
     val scrollState = rememberScrollState()
     var newPassword by remember { mutableStateOf("") }
+    var newEmail by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
     var showAddCardDialog by remember { mutableStateOf(false) }
     var showApplyCouponDialog by remember { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
+    var showLinkBankDialog by remember { mutableStateOf(false) }
+    var showIssueCreditsDialog by remember { mutableStateOf(false) }
+    var showCreateCouponDialog by remember { mutableStateOf(false) }
+    var showFeedbackReviewType by remember { mutableStateOf<FeedbackType?>(null) }
 
     if (showAddCardDialog)
     {
-        // ... (existing dialog)
+        var cardNumber by remember { mutableStateOf("") }
+        var expiryDate by remember { mutableStateOf("") }
+        var cvv by remember { mutableStateOf("") }
+        var isSaving by remember { mutableStateOf(false) }
+        var statusMsg by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { if (!isSaving) showAddCardDialog = false },
+            title = { Text(text = "Add Debit Card", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = cardNumber,
+                        onValueChange = { cardNumber = it },
+                        label = { Text(text = "Card Number") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = expiryDate,
+                            onValueChange = { expiryDate = it },
+                            label = { Text(text = "MM/YY") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = cvv,
+                            onValueChange = { cvv = it },
+                            label = { Text(text = "CVV") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    statusMsg?.let {
+                        Text(
+                            it,
+                            color = if (it.contains("Success")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (cardNumber.length < 16 || expiryDate.isEmpty() || cvv.length < 3)
+                        {
+                            statusMsg = "Please enter valid card details"
+                            return@Button
+                        }
+                        isSaving = true
+                        coroutineScope.launch {
+                            debitCardRepository.addCard(userId, cardNumber, expiryDate, cvv)
+                            isSaving = false
+                            statusMsg = "Success! Card saved."
+                            kotlinx.coroutines.delay(1000)
+                            showAddCardDialog = false
+                        }
+                    },
+                    enabled = !isSaving
+                ) {
+                    if (isSaving) CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    else Text(text = "Save Card")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddCardDialog = false }) { Text(text = "Cancel") }
+            }
+        )
+    }
+
+    if (showLinkBankDialog)
+    {
+        var bankName by remember { mutableStateOf("") }
+        var accountNumber by remember { mutableStateOf("") }
+        var isSaving by remember { mutableStateOf(false) }
+        var statusMsg by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { if (!isSaving) showLinkBankDialog = false },
+            title = { Text(text = "Link Bank Account", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = bankName,
+                        onValueChange = { bankName = it },
+                        label = { Text(text = "Bank Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = accountNumber,
+                        onValueChange = { accountNumber = it },
+                        label = { Text(text = "Account Number") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    statusMsg?.let {
+                        Text(
+                            it,
+                            color = if (it.contains("Success")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (bankName.isBlank() || accountNumber.isBlank())
+                        {
+                            statusMsg = "All fields required"
+                            return@Button
+                        }
+                        isSaving = true
+                        coroutineScope.launch {
+                            val res =
+                                authRepository.linkBankAccount(userId, "$bankName - $accountNumber")
+                            isSaving = false
+                            if (res.isSuccess)
+                            {
+                                statusMsg = "Success! Bank account linked."
+                                kotlinx.coroutines.delay(1000)
+                                showLinkBankDialog = false
+                            }
+                            else
+                            {
+                                statusMsg = res.exceptionOrNull()?.message ?: "Error"
+                            }
+                        }
+                    },
+                    enabled = !isSaving
+                ) {
+                    if (isSaving) CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    else Text(text = "Link Account")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLinkBankDialog = false }) { Text(text = "Cancel") }
+            }
+        )
     }
 
     if (showApplyCouponDialog)
@@ -1080,7 +1219,6 @@ fun SettingsScreenTab(
                             {
                                 validationMsg =
                                     "Success! ${coupon.discountPercent}% discount applied."
-                                // In real app, persist this to user's session or cart
                             }
                             else
                             {
@@ -1091,9 +1229,7 @@ fun SettingsScreenTab(
                     enabled = !isValidating && code.isNotBlank()
                 ) {
                     if (isValidating) CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                    else Text(
-                        text = "Apply"
-                    )
+                    else Text(text = "Apply")
                 }
             },
             dismissButton = {
@@ -1102,16 +1238,189 @@ fun SettingsScreenTab(
         )
     }
 
+    if (showCreateCouponDialog)
+    {
+        var code by remember { mutableStateOf("") }
+        var discount by remember { mutableStateOf("") }
+        var isSaving by remember { mutableStateOf(false) }
+        var statusMsg by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { if (!isSaving) showCreateCouponDialog = false },
+            title = { Text(text = "Create Coupon", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = code,
+                        onValueChange = { code = it },
+                        label = { Text("Coupon Code") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = discount,
+                        onValueChange = { discount = it },
+                        label = { Text("Discount %") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    statusMsg?.let {
+                        Text(
+                            it,
+                            color = if (it.contains("Success")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val d = discount.toDoubleOrNull()
+                    if (code.isBlank() || d == null)
+                    {
+                        statusMsg = "Invalid input"; return@Button
+                    }
+                    isSaving = true
+                    coroutineScope.launch {
+                        couponRepository.createCoupon(code, d)
+                        isSaving = false
+                        statusMsg = "Success! Coupon created."
+                        kotlinx.coroutines.delay(1000)
+                        showCreateCouponDialog = false
+                    }
+                }, enabled = !isSaving) {
+                    if (isSaving) CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    else Text(
+                        "Create"
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showCreateCouponDialog = false
+                }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showIssueCreditsDialog)
+    {
+        var targetId by remember { mutableStateOf("") }
+        var amount by remember { mutableStateOf("") }
+        var isSaving by remember { mutableStateOf(false) }
+        var statusMsg by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { if (!isSaving) showIssueCreditsDialog = false },
+            title = { Text(text = "Issue Wallet Credits", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = targetId,
+                        onValueChange = { targetId = it },
+                        label = { Text("User ID") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = amount,
+                        onValueChange = { amount = it },
+                        label = { Text("Amount (R)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    statusMsg?.let {
+                        Text(
+                            it,
+                            color = if (it.contains("Success")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val a = amount.toDoubleOrNull()
+                    if (targetId.isBlank() || a == null)
+                    {
+                        statusMsg = "Invalid input"; return@Button
+                    }
+                    isSaving = true
+                    coroutineScope.launch {
+                        adminRepository.issueCredits(targetId, a)
+                        isSaving = false
+                        statusMsg = "Success! Credits issued."
+                        kotlinx.coroutines.delay(1000)
+                        showIssueCreditsDialog = false
+                    }
+                }, enabled = !isSaving) {
+                    if (isSaving) CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    else Text(
+                        "Issue"
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showIssueCreditsDialog = false
+                }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showFeedbackReviewType != null)
+    {
+        val feedbacks by (if (showFeedbackReviewType == FeedbackType.COMPLAINT) feedbackRepository.getComplaints() else feedbackRepository.getCompliments()).collectAsState(
+            emptyList()
+        )
+        AlertDialog(
+            onDismissRequest = { showFeedbackReviewType = null },
+            title = {
+                Text(
+                    if (showFeedbackReviewType == FeedbackType.COMPLAINT) "Review Complaints" else "Review Compliments",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                LazyColumn(
+                    modifier = Modifier.height(300.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(feedbacks) { fb ->
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(8.dp)) {
+                                Text(fb.subject, fontWeight = FontWeight.Bold)
+                                Text(fb.message, style = MaterialTheme.typography.bodySmall)
+                                Text(
+                                    "From: ${fb.userId}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    showFeedbackReviewType = null
+                }) { Text("Close") }
+            }
+        )
+    }
+
     if (showFeedbackDialog)
     {
         var subject by remember { mutableStateOf("") }
         var message by remember { mutableStateOf("") }
+        var type by remember { mutableStateOf(FeedbackType.COMPLIMENT) }
         var isSubmitting by remember { mutableStateOf(false) }
         var submitted by remember { mutableStateOf(false) }
 
         AlertDialog(
             onDismissRequest = { if (!isSubmitting) showFeedbackDialog = false },
-            title = { Text(text = "Submit Feedback", fontWeight = FontWeight.Bold) },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { showFeedbackDialog = false }) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                    }
+                    Text(text = "Submit Feedback", fontWeight = FontWeight.Bold)
+                }
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (submitted)
@@ -1123,6 +1432,18 @@ fun SettingsScreenTab(
                     }
                     else
                     {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Type: ")
+                            RadioButton(
+                                selected = type == FeedbackType.COMPLIMENT,
+                                onClick = { type = FeedbackType.COMPLIMENT })
+                            Text("Compliment")
+                            Spacer(Modifier.width(8.dp))
+                            RadioButton(
+                                selected = type == FeedbackType.COMPLAINT,
+                                onClick = { type = FeedbackType.COMPLAINT })
+                            Text("Complaint")
+                        }
                         OutlinedTextField(
                             value = subject,
                             onValueChange = { subject = it },
@@ -1150,7 +1471,7 @@ fun SettingsScreenTab(
                         onClick = {
                             isSubmitting = true
                             coroutineScope.launch {
-                                feedbackRepository.submitFeedback(userId, subject, message)
+                                feedbackRepository.submitFeedback(userId, subject, message, type)
                                 isSubmitting = false
                                 submitted = true
                             }
@@ -1158,9 +1479,7 @@ fun SettingsScreenTab(
                         enabled = !isSubmitting && subject.isNotBlank() && message.isNotBlank()
                     ) {
                         if (isSubmitting) CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                        else Text(
-                            text = "Submit"
-                        )
+                        else Text(text = "Submit")
                     }
                 }
             }
@@ -1168,7 +1487,7 @@ fun SettingsScreenTab(
     }
 
     Column(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
             .padding(24.dp)
             .verticalScroll(scrollState),
@@ -1185,37 +1504,36 @@ fun SettingsScreenTab(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             shape = MaterialTheme.shapes.large
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(Modifier.padding(20.dp)) {
                 Text(
-                    text = "Update Password",
+                    text = "Update Profile",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
+                    value = newEmail,
+                    onValueChange = { newEmail = it },
+                    label = { Text("Email") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
                     value = newPassword,
                     onValueChange = { newPassword = it },
-                    label = { Text(text = "Enter New Password") }, 
+                    label = { Text("Password") },
                     modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                    shape = MaterialTheme.shapes.medium
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = { 
-                        coroutineScope.launch {
-                            val result = authRepository.resetPassword(userId, newPassword)
-                            if (result.isSuccess)
-                            {
-                                newPassword = ""
-                            }
-                        }
-                    }, 
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text(text = "Save Changes", fontWeight = FontWeight.Bold) 
-                }
+                Button(onClick = {
+                    coroutineScope.launch {
+                        authRepository.resetPassword(
+                            userId,
+                            newPassword
+                        ); newPassword = ""
+                    }
+                }, modifier = Modifier.fillMaxWidth()) { Text("Save Changes") }
             }
         }
 
@@ -1224,7 +1542,7 @@ fun SettingsScreenTab(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             shape = MaterialTheme.shapes.large
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(Modifier.padding(20.dp)) {
                 Text(
                     text = "Wallet",
                     style = MaterialTheme.typography.titleLarge,
@@ -1241,23 +1559,29 @@ fun SettingsScreenTab(
                         )
                         TextButton(onClick = {
                             showAddCardDialog = true
-                        }) { Text(text = "Add Debit Card") }
+                        }) { Text("Add Debit Card") }
                         TextButton(onClick = {
                             showApplyCouponDialog = true
-                        }) { Text(text = "Apply Coupons") }
+                        }) { Text("Apply Coupons") }
                     }
 
                     UserRole.VENDOR ->
                     {
                         Text(text = "Payout Settings", style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = {}) { Text(text = "Link Bank Account") }
+                        TextButton(onClick = {
+                            showLinkBankDialog = true
+                        }) { Text("Link Bank Account") }
                     }
 
                     UserRole.ADMIN ->
                     {
                         Text(text = "System Treasury", style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = {}) { Text(text = "Issue Wallet Credits") }
-                        TextButton(onClick = {}) { Text(text = "Create Coupons") }
+                        TextButton(onClick = {
+                            showIssueCreditsDialog = true
+                        }) { Text("Issue Wallet Credits") }
+                        TextButton(onClick = {
+                            showCreateCouponDialog = true
+                        }) { Text("Create Coupons") }
                     }
                 }
             }
@@ -1268,7 +1592,7 @@ fun SettingsScreenTab(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             shape = MaterialTheme.shapes.large
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(Modifier.padding(20.dp)) {
                 Text(
                     text = "Feedback",
                     style = MaterialTheme.typography.titleLarge,
@@ -1277,8 +1601,12 @@ fun SettingsScreenTab(
                 Spacer(modifier = Modifier.height(8.dp))
                 if (role == UserRole.ADMIN)
                 {
-                    TextButton(onClick = {}) { Text(text = "Review Complaints") }
-                    TextButton(onClick = {}) { Text(text = "Review Compliments") }
+                    TextButton(onClick = {
+                        showFeedbackReviewType = FeedbackType.COMPLAINT
+                    }) { Text("Review Complaints") }
+                    TextButton(onClick = {
+                        showFeedbackReviewType = FeedbackType.COMPLIMENT
+                    }) { Text("Review Compliments") }
                 }
                 else
                 {
@@ -1300,23 +1628,14 @@ fun SettingsScreenTab(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
             shape = MaterialTheme.shapes.large
         ) {
-            Icon(imageVector = Icons.Rounded.Logout, contentDescription = null)
+            Icon(Icons.Rounded.Logout, contentDescription = null)
             Spacer(modifier = Modifier.width(12.dp))
-            Text(text = "Logout Session", fontWeight = FontWeight.Bold)
-        }
-
-        val versionName = try
-        {
-            context.packageManager.getPackageInfo(context.packageName, 0).versionName
-        }
-        catch (e: Exception)
-        {
-            "1.0.0"
+            Text("Logout Session", fontWeight = FontWeight.Bold)
         }
         
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Text(
-                text = "Campus Eats v$versionName",
+                "Campus Eats v1.0.0",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline
             )
@@ -1342,7 +1661,7 @@ fun ServiceCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = MaterialTheme.shapes.large
     ) {
-        Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.primaryContainer,
@@ -1357,7 +1676,7 @@ fun ServiceCard(
                     )
                 }
             }
-            Spacer(modifier = Modifier.width(20.dp))
+            Spacer(Modifier.width(20.dp))
             Column {
                 Text(
                     text = title,

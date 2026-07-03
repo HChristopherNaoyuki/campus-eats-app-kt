@@ -30,4 +30,12 @@ class Converters {
 
     @TypeConverter
     fun toShopStatus(status: String?): ShopStatus? = status?.let { ShopStatus.valueOf(it) }
+
+    @TypeConverter
+    fun fromFeedbackType(type: com.example.campus_eats_app_kt.data.entity.FeedbackType): String =
+        type.name
+
+    @TypeConverter
+    fun toFeedbackType(type: String): com.example.campus_eats_app_kt.data.entity.FeedbackType =
+        com.example.campus_eats_app_kt.data.entity.FeedbackType.valueOf(type)
 }

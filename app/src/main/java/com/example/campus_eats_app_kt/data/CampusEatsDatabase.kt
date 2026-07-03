@@ -30,7 +30,7 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
         CouponEntity::class,
         DebitCardEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
