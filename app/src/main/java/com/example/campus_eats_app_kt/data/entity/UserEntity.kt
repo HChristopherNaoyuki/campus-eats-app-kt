@@ -4,20 +4,31 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
 
+/**
+ * UserRole defines the access levels for the application.
+ */
 @Serializable
-enum class UserRole {
+enum class UserRole
+{
     STUDENT,
     STANDARD,
     VENDOR,
     ADMIN
 }
 
+/**
+ * UserStatus defines the account state.
+ */
 @Serializable
-enum class UserStatus {
+enum class UserStatus
+{
     ACTIVE,
     SUSPENDED
 }
 
+/**
+ * ShopStatus defines the availability of a vendor.
+ */
 @Serializable
 enum class ShopStatus
 {
@@ -27,6 +38,10 @@ enum class ShopStatus
     CLOSED
 }
 
+/**
+ * UserEntity represents a user record in the local database.
+ * The primary key is a generated 16-character alphanumeric string.
+ */
 @Serializable
 @Entity(tableName = "users")
 data class UserEntity(

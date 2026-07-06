@@ -6,7 +6,12 @@ import com.example.campus_eats_app_kt.data.entity.ShopStatus
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.entity.UserStatus
 
-class Converters {
+/**
+ * Converters handles the transformation of complex types (Enums) into 
+ * persistent formats supported by SQLite (Strings).
+ */
+class Converters
+{
     @TypeConverter
     fun fromUserRole(role: UserRole): String = role.name
 
