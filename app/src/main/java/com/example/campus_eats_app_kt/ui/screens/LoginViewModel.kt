@@ -8,31 +8,67 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-sealed interface LoginState {
+/**
+ * LoginState represents the various states of the login process.
+ */
+sealed interface LoginState
+{
     data object Idle : LoginState
     data object Loading : LoginState
     data class Success(val user: UserEntity) : LoginState
     data class Error(val message: String) : LoginState
 }
 
-class LoginViewModel(private val authRepository: AuthRepository) : ViewModel() {
+/**
+ * LoginViewModel manages the state and logic for the Login screen.
+ */
+class LoginViewModel(private val authRepository: AuthRepository) : ViewModel()
+{
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
     val loginState: StateFlow<LoginState> = _loginState
 
-    fun login(email: String, password: String) {
-        if (email.isBlank() || password.isBlank()) {
+    /**
+     * Attempts to log in the user with the provided credentials.
+     * Performs validation and updates the loginState accordingly.
+     */
+    fun login(email: String, password: String)
+    {
+        // Simple input validation to prevent unnecessary processing
+        if (email.isBlank() || password.isBlank())
+        {
             _loginState.value = LoginState.Error("Please fill in all fields")
             return
         }
-        
+
         viewModelScope.launch {
             _loginState.value = LoginState.Loading
-            val result = authRepository.login(email, password)
-            result.onSuccess {
-                _loginState.value = LoginState.Success(it)
-            }.onFailure {
-                _loginState.value = LoginState.Error(it.message ?: "Login failed")
+
+            try
+            {
+                // Call the repository to perform the login operation
+                val result = authRepository.login(email, password)
+
+                result.onSuccess { user ->
+                    // On success, update the state with the authenticated user
+                    _loginState.value = LoginState.Success(user)
+                }.onFailure { exception ->
+                    // On failure, capture the error message for user feedback
+                    _loginState.value = LoginState.Error(exception.message ?: "Login failed")
+                }
+            }
+            catch (e: Exception)
+            {
+                // Catch any unexpected exceptions to prevent application termination
+                _loginState.value = LoginState.Error("An unexpected error occurred: ${e.message}")
             }
         }
+    }
+
+    /**
+     * Resets the login state to Idle.
+     */
+    fun resetState()
+    {
+        _loginState.value = LoginState.Idle
     }
 }

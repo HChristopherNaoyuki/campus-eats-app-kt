@@ -42,6 +42,10 @@ import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
+/**
+ * LoginScreen provides the UI for user authentication.
+ * It follows Apple's HIG principles for spacing and typography where applicable.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
@@ -50,15 +54,18 @@ fun LoginScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel
-) {
+)
+{
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    
+
     val loginState by viewModel.loginState.collectAsState()
 
+    // Handle state transitions for navigation
     LaunchedEffect(loginState) {
-        if (loginState is LoginState.Success) {
+        if (loginState is LoginState.Success)
+        {
             val user = (loginState as LoginState.Success).user
             onLoginSuccess(user.userId, user.role.name)
         }
@@ -70,7 +77,10 @@ fun LoginScreen(
                 title = "Login",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 }
             )
@@ -86,7 +96,8 @@ fun LoginScreen(
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
-            
+
+            // Email input field with icon
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -97,7 +108,8 @@ fun LoginScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
-            
+
+            // Password input field with toggleable visibility
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -117,7 +129,8 @@ fun LoginScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
-            
+
+            // Recovery link
             TextButton(
                 onClick = onForgotPasswordClick,
                 modifier = Modifier.align(Alignment.End)
@@ -126,8 +139,10 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.weight(1f))
-            
-            if (loginState is LoginState.Error) {
+
+            // Error message display area
+            if (loginState is LoginState.Error)
+            {
                 Text(
                     text = (loginState as LoginState.Error).message,
                     color = MaterialTheme.colorScheme.error,
@@ -136,6 +151,7 @@ fun LoginScreen(
                 )
             }
 
+            // Primary login action button
             HIGButton(
                 onClick = { viewModel.login(email, password) },
                 text = "Login",
@@ -143,6 +159,7 @@ fun LoginScreen(
                 enabled = loginState !is LoginState.Loading
             )
 
+            // Activity indicator for long-running login operation
             if (loginState is LoginState.Loading)
             {
                 CircularProgressIndicator(
@@ -156,6 +173,3 @@ fun LoginScreen(
         }
     }
 }
-
-// State and ViewModel for Login (I'll put them here or in separate files)
-// For now, I'll just create the placeholders
