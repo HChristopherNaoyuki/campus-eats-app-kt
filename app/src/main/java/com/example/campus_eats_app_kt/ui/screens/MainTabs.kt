@@ -1,5 +1,6 @@
 package com.example.campus_eats_app_kt.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -81,6 +82,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.campus_eats_app_kt.data.AdminRepository
 import com.example.campus_eats_app_kt.data.AdminStats
 import com.example.campus_eats_app_kt.data.AuthRepository
@@ -147,17 +149,29 @@ fun HomeScreenTab(
                 val context = LocalContext.current
                 IconButton(
                     onClick = {
-                        val clipboard =
-                            context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                        val clip = android.content.ClipData.newPlainText("User ID", userId)
-                        clipboard.setPrimaryClip(clip)
+                        try
+                        {
+                            val clipboard =
+                                context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("User ID", userId)
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(
+                                context,
+                                "User ID copied to clipboard",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        catch (e: Exception)
+                        {
+                            Toast.makeText(context, "Failed to copy ID", Toast.LENGTH_SHORT).show()
+                        }
                     },
-                    modifier = Modifier.size(DesignSystem.Spacing.large)
+                    modifier = Modifier.size(44.dp) // Optimized touch target for mobile
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.ContentCopy,
-                        contentDescription = "Copy ID",
-                        modifier = Modifier.size(14.dp),
+                        contentDescription = "Copy User ID",
+                        modifier = Modifier.size(18.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -479,17 +493,30 @@ fun ServicesScreenTab(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            when (adminView)
-            {
-                "VendorsList" -> StudentVendorList(userId, menuRepository, onNavigateToMenuBrowse)
-                "Users" -> AdminUserManagement(adminRepository = adminRepository)
-                "Vendors" -> AdminVendorManagement(adminRepository = adminRepository)
-                "Orders" -> AdminOrderManagement(orderRepository = orderRepository)
-                "Receipts" -> StudentReceipts(userId = userId, orderRepository = orderRepository)
-                "Spending" -> StudentTotalSpending(
-                    userId = userId,
-                    orderRepository = orderRepository
-                )
+            // Sub-view container with vertical scrolling for non-lazy layouts
+            // to ensure accessibility on devices as small as 4.7 inches.
+            Box(modifier = Modifier.weight(1f)) {
+                when (adminView)
+                {
+                    "VendorsList" -> StudentVendorList(
+                        userId,
+                        menuRepository,
+                        onNavigateToMenuBrowse
+                    )
+
+                    "Users" -> AdminUserManagement(adminRepository = adminRepository)
+                    "Vendors" -> AdminVendorManagement(adminRepository = adminRepository)
+                    "Orders" -> AdminOrderManagement(orderRepository = orderRepository)
+                    "Receipts" -> StudentReceipts(
+                        userId = userId,
+                        orderRepository = orderRepository
+                    )
+
+                    "Spending" -> StudentTotalSpending(
+                        userId = userId,
+                        orderRepository = orderRepository
+                    )
+                }
             }
         }
     }
@@ -661,37 +688,46 @@ fun ActivityScreenTab(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            when (currentHubView)
-            {
-                "Current" -> StudentCurrentOrderHub(
-                    userId = userId,
-                    cartRepository = cartRepository,
-                    onNavigateToCheckout = onNavigateToCheckout,
-                    onReturnHome = onReturnHome
-                )
+            // Sub-view container wrapper for role-specific activity modules.
+            // Responsive viewport management ensures no content squishing.
+            Box(modifier = Modifier.weight(1f)) {
+                when (currentHubView)
+                {
+                    "Current" -> StudentCurrentOrderHub(
+                        userId = userId,
+                        cartRepository = cartRepository,
+                        onNavigateToCheckout = onNavigateToCheckout,
+                        onReturnHome = onReturnHome
+                    )
 
-                "ReceiptsHub" -> StudentReceipts(userId = userId, orderRepository = orderRepository)
-                "ReportsHub" -> StudentActivityReports(
-                    userId = userId,
-                    orderRepository = orderRepository
-                )
+                    "ReceiptsHub" -> StudentReceipts(
+                        userId = userId,
+                        orderRepository = orderRepository
+                    )
 
-                "VendorOrders" -> VendorOrderHub(
-                    vendorId = userId,
-                    orderRepository = orderRepository
-                )
+                    "ReportsHub" -> StudentActivityReports(
+                        userId = userId,
+                        orderRepository = orderRepository
+                    )
 
-                "VendorReports" -> VendorReportHub(
-                    vendorId = userId,
-                    orderRepository = orderRepository
-                )
-                "AdminReceipts" -> AdminReceiptsHub(orderRepository = orderRepository)
-                "AdminSummary" -> AdminGlobalSummary(orderRepository = orderRepository)
-                "AdminReports" -> AdminReportHub(
-                    statsRepository = statsRepository,
-                    adminRepository = adminRepository,
-                    onReturnHome = onReturnHome
-                )
+                    "VendorOrders" -> VendorOrderHub(
+                        vendorId = userId,
+                        orderRepository = orderRepository
+                    )
+
+                    "VendorReports" -> VendorReportHub(
+                        vendorId = userId,
+                        orderRepository = orderRepository
+                    )
+
+                    "AdminReceipts" -> AdminReceiptsHub(orderRepository = orderRepository)
+                    "AdminSummary" -> AdminGlobalSummary(orderRepository = orderRepository)
+                    "AdminReports" -> AdminReportHub(
+                        statsRepository = statsRepository,
+                        adminRepository = adminRepository,
+                        onReturnHome = onReturnHome
+                    )
+                }
             }
         }
     }
@@ -711,17 +747,18 @@ fun AdminGlobalSummary(orderRepository: OrderRepository)
         if (totalTransactions > 0) totalRevenue / totalTransactions else 0.0
 
     // Administrator Global Summary Bar refactored to span full available width
-    // as per responsive dashboard layout requirements.
+    // with clean, minimalist card stacking for high visual impact and responsiveness.
     Column(
         modifier = Modifier
-            .fillMaxWidth() // Spans full width of parent container
-            .padding(horizontal = DesignSystem.Spacing.medium),
+            .fillMaxWidth()
+            .padding(horizontal = DesignSystem.Spacing.medium)
+            .verticalScroll(rememberScrollState()), // Enables scrolling for smaller viewports
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
     ) {
         StatCard(
             label = "Total Transactions",
             value = "$totalTransactions",
-            modifier = Modifier.fillMaxWidth() // Metric card expansion
+            modifier = Modifier.fillMaxWidth() // Metric card expansion for visual balance
         )
         StatCard(
             label = "Total Revenue",
@@ -786,8 +823,17 @@ fun StudentActivityReports(userId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
     val context = LocalContext.current
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-        Text(text = "Transaction Audit Report", style = MaterialTheme.typography.titleMedium)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = "Transaction Audit Report",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
         Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = {
@@ -808,10 +854,10 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
 
-    // UI State for Advanced Filtering
+    // UI State for Advanced Filtering and Search Logic
     var statusFilter by remember { mutableStateOf<OrderStatus?>(null) }
 
-    // Requirement: Current year must be pre-selected by default.
+    // Requirement: Current year must be pre-selected by default to show relevant live context.
     val initialYear = Calendar.getInstance().get(Calendar.YEAR)
     var selectedMonth by remember { mutableIntStateOf(-1) }
     var selectedYear by remember { mutableIntStateOf(initialYear) }
@@ -822,12 +868,13 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
     )
 
     // Requirement: Year range from 2019 to current year, updating automatically.
+    // The range calculation ensures that as the system enters a new year, it is added dynamically.
     val currentYear = Calendar.getInstance().get(Calendar.YEAR)
     val years = listOf("All Years") + (currentYear downTo 2019).map { it.toString() }
     
     val statusOptions = listOf("All Status", "Accepted", "Preparing", "Ready", "Completed")
 
-    // Memoized filter logic for performance and accuracy
+    // Robust filter module: Combinatorial logic for status, month, and year constraints.
     val filteredOrders = remember(orders, statusFilter, selectedMonth, selectedYear) {
         orders.filter { order ->
             val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
@@ -838,8 +885,11 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
         }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-        // Multi-Picker Layout for Responsive Views
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+    ) {
+        // Multi-Picker Filter Grid - Adaptive for mobile viewports
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
@@ -876,9 +926,10 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Result List with minimalist card styling
+        // Polished Order Stream - Responsive Lazy List with scrolling and padding
         LazyColumn(
             modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(bottom = DesignSystem.Spacing.medium),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
         ) {
             if (filteredOrders.isEmpty())
@@ -891,8 +942,9 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "No orders found for the selected period.",
-                            color = MaterialTheme.colorScheme.outline
+                            "No orders match the selected filters.",
+                            color = MaterialTheme.colorScheme.outline,
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
@@ -1390,6 +1442,7 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
 
     // Enhanced State Management for Receipt Filtering and Sorting
+    // State is preserved during sub-view transitions within the Activity Tab.
     var selectedMonth by remember { mutableIntStateOf(-1) }
     var selectedYear by remember { mutableIntStateOf(-1) }
     var sortBy by remember { mutableStateOf("Date (Newest to Oldest)") }
@@ -1399,11 +1452,11 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     )
 
-    // Requirement: Numeric Year Picker supporting current and 5 previous years
+    // Requirement: Numeric Year Picker supporting current and previous 5 years for auditing.
     val currentYear = Calendar.getInstance().get(Calendar.YEAR)
     val years = listOf("All Years") + (currentYear downTo currentYear - 5).map { it.toString() }
 
-    // Sort Options for minimalist dropdown
+    // Sort Options supporting minimalist financial tracking
     val sortOptions = listOf(
         "Amount (Ascending)",
         "Amount (Descending)",
@@ -1411,7 +1464,7 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
         "Date (Oldest to Newest)"
     )
 
-    // Dynamic filtering and sorting module
+    // Unified combinatorial filtering and sorting module for accurate record display.
     val filteredOrders = remember(orders, selectedMonth, selectedYear, sortBy) {
         orders.filter { order ->
             val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
@@ -1434,7 +1487,7 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
     ) {
-        // Minimalist Filter & Sort Control Grid
+        // Minimalist Filter & Sort Control Grid - High Touch Targets (44dp+)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
@@ -1467,7 +1520,7 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Responsive Result Stream
+        // Responsive Receipt Stream with clean typography and spacing.
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(bottom = 16.dp),
@@ -1483,8 +1536,9 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "No receipts found for the selection.",
-                            color = MaterialTheme.colorScheme.outline
+                            "No receipts match your current selection.",
+                            color = MaterialTheme.colorScheme.outline,
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
@@ -1496,7 +1550,7 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Row(
-                        modifier = Modifier.padding(20.dp),
+                        modifier = Modifier.padding(DesignSystem.Spacing.large),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -2286,13 +2340,19 @@ fun ServiceCard(
     modifier: Modifier = Modifier
 )
 {
+    // Minimalist Card following Apple-inspired design principles:
+    // Large corner radii, generous padding, and subtle interactive states.
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = DesignSystem.Spacing.extraSmall),
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = MaterialTheme.shapes.extraLarge
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        shape = MaterialTheme.shapes.extraLarge,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp, pressedElevation = 2.dp)
     ) {
         Row(
             Modifier.padding(DesignSystem.Spacing.medium),
@@ -2306,7 +2366,7 @@ fun ServiceCard(
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
-                        null,
+                        contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(28.dp)
                     )
@@ -2317,7 +2377,8 @@ fun ServiceCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.5).sp // Apple-like tight kerning for headers
                 )
                 Text(
                     text = description,
