@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.AttachMoney
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Inventory
@@ -137,11 +138,30 @@ fun HomeScreenTab(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            Text(
-                text = "User ID: $userId",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.outline
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "User ID: $userId",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
+                val context = LocalContext.current
+                IconButton(
+                    onClick = {
+                        val clipboard =
+                            context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        val clip = android.content.ClipData.newPlainText("User ID", userId)
+                        clipboard.setPrimaryClip(clip)
+                    },
+                    modifier = Modifier.size(DesignSystem.Spacing.large)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ContentCopy,
+                        contentDescription = "Copy ID",
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
             if (role == UserRole.VENDOR && user?.shopName != null)
             {
                 Text(
@@ -365,6 +385,7 @@ fun ServicesScreenTab(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp)
+                .verticalScroll(rememberScrollState()) // Ensures accessibility on small 4.7" devices
         ) {
             Text(
                 text = "Services",
@@ -541,6 +562,7 @@ fun ActivityScreenTab(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp)
+                .verticalScroll(rememberScrollState()) // Responsive adaptation for small viewports
         ) {
             Text(
                 text = "Activity Hub",
@@ -688,16 +710,18 @@ fun AdminGlobalSummary(orderRepository: OrderRepository)
     val averageTransactionValue =
         if (totalTransactions > 0) totalRevenue / totalTransactions else 0.0
 
+    // Administrator Global Summary Bar refactored to span full available width
+    // as per responsive dashboard layout requirements.
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(DesignSystem.Spacing.medium),
+            .fillMaxWidth() // Spans full width of parent container
+            .padding(horizontal = DesignSystem.Spacing.medium),
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
     ) {
         StatCard(
             label = "Total Transactions",
             value = "$totalTransactions",
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth() // Metric card expansion
         )
         StatCard(
             label = "Total Revenue",
@@ -783,39 +807,39 @@ fun StudentActivityReports(userId: String, orderRepository: OrderRepository)
 fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
+
+    // UI State for Advanced Filtering
     var statusFilter by remember { mutableStateOf<OrderStatus?>(null) }
+
+    // Requirement: Current year must be pre-selected by default.
+    val initialYear = Calendar.getInstance().get(Calendar.YEAR)
     var selectedMonth by remember { mutableIntStateOf(-1) }
-    var selectedYear by remember { mutableIntStateOf(-1) }
+    var selectedYear by remember { mutableIntStateOf(initialYear) }
 
     val months = listOf(
-        "All Months",
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec"
+        "All Months", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     )
+
+    // Requirement: Year range from 2019 to current year, updating automatically.
     val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-    val years = listOf("All Years") + (currentYear downTo currentYear - 5).map { it.toString() }
+    val years = listOf("All Years") + (currentYear downTo 2019).map { it.toString() }
+    
     val statusOptions = listOf("All Status", "Accepted", "Preparing", "Ready", "Completed")
 
+    // Memoized filter logic for performance and accuracy
     val filteredOrders = remember(orders, statusFilter, selectedMonth, selectedYear) {
         orders.filter { order ->
             val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
-            (statusFilter == null || order.status == statusFilter) &&
-                    (selectedMonth == -1 || cal.get(Calendar.MONTH) == selectedMonth) &&
-                    (selectedYear == -1 || cal.get(Calendar.YEAR) == selectedYear)
+            val statusMatch = statusFilter == null || order.status == statusFilter
+            val monthMatch = selectedMonth == -1 || cal.get(Calendar.MONTH) == selectedMonth
+            val yearMatch = selectedYear == -1 || cal.get(Calendar.YEAR) == selectedYear
+            statusMatch && monthMatch && yearMatch
         }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+        // Multi-Picker Layout for Responsive Views
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
@@ -852,10 +876,27 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
             modifier = Modifier.fillMaxWidth()
         )
 
+        // Result List with minimalist card styling
         LazyColumn(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
         ) {
+            if (filteredOrders.isEmpty())
+            {
+                item {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(DesignSystem.Spacing.extraLarge),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No orders found for the selected period.",
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+            }
             items(filteredOrders) { order -> VendorOrderCard(order = order) }
         }
     }
@@ -973,13 +1014,15 @@ fun AdminReportHub(
 {
     var reportType by remember { mutableStateOf("Main") }
 
+    // Administrator System Reports view refactored for vertical scrolling
+    // to ensure all content remains accessible across various device viewports.
     if (reportType == "Main")
     {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(DesignSystem.Spacing.medium)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState()), // Enables window-level scrolling
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
             ServiceCard(
@@ -1023,7 +1066,7 @@ fun AdminReportHub(
         Column(Modifier.fillMaxSize()) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(DesignSystem.Spacing.medium)
             ) {
                 IconButton(onClick = { reportType = "Main" }) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
@@ -1065,6 +1108,8 @@ fun AdminAnalyticsReport(adminRepository: AdminRepository)
     val vendors = users.count { it.role == UserRole.VENDOR }
     val admins = users.count { it.role == UserRole.ADMIN }
 
+    // User Analytics report refactored with full-width cards and scrolling
+    // to maintain readability and data hierarchy.
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1089,12 +1134,14 @@ fun AdminDailyTrendsReport(statsRepository: StatsRepository)
     }
     else
     {
-        Column(Modifier
-            .fillMaxSize()
-            .padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(DesignSystem.Spacing.medium)
+        ) {
             ReportHeader(listOf("Date", "Orders", "Revenue"))
-            HorizontalDivider()
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
                 items(trends) { trend ->
                     ReportRow(
                         listOf(
@@ -1119,12 +1166,14 @@ fun AdminVendorRevenueReport(statsRepository: StatsRepository)
     }
     else
     {
-        Column(Modifier
-            .fillMaxSize()
-            .padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(DesignSystem.Spacing.medium)
+        ) {
             ReportHeader(listOf("Vendor", "Orders", "Revenue", "%"))
-            HorizontalDivider()
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
                 items(rankings) { rank ->
                     ReportRow(
                         listOf(
@@ -1150,12 +1199,14 @@ fun AdminPopularItemsReport(statsRepository: StatsRepository)
     }
     else
     {
-        Column(Modifier
-            .fillMaxSize()
-            .padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(DesignSystem.Spacing.medium)
+        ) {
             ReportHeader(listOf("Item Name", "Units Sold", "Revenue"))
-            HorizontalDivider()
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
                 items(items) { item ->
                     ReportRow(
                         listOf(
@@ -1338,27 +1389,21 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
 
+    // Enhanced State Management for Receipt Filtering and Sorting
     var selectedMonth by remember { mutableIntStateOf(-1) }
     var selectedYear by remember { mutableIntStateOf(-1) }
     var sortBy by remember { mutableStateOf("Date (Newest to Oldest)") }
 
     val months = listOf(
-        "All Months",
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec"
+        "All Months", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     )
+
+    // Requirement: Numeric Year Picker supporting current and 5 previous years
     val currentYear = Calendar.getInstance().get(Calendar.YEAR)
     val years = listOf("All Years") + (currentYear downTo currentYear - 5).map { it.toString() }
+
+    // Sort Options for minimalist dropdown
     val sortOptions = listOf(
         "Amount (Ascending)",
         "Amount (Descending)",
@@ -1366,11 +1411,13 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
         "Date (Oldest to Newest)"
     )
 
+    // Dynamic filtering and sorting module
     val filteredOrders = remember(orders, selectedMonth, selectedYear, sortBy) {
         orders.filter { order ->
             val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
-            (selectedMonth == -1 || cal.get(Calendar.MONTH) == selectedMonth) &&
-                    (selectedYear == -1 || cal.get(Calendar.YEAR) == selectedYear)
+            val monthMatch = selectedMonth == -1 || cal.get(Calendar.MONTH) == selectedMonth
+            val yearMatch = selectedYear == -1 || cal.get(Calendar.YEAR) == selectedYear
+            monthMatch && yearMatch
         }.let { list ->
             when (sortBy)
             {
@@ -1383,7 +1430,11 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
         }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+    ) {
+        // Minimalist Filter & Sort Control Grid
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
@@ -1416,10 +1467,28 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
             modifier = Modifier.fillMaxWidth()
         )
 
+        // Responsive Result Stream
         LazyColumn(
             modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
         ) {
+            if (filteredOrders.isEmpty())
+            {
+                item {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(DesignSystem.Spacing.extraLarge),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No receipts found for the selection.",
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+            }
             items(filteredOrders) { order ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
