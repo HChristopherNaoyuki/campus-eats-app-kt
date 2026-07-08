@@ -30,6 +30,8 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Inventory
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.List
 import androidx.compose.material.icons.rounded.ListAlt
 import androidx.compose.material.icons.rounded.Logout
@@ -264,18 +266,20 @@ fun StatRow(label: String, value: String)
 {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(DesignSystem.Spacing.large)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                fontWeight = FontWeight.Bold
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
@@ -287,19 +291,20 @@ fun StatCard(label: String, value: String, modifier: Modifier = Modifier)
 {
     Card(
         modifier = modifier,
-        shape = MaterialTheme.shapes.large,
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(DesignSystem.Spacing.medium)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                fontWeight = FontWeight.Bold
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
@@ -686,15 +691,28 @@ fun AdminGlobalSummary(orderRepository: OrderRepository)
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(DesignSystem.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
     ) {
-        StatCard(label = "Total Transactions", value = "$totalTransactions")
-        StatCard(label = "Total Revenue", value = "R${String.format("%.2f", totalRevenue)}")
-        StatCard(label = "Pending Payments", value = "R${String.format("%.2f", pendingPayments)}")
+        StatCard(
+            label = "Total Transactions",
+            value = "$totalTransactions",
+            modifier = Modifier.fillMaxWidth()
+        )
+        StatCard(
+            label = "Total Revenue",
+            value = "R${String.format("%.2f", totalRevenue)}",
+            modifier = Modifier.fillMaxWidth()
+        )
+        StatCard(
+            label = "Pending Payments",
+            value = "R${String.format("%.2f", pendingPayments)}",
+            modifier = Modifier.fillMaxWidth()
+        )
         StatCard(
             label = "Average Transaction Value",
-            value = "R${String.format("%.2f", averageTransactionValue)}"
+            value = "R${String.format("%.2f", averageTransactionValue)}",
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
@@ -769,6 +787,25 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
     var selectedMonth by remember { mutableIntStateOf(-1) }
     var selectedYear by remember { mutableIntStateOf(-1) }
 
+    val months = listOf(
+        "All Months",
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+    )
+    val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+    val years = listOf("All Years") + (currentYear downTo currentYear - 5).map { it.toString() }
+    val statusOptions = listOf("All Status", "Accepted", "Preparing", "Ready", "Completed")
+
     val filteredOrders = remember(orders, statusFilter, selectedMonth, selectedYear) {
         orders.filter { order ->
             val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
@@ -778,71 +815,47 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
         }
     }
 
-    val years = remember(orders) {
-        orders.map {
-            Calendar.getInstance().apply { timeInMillis = it.timestamp }.get(Calendar.YEAR)
-        }.distinct().sortedDescending()
-    }
-
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
         ) {
-            FilterChip(
-                onClick = { statusFilter = null },
-                label = { Text(text = "All Status") },
-                selected = statusFilter == null
+            MinimalDropdown(
+                label = "Month",
+                selectedOption = if (selectedMonth == -1) "All Months" else months[selectedMonth + 1],
+                options = months,
+                onOptionSelected = { option ->
+                    selectedMonth = months.indexOf(option) - 1
+                },
+                modifier = Modifier.weight(1f)
             )
-            OrderStatus.values().forEach { status ->
-                FilterChip(
-                    selected = statusFilter == status,
-                    onClick = { statusFilter = if (statusFilter == status) null else status },
-                    label = { Text(text = status.name) }
-                )
-            }
+            MinimalDropdown(
+                label = "Year",
+                selectedOption = if (selectedYear == -1) "All Years" else selectedYear.toString(),
+                options = years,
+                onOptionSelected = { option ->
+                    selectedYear = if (option == "All Years") -1 else option.toInt()
+                },
+                modifier = Modifier.weight(1f)
+            )
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        MinimalDropdown(
+            label = "Order Status",
+            selectedOption = statusFilter?.name?.lowercase()?.replaceFirstChar { it.uppercase() }
+                ?: "All Status",
+            options = statusOptions,
+            onOptionSelected = { option ->
+                statusFilter =
+                    if (option == "All Status") null else OrderStatus.valueOf(option.uppercase())
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
         ) {
-            years.forEach { year ->
-                FilterChip(
-                    selected = selectedYear == year,
-                    onClick = { selectedYear = if (selectedYear == year) -1 else year },
-                    label = { Text("$year") }
-                )
-            }
-
-            val months = listOf(
-                "Jan",
-                "Feb",
-                "Mar",
-                "Apr",
-                "May",
-                "Jun",
-                "Jul",
-                "Aug",
-                "Sep",
-                "Oct",
-                "Nov",
-                "Dec"
-            )
-            months.forEachIndexed { index, month ->
-                FilterChip(
-                    selected = selectedMonth == index,
-                    onClick = { selectedMonth = if (selectedMonth == index) -1 else index },
-                    label = { Text(month) }
-                )
-            }
-        }
-
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(filteredOrders) { order -> VendorOrderCard(order = order) }
         }
     }
@@ -965,8 +978,9 @@ fun AdminReportHub(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(DesignSystem.Spacing.medium)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
             ServiceCard(
                 title = "Daily Trends",
@@ -997,9 +1011,10 @@ fun AdminReportHub(
             Button(
                 onClick = onReturnHome,
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Return Home")
+                Text("Return Home", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -1053,13 +1068,14 @@ fun AdminAnalyticsReport(adminRepository: AdminRepository)
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(DesignSystem.Spacing.medium)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
     ) {
-        StatCard(label = "Students", value = "$students")
-        StatCard(label = "Standard Users", value = "$standards")
-        StatCard(label = "Vendors", value = "$vendors")
-        StatCard(label = "Admins", value = "$admins")
+        StatCard(label = "Students", value = "$students", modifier = Modifier.fillMaxWidth())
+        StatCard(label = "Standard Users", value = "$standards", modifier = Modifier.fillMaxWidth())
+        StatCard(label = "Vendors", value = "$vendors", modifier = Modifier.fillMaxWidth())
+        StatCard(label = "Admins", value = "$admins", modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -1321,91 +1337,118 @@ fun AdminOrderManagement(orderRepository: OrderRepository)
 fun StudentReceipts(userId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
-    var sortAscending by remember { mutableStateOf(false) }
-    var selectedMonth by remember { mutableIntStateOf(-1) } // -1 for all
-    var selectedYear by remember { mutableIntStateOf(-1) } // -1 for all
 
-    val filteredOrders = remember(orders, sortAscending, selectedMonth, selectedYear) {
+    var selectedMonth by remember { mutableIntStateOf(-1) }
+    var selectedYear by remember { mutableIntStateOf(-1) }
+    var sortBy by remember { mutableStateOf("Date (Newest to Oldest)") }
+
+    val months = listOf(
+        "All Months",
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+    )
+    val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+    val years = listOf("All Years") + (currentYear downTo currentYear - 5).map { it.toString() }
+    val sortOptions = listOf(
+        "Amount (Ascending)",
+        "Amount (Descending)",
+        "Date (Newest to Oldest)",
+        "Date (Oldest to Newest)"
+    )
+
+    val filteredOrders = remember(orders, selectedMonth, selectedYear, sortBy) {
         orders.filter { order ->
             val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
             (selectedMonth == -1 || cal.get(Calendar.MONTH) == selectedMonth) &&
                     (selectedYear == -1 || cal.get(Calendar.YEAR) == selectedYear)
-        }.sortedBy { if (sortAscending) it.totalAmount else -it.totalAmount }
-    }
-
-    val years = remember(orders) {
-        orders.map {
-            Calendar.getInstance().apply { timeInMillis = it.timestamp }.get(Calendar.YEAR)
-        }.distinct().sortedDescending()
-    }
-
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FilterChip(
-                selected = sortAscending,
-                onClick = { sortAscending = true },
-                label = { Text("Amount Asc") }
-            )
-            FilterChip(
-                selected = !sortAscending,
-                onClick = { sortAscending = false },
-                label = { Text("Amount Desc") }
-            )
-            years.forEach { year ->
-                FilterChip(
-                    selected = selectedYear == year,
-                    onClick = { selectedYear = if (selectedYear == year) -1 else year },
-                    label = { Text("$year") }
-                )
-            }
-
-            val months = listOf(
-                "Jan",
-                "Feb",
-                "Mar",
-                "Apr",
-                "May",
-                "Jun",
-                "Jul",
-                "Aug",
-                "Sep",
-                "Oct",
-                "Nov",
-                "Dec"
-            )
-            months.forEachIndexed { index, month ->
-                FilterChip(
-                    selected = selectedMonth == index,
-                    onClick = { selectedMonth = if (selectedMonth == index) -1 else index },
-                    label = { Text(month) }
-                )
+        }.let { list ->
+            when (sortBy)
+            {
+                "Amount (Ascending)" -> list.sortedBy { it.totalAmount }
+                "Amount (Descending)" -> list.sortedByDescending { it.totalAmount }
+                "Date (Newest to Oldest)" -> list.sortedByDescending { it.timestamp }
+                "Date (Oldest to Newest)" -> list.sortedBy { it.timestamp }
+                else -> list
             }
         }
+    }
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
+        ) {
+            MinimalDropdown(
+                label = "Month",
+                selectedOption = if (selectedMonth == -1) "All Months" else months[selectedMonth + 1],
+                options = months,
+                onOptionSelected = { option ->
+                    selectedMonth = months.indexOf(option) - 1
+                },
+                modifier = Modifier.weight(1f)
+            )
+            MinimalDropdown(
+                label = "Year",
+                selectedOption = if (selectedYear == -1) "All Years" else selectedYear.toString(),
+                options = years,
+                onOptionSelected = { option ->
+                    selectedYear = if (option == "All Years") -1 else option.toInt()
+                },
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        MinimalDropdown(
+            label = "Sort By",
+            selectedOption = sortBy,
+            options = sortOptions,
+            onOptionSelected = { sortBy = it },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
+        ) {
             items(filteredOrders) { order ->
-                Card(modifier = Modifier.fillMaxWidth()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        modifier = Modifier.padding(20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
                             Text(
-                                text = "Date: ${
-                                    SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                                        .format(Date(order.timestamp))
-                                }"
+                                text = "Order #${order.orderId}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(
+                                    Date(order.timestamp)
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.outline
                             )
                         }
                         Text(
                             text = "R${String.format("%.2f", order.totalAmount)}",
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -2177,16 +2220,19 @@ fun ServiceCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = 4.dp),
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = MaterialTheme.shapes.large
+        shape = MaterialTheme.shapes.extraLarge
     ) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.padding(DesignSystem.Spacing.medium),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Surface(
-                shape = MaterialTheme.shapes.medium,
+                shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(52.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -2197,17 +2243,89 @@ fun ServiceCard(
                     )
                 }
             }
-            Spacer(Modifier.width(20.dp))
+            Spacer(Modifier.width(DesignSystem.Spacing.medium))
             Column {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MinimalDropdown(
+    label: String,
+    selectedOption: String,
+    options: List<String>,
+    onOptionSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+)
+{
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier)
+    {
+        Surface(
+            onClick = { expanded = true },
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = selectedOption,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Icon(
+                    imageVector = if (expanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth(0.9f),
+            shape = MaterialTheme.shapes.large
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = option,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (option == selectedOption) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    onClick = {
+                        onOptionSelected(option)
+                        expanded = false
+                    }
                 )
             }
         }
