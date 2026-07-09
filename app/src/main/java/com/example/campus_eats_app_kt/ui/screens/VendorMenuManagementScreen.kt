@@ -31,38 +31,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.entity.MenuItemEntity
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-
-/**
- * VendorMenuViewModel handles menu item management logic for shop owners.
- */
-class VendorMenuViewModel(
-    private val repository: MenuRepository,
-    val vendorId: String
-) : ViewModel()
-{
-    val menuItems: StateFlow<List<MenuItemEntity>> = repository.getMenuItemsByVendor(vendorId)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    /**
-     * Removes an item from the menu database.
-     */
-    fun deleteItem(item: MenuItemEntity)
-    {
-        viewModelScope.launch {
-            repository.deleteMenuItem(item)
-        }
-    }
-}
 
 /**
  * VendorMenuManagementScreen provides a control panel for vendors to manage their food items.

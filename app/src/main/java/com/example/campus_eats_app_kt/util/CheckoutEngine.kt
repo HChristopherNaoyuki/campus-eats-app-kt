@@ -20,34 +20,57 @@ data class CheckoutSummary(
  */
 object CheckoutEngine
 {
+    // Business Logic Constants
     private const val TAX_RATE = 0.20 // 20%
     private const val STUDENT_DISCOUNT_RATE = 0.025 // 2.5%
     private const val ROUNDING_INCREMENT = 5.0 // Round up to nearest R5
 
+    // Service Fee Tiers
+    private const val TIER_LOW_THRESHOLD = 500.0
+    private const val TIER_MID_THRESHOLD = 1000.0
+    private const val TIER_LOW_FEE_RATE = 0.10 // 10%
+    private const val TIER_MID_FEE_RATE = 0.065 // 6.5%
+    private const val TIER_HIGH_FEE_RATE = 0.0 // 0%
+
     /**
      * Computes the final cost breakdown for an order subtotal.
+     *
+     * Tiered Service Fee Logic:
+     * - Under R500: 10%
+     * - R500 to R1000: 6.5%
+     * - Above R1000: Free
+     *
+     * @param subtotal The sum of prices for all items in the cart.
+     * @param role The role of the user, used to determine discount eligibility.
+     * @return A CheckoutSummary object containing the detailed financial breakdown.
      */
     fun calculateSummary(subtotal: Double, role: UserRole): CheckoutSummary
     {
-        // Compute standard tax
+        // 1. Compute standard tax (20% of subtotal)
         val tax = subtotal * TAX_RATE
 
-        // Compute tiered service fee based on order value
+        // 2. Compute tiered service fee based on order value
         val serviceFee = when
         {
-            subtotal < 500 -> subtotal * 0.10 // 10% for small orders
-            subtotal < 1000 -> subtotal * 0.065 // 6.5% for medium orders
-            else -> 0.0 // Waived for large orders
+            subtotal < TIER_LOW_THRESHOLD -> subtotal * TIER_LOW_FEE_RATE
+            subtotal <= TIER_MID_THRESHOLD -> subtotal * TIER_MID_FEE_RATE
+            else -> subtotal * TIER_HIGH_FEE_RATE
         }
 
-        // Apply student-exclusive discount
-        val studentDiscount =
-            if (role == UserRole.STUDENT) subtotal * STUDENT_DISCOUNT_RATE else 0.0
+        // 3. Apply student-exclusive discount (2.5% of subtotal)
+        val studentDiscount = if (role == UserRole.STUDENT)
+        {
+            subtotal * STUDENT_DISCOUNT_RATE
+        }
+        else
+        {
+            0.0
+        }
 
-        // Calculate initial total
+        // 4. Calculate initial total before rounding
         var total = subtotal + tax + serviceFee - studentDiscount
 
-        // Perform mandatory financial rounding for cash handling optimization
+        // 5. Perform mandatory financial rounding for cash handling optimization (Round up to next R5)
         total = ceil(total / ROUNDING_INCREMENT) * ROUNDING_INCREMENT
 
         return CheckoutSummary(

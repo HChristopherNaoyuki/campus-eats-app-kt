@@ -34,24 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
-
-/**
- * VendorBrowseViewModel provides a reactive stream of all vendors.
- */
-class VendorBrowseViewModel(repository: MenuRepository) : ViewModel()
-{
-    val vendors: StateFlow<List<UserEntity>> = repository.getAllVendors()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-}
 
 /**
  * CustomerVendorBrowseScreen allows users to select from a list of campus vendors.
