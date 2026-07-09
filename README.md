@@ -16,7 +16,8 @@ within a university campus environment.
 5. [Installation Instructions](#installation-instructions)
 6. [Build and Run Instructions](#build-and-run-instructions)
 7. [Testing Instructions](#testing-instructions)
-8. [Database Schema](#database-schema)
+8. [Continuous Integration](#continuous-integration)
+9. [Database Schema](#database-schema)
 9. [User ID Format](#user-id-format)
 10. [Role-Based Access Control](#role-based-access-control)
 11. [Fee Calculation Logic](#fee-calculation-logic)
@@ -265,6 +266,30 @@ The project includes a robust test suite covering business logic and utilities.
 - OrderStatusEngine (Valid state transitions)
 - IdGenerator (Format and uniqueness)
 - ValidationEngine (Inputs and security)
+
+---
+
+## Continuous Integration
+
+The project uses GitHub Actions for automated building and testing. The CI pipeline is triggered
+on every push to the `release` branch and can also be executed manually.
+
+**Workflow Path:** `.github/workflows/build-release.yml`
+
+**Key Features:**
+
+- Automated Unit Testing: Runs the full JUnit test suite.
+- Build Verification: Compiles the full project and creates artifacts.
+- Artifact Generation:
+    - Debug APK: For internal testing and QA.
+    - Release APK: For distribution.
+    - Android App Bundle (AAB): For Google Play Store submission.
+
+**Accessing Artifacts:**
+
+1. Navigate to the "Actions" tab in the GitHub repository.
+2. Select the latest successful workflow run.
+3. Scroll down to the "Artifacts" section to download the generated files.
 
 ---
 
