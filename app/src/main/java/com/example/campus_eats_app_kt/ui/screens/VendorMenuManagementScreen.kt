@@ -1,6 +1,13 @@
 package com.example.campus_eats_app_kt.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -8,7 +15,15 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,25 +35,38 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.entity.MenuItemEntity
+import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
+import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/**
+ * VendorMenuViewModel handles menu item management logic for shop owners.
+ */
 class VendorMenuViewModel(
     private val repository: MenuRepository,
     val vendorId: String
-) : ViewModel() {
+) : ViewModel()
+{
     val menuItems: StateFlow<List<MenuItemEntity>> = repository.getMenuItemsByVendor(vendorId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun deleteItem(item: MenuItemEntity) {
+    /**
+     * Removes an item from the menu database.
+     */
+    fun deleteItem(item: MenuItemEntity)
+    {
         viewModelScope.launch {
             repository.deleteMenuItem(item)
         }
     }
 }
 
+/**
+ * VendorMenuManagementScreen provides a control panel for vendors to manage their food items.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VendorMenuManagementScreen(
@@ -46,13 +74,14 @@ fun VendorMenuManagementScreen(
     onAddItemClick: () -> Unit,
     onEditItemClick: (Long) -> Unit,
     viewModel: VendorMenuViewModel
-) {
+)
+{
     val menuItems by viewModel.menuItems.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Manage Menu") },
+            HIGTopAppBar(
+                title = "Manage Menu",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
@@ -61,44 +90,92 @@ fun VendorMenuManagementScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddItemClick) {
+            FloatingActionButton(
+                onClick = onAddItemClick,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
                 Icon(Icons.Rounded.Add, contentDescription = "Add Item")
             }
         }
     ) { innerPadding ->
-        if (menuItems.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                Text("No items in your menu yet.")
+        if (menuItems.isEmpty())
+        {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No items in your menu yet.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.outline
+                )
             }
-        } else {
+        }
+        else
+        {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(DesignSystem.Spacing.medium),
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
             ) {
                 items(menuItems) { item ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(item.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                                Text(item.category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
-                                Text("R${String.format("%.2f", item.price)} - Stock: ${item.stock}", style = MaterialTheme.typography.bodyMedium)
-                            }
-                            IconButton(onClick = { onEditItemClick(item.itemId) }) {
-                                Icon(Icons.Rounded.Edit, contentDescription = "Edit")
-                            }
-                            IconButton(onClick = { viewModel.deleteItem(item) }) {
-                                Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                            }
-                        }
-                    }
+                    MenuManagementCard(
+                        item = item,
+                        onEdit = { onEditItemClick(item.itemId) },
+                        onDelete = { viewModel.deleteItem(item) }
+                    )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun MenuManagementCard(item: MenuItemEntity, onEdit: () -> Unit, onDelete: () -> Unit)
+{
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier.padding(DesignSystem.Spacing.medium),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = item.category,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "R${String.format("%.2f", item.price)} | Stock: ${item.stock}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Rounded.Edit, contentDescription = "Edit")
+            }
+
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Rounded.Delete,
+                    contentDescription = "Delete",
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }

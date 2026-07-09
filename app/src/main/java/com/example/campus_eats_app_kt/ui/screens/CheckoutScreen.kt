@@ -29,7 +29,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,6 +47,8 @@ import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.PaymentMethod
 import com.example.campus_eats_app_kt.data.entity.UserRole
+import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
+import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.CheckoutEngine
 import com.example.campus_eats_app_kt.util.CheckoutSummary
 import kotlinx.coroutines.flow.SharingStarted
@@ -58,12 +59,17 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Locale
 
+/**
+ * CheckoutViewModel coordinates the finalization of an order.
+ * It combines cart items and user profile data to generate a definitive financial summary.
+ */
 class CheckoutViewModel(
     private val cartRepository: CartRepository,
     private val orderRepository: OrderRepository,
     private val authRepository: AuthRepository,
     val userId: String
-) : ViewModel() {
+) : ViewModel()
+{
     val cartItems: StateFlow<List<CartItemEntity>> = cartRepository.getCart(userId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -77,6 +83,9 @@ class CheckoutViewModel(
         CheckoutEngine.calculateSummary(subtotal, role)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    /**
+     * Executes the order placement process.
+     */
     fun placeOrder(
         paymentMethod: PaymentMethod,
         pickupTime: String,
@@ -87,7 +96,8 @@ class CheckoutViewModel(
         viewModelScope.launch {
             val items = cartItems.value
             val sum = summary.value
-            if (items.isNotEmpty() && sum != null) {
+            if (items.isNotEmpty() && sum != null)
+            {
                 val vendorId = items.first().vendorId
                 val orderId = orderRepository.placeOrder(
                     userId = userId,
@@ -104,21 +114,26 @@ class CheckoutViewModel(
     }
 }
 
+/**
+ * CheckoutScreen provides the final interface for users to select payment methods,
+ * specify pickup times, and confirm their purchase.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckoutScreen(
     onBackClick: () -> Unit,
     onOrderPlaced: (Long) -> Unit,
     viewModel: CheckoutViewModel
-) {
+)
+{
     val cartItems by viewModel.cartItems.collectAsState()
     val summary by viewModel.summary.collectAsState()
-    val role by viewModel.userRole.collectAsState()
 
     var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.DEBIT_CARD) }
     var selectedPickupTime by remember { mutableStateOf("12:00") }
     var specialRequests by remember { mutableStateOf("") }
 
+    // Hardcoded logic for valid pickup intervals (10:00 AM to 16:00 PM)
     val pickupTimes = remember {
         (10..15).flatMap { hour ->
             listOf("00", "15", "30", "45").map { min -> "${hour.toString().padStart(2, '0')}:$min" }
@@ -127,8 +142,8 @@ fun CheckoutScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Checkout Summary", fontWeight = FontWeight.Bold) },
+            HIGTopAppBar(
+                title = "Checkout Summary",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
@@ -138,8 +153,12 @@ fun CheckoutScreen(
         },
         bottomBar = {
             summary?.let { sum ->
-                Surface(tonalElevation = 8.dp, shadowElevation = 8.dp) {
-                    Column(modifier = Modifier.padding(24.dp)) {
+                Surface(
+                    tonalElevation = 8.dp,
+                    shadowElevation = 8.dp,
+                    color = MaterialTheme.colorScheme.surface
+                ) {
+                    Column(modifier = Modifier.padding(DesignSystem.Spacing.screenPadding)) {
                         Button(
                             onClick = {
                                 viewModel.placeOrder(
@@ -155,7 +174,7 @@ fun CheckoutScreen(
                             shape = MaterialTheme.shapes.large
                         ) {
                             Text(
-                                "Place Order - R${
+                                text = "Place Order - R${
                                     String.format(
                                         Locale.getDefault(),
                                         "%.2f",
@@ -175,102 +194,43 @@ fun CheckoutScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            contentPadding = PaddingValues(DesignSystem.Spacing.large),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
         ) {
+            // Summary of items to be purchased
             item {
-                SectionHeader("Items")
-                Spacer(modifier = Modifier.height(8.dp))
+                SectionHeader(title = "Items")
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 cartItems.forEach { item ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            "${item.quantity}x ${item.name}",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            "R${
-                                String.format(
-                                    Locale.getDefault(),
-                                    "%.2f",
-                                    item.price * item.quantity
-                                )
-                            }",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    ItemSummaryRow(item = item)
                 }
             }
 
+            // Pickup Time Selection module
             item {
-                SectionHeader("Pickup Time")
-                Spacer(modifier = Modifier.height(8.dp))
-                var expanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
-                    OutlinedTextField(
-                        value = selectedPickupTime,
-                        onValueChange = {},
-                        readOnly = true,
-                        leadingIcon = { Icon(Icons.Rounded.AccessTime, null) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        pickupTimes.forEach { time ->
-                            DropdownMenuItem(
-                                text = { Text(time) },
-                                onClick = {
-                                    selectedPickupTime = time
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                SectionHeader(title = "Pickup Time")
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
+                PickupTimePicker(
+                    selectedTime = selectedPickupTime,
+                    times = pickupTimes,
+                    onTimeSelected = { selectedPickupTime = it }
+                )
             }
 
+            // Financial transaction method module
             item {
-                SectionHeader("Payment Method")
-                Spacer(modifier = Modifier.height(8.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PaymentOption(
-                        method = PaymentMethod.DEBIT_CARD,
-                        label = "Debit Card",
-                        selected = selectedPaymentMethod == PaymentMethod.DEBIT_CARD,
-                        onClick = { selectedPaymentMethod = PaymentMethod.DEBIT_CARD }
-                    )
-                    PaymentOption(
-                        method = PaymentMethod.CAMPUS_WALLET,
-                        label = "Campus Wallet",
-                        selected = selectedPaymentMethod == PaymentMethod.CAMPUS_WALLET,
-                        onClick = { selectedPaymentMethod = PaymentMethod.CAMPUS_WALLET }
-                    )
-                    PaymentOption(
-                        method = PaymentMethod.COUPON,
-                        label = "Apply Coupon",
-                        selected = selectedPaymentMethod == PaymentMethod.COUPON,
-                        onClick = { selectedPaymentMethod = PaymentMethod.COUPON }
-                    )
-                }
+                SectionHeader(title = "Payment Method")
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
+                PaymentMethodSelector(
+                    selectedMethod = selectedPaymentMethod,
+                    onMethodSelected = { selectedPaymentMethod = it }
+                )
             }
 
+            // User-provided fulfillment instructions
             item {
-                SectionHeader("Special Requests")
-                Spacer(modifier = Modifier.height(8.dp))
+                SectionHeader(title = "Special Requests")
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 OutlinedTextField(
                     value = specialRequests,
                     onValueChange = { specialRequests = it },
@@ -281,34 +241,45 @@ fun CheckoutScreen(
                 )
             }
 
+            // Final financial breakdown
             summary?.let { sum ->
                 item {
-                    SectionHeader("Totals")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SectionHeader(title = "Totals")
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
+                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
                         SummaryRow("Subtotal", sum.subtotal)
                         SummaryRow("Tax (20%)", sum.tax)
                         SummaryRow("Service Fee", sum.serviceFee)
-                        if (sum.studentDiscount > 0) {
-                            SummaryRow("Student Discount (2.5%)", -sum.studentDiscount, color = MaterialTheme.colorScheme.primary)
+
+                        if (sum.studentDiscount > 0)
+                        {
+                            SummaryRow(
+                                label = "Student Discount (2.5%)",
+                                amount = -sum.studentDiscount,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
 
                         val rounding =
                             sum.total - (sum.subtotal + sum.tax + sum.serviceFee - sum.studentDiscount)
-                        if (rounding > 0.01)
+                        if (kotlin.math.abs(rounding) > 0.001)
                         {
                             SummaryRow("Rounding Adjustment", rounding)
                         }
 
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = DesignSystem.Spacing.small))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
                             Text(
-                                "Total",
+                                text = "Total",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold
                             )
                             Text(
-                                "R${String.format(Locale.getDefault(), "%.2f", sum.total)}",
+                                text = "R${String.format(Locale.getDefault(), "%.2f", sum.total)}",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.primary
@@ -318,8 +289,98 @@ fun CheckoutScreen(
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(32.dp)) }
+            item { Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge)) }
         }
+    }
+}
+
+@Composable
+fun ItemSummaryRow(item: CartItemEntity)
+{
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = "${item.quantity}x ${item.name}",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Text(
+            text = "R${String.format(Locale.getDefault(), "%.2f", item.price * item.quantity)}",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PickupTimePicker(
+    selectedTime: String,
+    times: List<String>,
+    onTimeSelected: (String) -> Unit
+)
+{
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedTime,
+            onValueChange = {},
+            readOnly = true,
+            leadingIcon = { Icon(Icons.Rounded.AccessTime, null) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            times.forEach { time ->
+                DropdownMenuItem(
+                    text = { Text(time) },
+                    onClick = {
+                        onTimeSelected(time)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PaymentMethodSelector(
+    selectedMethod: PaymentMethod,
+    onMethodSelected: (PaymentMethod) -> Unit
+)
+{
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+        PaymentOption(
+            method = PaymentMethod.DEBIT_CARD,
+            label = "Debit Card",
+            selected = selectedMethod == PaymentMethod.DEBIT_CARD,
+            onClick = { onMethodSelected(PaymentMethod.DEBIT_CARD) }
+        )
+        PaymentOption(
+            method = PaymentMethod.CAMPUS_WALLET,
+            label = "Campus Wallet",
+            selected = selectedMethod == PaymentMethod.CAMPUS_WALLET,
+            onClick = { onMethodSelected(PaymentMethod.CAMPUS_WALLET) }
+        )
+        PaymentOption(
+            method = PaymentMethod.COUPON,
+            label = "Apply Coupon",
+            selected = selectedMethod == PaymentMethod.COUPON,
+            onClick = { onMethodSelected(PaymentMethod.COUPON) }
+        )
     }
 }
 
@@ -335,11 +396,19 @@ fun SectionHeader(title: String)
 }
 
 @Composable
-fun SummaryRow(label: String, amount: Double, color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, color = color)
+fun SummaryRow(
+    label: String,
+    amount: Double,
+    color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+)
+{
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = label, color = color)
         Text(
-            if (amount >= 0) "R${String.format(Locale.getDefault(), "%.2f", amount)}"
+            text = if (amount >= 0) "R${String.format(Locale.getDefault(), "%.2f", amount)}"
             else "-R${String.format(Locale.getDefault(), "%.2f", -amount)}",
             color = color,
             fontWeight = FontWeight.SemiBold
@@ -368,7 +437,7 @@ fun PaymentOption(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(DesignSystem.Spacing.medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -376,7 +445,7 @@ fun PaymentOption(
                 contentDescription = null,
                 tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(DesignSystem.Spacing.medium))
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,

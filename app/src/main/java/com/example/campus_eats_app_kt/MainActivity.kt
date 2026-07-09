@@ -48,11 +48,18 @@ import com.example.campus_eats_app_kt.ui.screens.VendorMenuManagementScreen
 import com.example.campus_eats_app_kt.ui.screens.VendorMenuViewModel
 import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
+/**
+ * MainActivity serves as the entry point for the Campus Eats application.
+ * It initializes dependencies and sets up the navigation structure using Compose Navigation.
+ */
+class MainActivity : ComponentActivity()
+{
+    override fun onCreate(savedInstanceState: Bundle?)
+    {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
+        // Dependency Initialization (Simplified DI pattern)
         val database = CampusEatsDatabase.getDatabase(this)
         val authRepository = AuthRepository(database.userDao())
         val menuRepository = MenuRepository(database.menuItemDao(), database.userDao())
@@ -68,7 +75,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             CampusEatsAppTheme {
                 val backStack = rememberNavBackStack(Route.Landing)
-                
+
                 NavDisplay(
                     backStack = backStack,
                     onBack = { backStack.removeLastOrNull() },
@@ -78,6 +85,7 @@ class MainActivity : ComponentActivity() {
                     ),
                     modifier = Modifier.fillMaxSize(),
                     entryProvider = entryProvider {
+                        // Landing Screen Entry
                         entry<Route.Landing> {
                             LandingScreen(
                                 onLoginClick = { backStack.add(Route.Login) },
@@ -85,6 +93,8 @@ class MainActivity : ComponentActivity() {
                                 onForgotPasswordClick = { backStack.add(Route.ForgotPassword) }
                             )
                         }
+
+                        // Login Screen Entry
                         entry<Route.Login> {
                             val viewModel: LoginViewModel = viewModel(
                                 factory = viewModelFactory {
@@ -93,7 +103,7 @@ class MainActivity : ComponentActivity() {
                             )
                             LoginScreen(
                                 onLoginSuccess = { userId, role ->
-                                    // Fix: Atomic update to backStack to avoid temporary empty state
+                                    // Atomic backstack update to prevent navigation glitches
                                     val nextRoute = Route.Main(userId, role)
                                     backStack.add(nextRoute)
                                     while (backStack.size > 1)
@@ -106,6 +116,8 @@ class MainActivity : ComponentActivity() {
                                 viewModel = viewModel
                             )
                         }
+
+                        // Registration Screen Entry
                         entry<Route.Register> {
                             val viewModel: RegistrationViewModel = viewModel(
                                 factory = viewModelFactory {
@@ -113,14 +125,15 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                             RegistrationScreen(
-                                onRegistrationSuccess = { userId, role ->
-                                    // Requirement: Registration successfully returns user to the Landing page.
+                                onRegistrationSuccess = { _, _ ->
                                     backStack.removeLastOrNull()
                                 },
                                 onBackClick = { backStack.removeLastOrNull() },
                                 viewModel = viewModel
                             )
                         }
+
+                        // Forgot Password Screen Entry
                         entry<Route.ForgotPassword> {
                             val viewModel: ForgotPasswordViewModel = viewModel(
                                 factory = viewModelFactory {
@@ -133,6 +146,8 @@ class MainActivity : ComponentActivity() {
                                 viewModel = viewModel
                             )
                         }
+
+                        // Main Role-Based Dashboard Entry
                         entry<Route.Main> { route ->
                             MainScreen(
                                 userId = route.userId,
@@ -146,9 +161,9 @@ class MainActivity : ComponentActivity() {
                                 feedbackRepository = feedbackRepository,
                                 couponRepository = couponRepository,
                                 debitCardRepository = debitCardRepository,
-                                onLogout = { 
+                                onLogout = {
                                     backStack.clear()
-                                    backStack.add(Route.Landing) 
+                                    backStack.add(Route.Landing)
                                 },
                                 onNavigateToCheckout = { backStack.add(Route.Checkout(route.userId)) },
                                 onNavigateToVendorMenu = { vendorId -> backStack.add(Route.VendorMenuManagement(vendorId)) },
@@ -157,6 +172,8 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToMenuBrowse = { userId, vendorId -> backStack.add(Route.CustomerMenuBrowse(userId, vendorId)) }
                             )
                         }
+
+                        // Vendor Menu Management Entry
                         entry<Route.VendorMenuManagement> { route ->
                             val viewModel: VendorMenuViewModel = viewModel(
                                 factory = viewModelFactory {
@@ -170,6 +187,8 @@ class MainActivity : ComponentActivity() {
                                 viewModel = viewModel
                             )
                         }
+
+                        // Customer Vendor Browsing Entry
                         entry<Route.CustomerVendorBrowse> { route ->
                             val viewModel: VendorBrowseViewModel = viewModel(
                                 factory = viewModelFactory {
@@ -179,13 +198,15 @@ class MainActivity : ComponentActivity() {
                             CustomerVendorBrowseScreen(
                                 onVendorClick = { vendorId -> backStack.add(Route.CustomerMenuBrowse(route.userId, vendorId)) },
                                 onCartClick = { backStack.add(Route.Cart(route.userId)) },
-                                onLogout = { 
+                                onLogout = {
                                     backStack.clear()
-                                    backStack.add(Route.Landing) 
+                                    backStack.add(Route.Landing)
                                 },
                                 viewModel = viewModel
                             )
                         }
+
+                        // Add/Edit Menu Item Entry
                         entry<Route.AddEditMenuItem> { route ->
                             val viewModel: AddEditMenuViewModel = viewModel(
                                 factory = viewModelFactory {
@@ -197,6 +218,8 @@ class MainActivity : ComponentActivity() {
                                 viewModel = viewModel
                             )
                         }
+
+                        // Customer Menu Item Browsing Entry
                         entry<Route.CustomerMenuBrowse> { route ->
                             val viewModel: MenuBrowseViewModel = viewModel(
                                 factory = viewModelFactory {
@@ -209,6 +232,8 @@ class MainActivity : ComponentActivity() {
                                 viewModel = viewModel
                             )
                         }
+
+                        // Cart Screen Entry
                         entry<Route.Cart> { route ->
                             val viewModel: CartViewModel = viewModel(
                                 factory = viewModelFactory {
@@ -227,6 +252,8 @@ class MainActivity : ComponentActivity() {
                                 viewModel = viewModel
                             )
                         }
+
+                        // Checkout Screen Entry
                         entry<Route.Checkout> { route ->
                             val viewModel: CheckoutViewModel = viewModel(
                                 factory = viewModelFactory {
@@ -243,7 +270,6 @@ class MainActivity : ComponentActivity() {
                             CheckoutScreen(
                                 onBackClick = { backStack.removeLastOrNull() },
                                 onOrderPlaced = { orderId ->
-                                    // Fix: Atomic update to backStack to avoid temporary empty state
                                     val nextRoute = Route.OrderConfirmation(
                                         orderId,
                                         route.userId,
@@ -258,6 +284,8 @@ class MainActivity : ComponentActivity() {
                                 viewModel = viewModel
                             )
                         }
+
+                        // Order Confirmation Entry
                         entry<Route.OrderConfirmation> { route ->
                             OrderConfirmationScreen(
                                 orderId = route.orderId,

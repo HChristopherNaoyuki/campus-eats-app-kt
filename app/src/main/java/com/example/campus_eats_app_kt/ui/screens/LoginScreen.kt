@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -44,7 +45,8 @@ import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
  * LoginScreen provides the UI for user authentication.
- * It follows Apple's HIG principles for spacing and typography where applicable.
+ * It adheres to Apple's Human Interface Guidelines (HIG) by using generous whitespace,
+ * clear typography, and consistent spacing.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +64,7 @@ fun LoginScreen(
 
     val loginState by viewModel.loginState.collectAsState()
 
-    // Handle state transitions for navigation
+    // Handle state transitions for navigation in a reactive manner
     LaunchedEffect(loginState) {
         if (loginState is LoginState.Success)
         {
@@ -97,7 +99,7 @@ fun LoginScreen(
         ) {
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
 
-            // Email input field with icon
+            // Email input field with minimalist iconography
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -109,7 +111,7 @@ fun LoginScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
 
-            // Password input field with toggleable visibility
+            // Password input field with visibility toggle and security-focused transformations
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -121,7 +123,7 @@ fun LoginScreen(
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                            contentDescription = null
+                            contentDescription = "Toggle password visibility"
                         )
                     }
                 },
@@ -130,28 +132,33 @@ fun LoginScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
 
-            // Recovery link
+            // Secondary action: Account recovery
             TextButton(
                 onClick = onForgotPasswordClick,
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Forgot Password?", color = MaterialTheme.colorScheme.primary)
+                Text(
+                    text = "Forgot Password?",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Error message display area
+            // Informative error feedback area
             if (loginState is LoginState.Error)
             {
                 Text(
                     text = (loginState as LoginState.Error).message,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(bottom = DesignSystem.Spacing.small),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
 
-            // Primary login action button
+            // Primary authentication action
             HIGButton(
                 onClick = { viewModel.login(email, password) },
                 text = "Login",
@@ -159,7 +166,7 @@ fun LoginScreen(
                 enabled = loginState !is LoginState.Loading
             )
 
-            // Activity indicator for long-running login operation
+            // Visual feedback for long-running network or database operations
             if (loginState is LoginState.Loading)
             {
                 CircularProgressIndicator(

@@ -62,6 +62,10 @@ import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
+/**
+ * RegistrationScreen facilitates user onboarding by allowing new users to create accounts.
+ * It features a minimalist, Apple-inspired layout with robust form validation and role selection.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrationScreen(
@@ -69,7 +73,8 @@ fun RegistrationScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: RegistrationViewModel
-) {
+)
+{
     var fullName by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -78,25 +83,29 @@ fun RegistrationScreen(
     var shopName by remember { mutableStateOf("") }
     var selectedRole by remember { mutableStateOf(UserRole.STUDENT) }
     var expanded by remember { mutableStateOf(false) }
-    
+
     val registrationState by viewModel.registrationState.collectAsState()
     var showIdDialog by remember { mutableStateOf(false) }
     var registeredUserId by remember { mutableStateOf("") }
 
+    // Navigation logic upon successful registration
     LaunchedEffect(registrationState) {
-        if (registrationState is RegistrationState.Success) {
+        if (registrationState is RegistrationState.Success)
+        {
             registeredUserId = (registrationState as RegistrationState.Success).user.userId
             showIdDialog = true
         }
     }
 
-    if (showIdDialog) {
+    // Success Dialog displaying the generated 16-character User ID
+    if (showIdDialog)
+    {
         AlertDialog(
-            onDismissRequest = { /* Don't dismiss without action */ },
+            onDismissRequest = { /* Modal: prevents accidental closure */ },
             shape = RoundedCornerShape(DesignSystem.CornerRadius.extraLarge),
             title = {
                 Text(
-                    "Registration Successful!",
+                    text = "Registration Successful!",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
@@ -105,7 +114,7 @@ fun RegistrationScreen(
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        "Your unique User ID is:",
+                        text = "Your unique User ID is:",
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -149,7 +158,7 @@ fun RegistrationScreen(
                     }
                     Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
                     Text(
-                        "Please save this ID safely. You will need it for account recovery.",
+                        text = "Please save this ID safely. You will need it for account recovery.",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.outline,
                         textAlign = TextAlign.Center
@@ -191,6 +200,7 @@ fun RegistrationScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
+            // Personal Information Fields
             OutlinedTextField(
                 value = fullName,
                 onValueChange = { fullName = it },
@@ -210,7 +220,7 @@ fun RegistrationScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
-            
+
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -221,7 +231,8 @@ fun RegistrationScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
-            
+
+            // Role Selection Dropdown
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded },
@@ -255,6 +266,7 @@ fun RegistrationScreen(
                 }
             }
 
+            // Vendor-specific field: Shop Name
             AnimatedVisibility(
                 visible = selectedRole == UserRole.VENDOR,
                 enter = expandVertically() + fadeIn(),
@@ -270,7 +282,8 @@ fun RegistrationScreen(
                     shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
                 )
             }
-            
+
+            // Security Credentials
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -282,7 +295,7 @@ fun RegistrationScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
-            
+
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
@@ -296,8 +309,10 @@ fun RegistrationScreen(
             )
 
             Spacer(modifier = Modifier.weight(1f))
-            
-            if (registrationState is RegistrationState.Error) {
+
+            // Logical error reporting
+            if (registrationState is RegistrationState.Error)
+            {
                 Text(
                     text = (registrationState as RegistrationState.Error).message,
                     color = MaterialTheme.colorScheme.error,
@@ -306,9 +321,11 @@ fun RegistrationScreen(
                 )
             }
 
+            // Primary call to action
             HIGButton(
-                onClick = { 
-                    if (password == confirmPassword) {
+                onClick = {
+                    if (password == confirmPassword)
+                    {
                         viewModel.register(
                             fullName,
                             username,
@@ -324,6 +341,7 @@ fun RegistrationScreen(
                 enabled = registrationState !is RegistrationState.Loading
             )
 
+            // Asynchronous state indicator
             if (registrationState is RegistrationState.Loading)
             {
                 CircularProgressIndicator(

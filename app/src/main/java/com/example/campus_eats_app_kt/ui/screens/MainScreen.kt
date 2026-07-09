@@ -20,7 +20,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModel
 import com.example.campus_eats_app_kt.data.AdminRepository
 import com.example.campus_eats_app_kt.data.AuthRepository
 import com.example.campus_eats_app_kt.data.CartRepository
@@ -33,14 +32,10 @@ import com.example.campus_eats_app_kt.data.StatsRepository
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 
-class MainViewModel(
-    private val authRepository: AuthRepository,
-    val userId: String,
-    val role: String
-) : ViewModel() {
-    // In real app, we fetch from DB properly
-}
-
+/**
+ * MainScreen is the primary navigation hub after authentication.
+ * It manages the bottom navigation bar and displays the corresponding role-based tabs.
+ */
 @Composable
 fun MainScreen(
     userId: String,
@@ -60,7 +55,8 @@ fun MainScreen(
     onNavigateToAddMenuItem: (String, Long?) -> Unit,
     onNavigateToCart: () -> Unit,
     onNavigateToMenuBrowse: (String, String) -> Unit
-) {
+)
+{
     var selectedTab by remember { mutableIntStateOf(0) }
     val userRole = remember(role) { UserRole.valueOf(role) }
 
@@ -80,6 +76,7 @@ fun MainScreen(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             ) {
+                // Home Tab
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
@@ -92,6 +89,7 @@ fun MainScreen(
                         unselectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 )
+                // Services Tab
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
@@ -102,6 +100,7 @@ fun MainScreen(
                         selectedTextColor = MaterialTheme.colorScheme.primary
                     )
                 )
+                // Activity Tab
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
@@ -112,6 +111,7 @@ fun MainScreen(
                         selectedTextColor = MaterialTheme.colorScheme.primary
                     )
                 )
+                // Settings Tab
                 NavigationBarItem(
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3 },
@@ -126,7 +126,8 @@ fun MainScreen(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            when (selectedTab) {
+            when (selectedTab)
+            {
                 0 -> HomeScreenTab(
                     userId = userId,
                     role = userRole,
@@ -148,7 +149,6 @@ fun MainScreen(
                     onNavigateToAddMenuItem = onNavigateToAddMenuItem,
                     onReturnHome = { selectedTab = 0 }
                 )
-
                 2 -> ActivityScreenTab(
                     userId = userId,
                     role = role,
@@ -159,11 +159,10 @@ fun MainScreen(
                     onNavigateToCheckout = onNavigateToCheckout,
                     onReturnHome = { selectedTab = 0 }
                 )
-
                 3 -> SettingsScreenTab(
-                    userId = userId, 
+                    userId = userId,
                     role = userRole,
-                    authRepository = authRepository, 
+                    authRepository = authRepository,
                     feedbackRepository = feedbackRepository,
                     couponRepository = couponRepository,
                     adminRepository = adminRepository,

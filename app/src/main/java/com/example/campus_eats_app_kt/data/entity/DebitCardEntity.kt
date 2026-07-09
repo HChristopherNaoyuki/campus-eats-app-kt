@@ -4,6 +4,9 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
 
+/**
+ * DebitCardEntity stores encrypted or masked debit card information for offline payments.
+ */
 @Serializable
 @Entity(tableName = "debit_cards")
 data class DebitCardEntity(

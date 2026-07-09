@@ -3,6 +3,9 @@ package com.example.campus_eats_app_kt.data.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * CouponEntity represents a promotional discount code.
+ */
 @Entity(tableName = "coupons")
 data class CouponEntity(
     @PrimaryKey

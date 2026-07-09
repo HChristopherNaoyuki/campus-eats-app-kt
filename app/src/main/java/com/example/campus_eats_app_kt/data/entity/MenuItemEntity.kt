@@ -3,6 +3,9 @@ package com.example.campus_eats_app_kt.data.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * MenuItemEntity represents a food or drink item available for purchase.
+ */
 @Entity(tableName = "menu_items")
 data class MenuItemEntity(
     @PrimaryKey(autoGenerate = true)

@@ -29,13 +29,18 @@ import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
+/**
+ * LandingScreen serves as the welcome page for the application.
+ * It provides entry points for authentication and account creation.
+ */
 @Composable
 fun LandingScreen(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     modifier: Modifier = Modifier
-) {
+)
+{
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background
@@ -49,7 +54,8 @@ fun LandingScreen(
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
             Spacer(modifier = Modifier.weight(1f))
-            
+
+            // Minimalist Brand Identity
             Icon(
                 imageVector = Icons.Rounded.Fastfood,
                 contentDescription = null,
@@ -77,6 +83,7 @@ fun LandingScreen(
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
 
+            // Primary Authentication Actions
             HIGButton(
                 onClick = onLoginClick,
                 text = "Login",
@@ -90,12 +97,12 @@ fun LandingScreen(
                     .height(50.dp),
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                 border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.primary
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.primary
                 )
             ) {
                 Text(
-                    "Create Account",
+                    text = "Create Account",
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -106,7 +113,7 @@ fun LandingScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    "Forgot Password?",
+                    text = "Forgot Password?",
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
@@ -114,6 +121,7 @@ fun LandingScreen(
 
             Spacer(modifier = Modifier.weight(1.5f))
 
+            // Version Information
             Text(
                 text = "v1.0.0",
                 style = MaterialTheme.typography.labelSmall,
@@ -125,7 +133,8 @@ fun LandingScreen(
 
 @Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
 @Composable
-fun LandingScreenPreview() {
+fun LandingScreenPreview()
+{
     CampusEatsAppTheme {
         LandingScreen(onLoginClick = {}, onRegisterClick = {}, onForgotPasswordClick = {})
     }

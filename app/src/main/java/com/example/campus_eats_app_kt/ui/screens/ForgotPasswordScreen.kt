@@ -38,6 +38,10 @@ import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
+/**
+ * ForgotPasswordScreen provides account recovery functionality.
+ * Users must provide their unique User ID to reset their password offline.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(
@@ -45,14 +49,17 @@ fun ForgotPasswordScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ForgotPasswordViewModel
-) {
+)
+{
     var userId by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
-    
+
     val resetState by viewModel.resetState.collectAsState()
 
+    // Observe state for navigation triggers
     LaunchedEffect(resetState) {
-        if (resetState is ResetState.Success) {
+        if (resetState is ResetState.Success)
+        {
             onResetSuccess()
         }
     }
@@ -78,14 +85,16 @@ fun ForgotPasswordScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
+            // Contextual instruction text
             Text(
-                "Enter your unique 16-character User ID and a new password to reset your account.",
+                text = "Enter your unique 16-character User ID and a new password to reset your account.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.padding(bottom = DesignSystem.Spacing.medium)
             )
 
+            // Identification field
             OutlinedTextField(
                 value = userId,
                 onValueChange = { userId = it },
@@ -96,7 +105,8 @@ fun ForgotPasswordScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                 placeholder = { Text("XXXX-XXXX-XXXX-XXXX") }
             )
-            
+
+            // Security update field
             OutlinedTextField(
                 value = newPassword,
                 onValueChange = { newPassword = it },
@@ -110,8 +120,10 @@ fun ForgotPasswordScreen(
             )
 
             Spacer(modifier = Modifier.weight(1f))
-            
-            if (resetState is ResetState.Error) {
+
+            // Error display
+            if (resetState is ResetState.Error)
+            {
                 Text(
                     text = (resetState as ResetState.Error).message,
                     color = MaterialTheme.colorScheme.error,
@@ -120,6 +132,7 @@ fun ForgotPasswordScreen(
                 )
             }
 
+            // Implementation of Allman-style blocks for logical clarity
             HIGButton(
                 onClick = { viewModel.resetPassword(userId, newPassword) },
                 text = "Reset Password",
@@ -127,6 +140,7 @@ fun ForgotPasswordScreen(
                 enabled = resetState !is ResetState.Loading
             )
 
+            // Loading indicator for database transaction
             if (resetState is ResetState.Loading)
             {
                 CircularProgressIndicator(
