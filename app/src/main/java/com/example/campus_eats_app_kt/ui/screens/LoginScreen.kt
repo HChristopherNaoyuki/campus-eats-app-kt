@@ -46,7 +46,7 @@ import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 /**
  * LoginScreen provides the UI for user authentication.
  * It adheres to Apple's Human Interface Guidelines (HIG) by using generous whitespace,
- * clear typography, and consistent spacing.
+ * clear typography, and consistent spacing units.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +64,7 @@ fun LoginScreen(
 
     val loginState by viewModel.loginState.collectAsState()
 
-    // Handle state transitions for navigation in a reactive manner
+    // Reactive navigation triggered by authentication success
     LaunchedEffect(loginState) {
         if (loginState is LoginState.Success)
         {
@@ -87,23 +87,32 @@ fun LoginScreen(
                 }
             )
         },
-        modifier = modifier
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(DesignSystem.Spacing.large),
+                .padding(DesignSystem.Spacing.screenPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
 
-            // Email input field with minimalist iconography
+            // Textual guidance following HIG simplicity
+            Text(
+                text = "Welcome back. Please sign in to your account.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(bottom = DesignSystem.Spacing.medium)
+            )
+
+            // Principle: Aesthetic Integrity - Purposeful inputs with clear icons
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text("Email Address") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -111,7 +120,6 @@ fun LoginScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
 
-            // Password input field with visibility toggle and security-focused transformations
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -132,7 +140,7 @@ fun LoginScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
 
-            // Secondary action: Account recovery
+            // Contextual link for recovery
             TextButton(
                 onClick = onForgotPasswordClick,
                 modifier = Modifier.align(Alignment.End)
@@ -140,13 +148,13 @@ fun LoginScreen(
                 Text(
                     text = "Forgot Password?",
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Informative error feedback area
+            // Principle: Feedback - Real-time error reporting
             if (loginState is LoginState.Error)
             {
                 Text(
@@ -154,19 +162,18 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(bottom = DesignSystem.Spacing.small),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
             }
 
-            // Primary authentication action
+            // Principle: Feedback - Action status indicators
             HIGButton(
                 onClick = { viewModel.login(email, password) },
-                text = "Login",
+                text = "Sign In",
                 modifier = Modifier.fillMaxWidth(),
                 enabled = loginState !is LoginState.Loading
             )
 
-            // Visual feedback for long-running network or database operations
             if (loginState is LoginState.Loading)
             {
                 CircularProgressIndicator(

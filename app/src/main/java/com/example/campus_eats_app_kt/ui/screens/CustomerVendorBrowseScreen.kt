@@ -1,6 +1,5 @@
 package com.example.campus_eats_app_kt.ui.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.rounded.Restaurant
 import androidx.compose.material.icons.rounded.ShoppingCart
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,11 +32,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.campus_eats_app_kt.data.entity.UserEntity
+import com.example.campus_eats_app_kt.ui.components.HIGCard
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
  * CustomerVendorBrowseScreen allows users to select from a list of campus vendors.
+ * It emphasizes visual clarity and uses metaphors to represent dining establishments.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,17 +54,22 @@ fun CustomerVendorBrowseScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Vendors",
+                title = "Campus Dining",
                 actions = {
                     IconButton(onClick = onCartClick) {
-                        Icon(Icons.Rounded.ShoppingCart, contentDescription = "Cart")
+                        Icon(
+                            Icons.Rounded.ShoppingCart,
+                            contentDescription = "Cart",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                     IconButton(onClick = onLogout) {
                         Icon(Icons.AutoMirrored.Rounded.Logout, contentDescription = "Logout")
                     }
                 }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         if (vendors.isEmpty())
         {
@@ -76,7 +80,7 @@ fun CustomerVendorBrowseScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No vendors available right now.",
+                    text = "No vendors are currently accepting orders.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -89,7 +93,7 @@ fun CustomerVendorBrowseScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
                 contentPadding = PaddingValues(DesignSystem.Spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.itemSpacing)
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
             ) {
                 items(vendors) { vendor ->
                     VendorSelectionCard(vendor = vendor, onClick = { onVendorClick(vendor.userId) })
@@ -102,19 +106,12 @@ fun CustomerVendorBrowseScreen(
 @Composable
 fun VendorSelectionCard(vendor: UserEntity, onClick: () -> Unit)
 {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.large,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    HIGCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick
     ) {
-        Row(
-            modifier = Modifier.padding(DesignSystem.Spacing.large),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Distinct visual representation for vendors
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // Principle: Metaphor - Restaurant icon in a branded container
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.primaryContainer,
@@ -139,9 +136,10 @@ fun VendorSelectionCard(vendor: UserEntity, onClick: () -> Unit)
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Click to view full menu",
+                    text = "View full menu and availability",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }

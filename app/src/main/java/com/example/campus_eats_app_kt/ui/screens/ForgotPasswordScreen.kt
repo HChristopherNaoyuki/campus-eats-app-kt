@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -39,8 +40,8 @@ import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
- * ForgotPasswordScreen provides account recovery functionality.
- * Users must provide their unique User ID to reset their password offline.
+ * ForgotPasswordScreen provides account recovery. Users must provide their unique 
+ * 16-character User ID as an offline authentication token to reset their password.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +57,7 @@ fun ForgotPasswordScreen(
 
     val resetState by viewModel.resetState.collectAsState()
 
-    // Observe state for navigation triggers
+    // Principle: Feedback - Immediate navigation upon successful database update
     LaunchedEffect(resetState) {
         if (resetState is ResetState.Success)
         {
@@ -67,7 +68,7 @@ fun ForgotPasswordScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Reset Password",
+                title = "Recover Account",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
@@ -75,30 +76,33 @@ fun ForgotPasswordScreen(
                 }
             )
         },
-        modifier = modifier
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(DesignSystem.Spacing.large),
+                .padding(DesignSystem.Spacing.screenPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
-            // Contextual instruction text
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
+
+            // Guidance text aligned with minimalist principles
             Text(
-                text = "Enter your unique 16-character User ID and a new password to reset your account.",
-                style = MaterialTheme.typography.bodyMedium,
+                text = "Please enter your unique 16-character User ID to establish a new password for your account.",
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.outline,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.padding(bottom = DesignSystem.Spacing.medium)
             )
 
-            // Identification field
+            // Principle: Metaphor - Key icon for identification
             OutlinedTextField(
                 value = userId,
                 onValueChange = { userId = it },
-                label = { Text("User ID") },
+                label = { Text("Unique User ID") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Key, contentDescription = null) },
                 singleLine = true,
@@ -106,11 +110,10 @@ fun ForgotPasswordScreen(
                 placeholder = { Text("XXXX-XXXX-XXXX-XXXX") }
             )
 
-            // Security update field
             OutlinedTextField(
                 value = newPassword,
                 onValueChange = { newPassword = it },
-                label = { Text("New Password") },
+                label = { Text("New Secure Password") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
@@ -121,26 +124,24 @@ fun ForgotPasswordScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Error display
             if (resetState is ResetState.Error)
             {
                 Text(
                     text = (resetState as ResetState.Error).message,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(bottom = DesignSystem.Spacing.small),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
 
-            // Implementation of Allman-style blocks for logical clarity
             HIGButton(
                 onClick = { viewModel.resetPassword(userId, newPassword) },
-                text = "Reset Password",
+                text = "Update Password",
                 modifier = Modifier.fillMaxWidth(),
                 enabled = resetState !is ResetState.Loading
             )
 
-            // Loading indicator for database transaction
             if (resetState is ResetState.Loading)
             {
                 CircularProgressIndicator(

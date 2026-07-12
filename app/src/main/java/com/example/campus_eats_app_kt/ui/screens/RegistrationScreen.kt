@@ -63,8 +63,8 @@ import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
- * RegistrationScreen facilitates user onboarding by allowing new users to create accounts.
- * It features a minimalist, Apple-inspired layout with robust form validation and role selection.
+ * RegistrationScreen facilitates user onboarding. It features a minimalist layout with 
+ * generous padding and clear visual metaphors for account attributes.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,7 +88,7 @@ fun RegistrationScreen(
     var showIdDialog by remember { mutableStateOf(false) }
     var registeredUserId by remember { mutableStateOf("") }
 
-    // Navigation logic upon successful registration
+    // Navigation trigger upon successful persistence
     LaunchedEffect(registrationState) {
         if (registrationState is RegistrationState.Success)
         {
@@ -97,15 +97,16 @@ fun RegistrationScreen(
         }
     }
 
-    // Success Dialog displaying the generated 16-character User ID
+    // Principle: User Control - Explicit acknowledgement of account metadata
     if (showIdDialog)
     {
         AlertDialog(
-            onDismissRequest = { /* Modal: prevents accidental closure */ },
+            onDismissRequest = { /* Modal context */ },
             shape = RoundedCornerShape(DesignSystem.CornerRadius.extraLarge),
+            containerColor = MaterialTheme.colorScheme.surface,
             title = {
                 Text(
-                    text = "Registration Successful!",
+                    text = "Welcome to Campus Eats",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
@@ -114,22 +115,23 @@ fun RegistrationScreen(
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Your unique User ID is:",
+                        text = "Your unique 16-character User ID has been generated. Please store it securely.",
                         style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.outline
                     )
-                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
                     Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
                         shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
                             text = registeredUserId,
                             style = MaterialTheme.typography.headlineSmall.copy(
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.Black,
                                 color = MaterialTheme.colorScheme.primary,
-                                letterSpacing = 2.sp
+                                letterSpacing = 1.5.sp
                             ),
                             modifier = Modifier
                                 .padding(DesignSystem.Spacing.medium)
@@ -152,17 +154,14 @@ fun RegistrationScreen(
                             .height(50.dp),
                         shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
                     ) {
-                        Icon(Icons.Rounded.ContentCopy, contentDescription = null)
+                        Icon(
+                            Icons.Rounded.ContentCopy,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
-                        Text("Copy User ID")
+                        Text("Copy ID to Clipboard")
                     }
-                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
-                    Text(
-                        text = "Please save this ID safely. You will need it for account recovery.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline,
-                        textAlign = TextAlign.Center
-                    )
                 }
             },
             confirmButton = {
@@ -171,7 +170,7 @@ fun RegistrationScreen(
                         showIdDialog = false
                         onRegistrationSuccess(registeredUserId, selectedRole.name)
                     },
-                    text = "Return to Login",
+                    text = "Go to Dashboard",
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -181,7 +180,7 @@ fun RegistrationScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Create Account",
+                title = "Join Campus Eats",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
@@ -189,18 +188,19 @@ fun RegistrationScreen(
                 }
             )
         },
-        modifier = modifier
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(DesignSystem.Spacing.large)
+                .padding(DesignSystem.Spacing.screenPadding)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
-            // Personal Information Fields
+            // Field Group: Basic Profile
             OutlinedTextField(
                 value = fullName,
                 onValueChange = { fullName = it },
@@ -224,7 +224,7 @@ fun RegistrationScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text("Email Address") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -232,7 +232,7 @@ fun RegistrationScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
 
-            // Role Selection Dropdown
+            // Principle: Metaphor - Badge icon for role selection
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded },
@@ -242,7 +242,7 @@ fun RegistrationScreen(
                     value = selectedRole.name.lowercase().replaceFirstChar { it.uppercase() },
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("I am a...") },
+                    label = { Text("Account Role") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier = Modifier
                         .menuAnchor(MenuAnchorType.PrimaryNotEditable)
@@ -254,7 +254,7 @@ fun RegistrationScreen(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    UserRole.values().forEach { role ->
+                    UserRole.entries.forEach { role ->
                         DropdownMenuItem(
                             text = { Text(role.name.lowercase().replaceFirstChar { it.uppercase() }) },
                             onClick = {
@@ -266,7 +266,7 @@ fun RegistrationScreen(
                 }
             }
 
-            // Vendor-specific field: Shop Name
+            // Vendor-specific contextual input
             AnimatedVisibility(
                 visible = selectedRole == UserRole.VENDOR,
                 enter = expandVertically() + fadeIn(),
@@ -275,7 +275,7 @@ fun RegistrationScreen(
                 OutlinedTextField(
                     value = shopName,
                     onValueChange = { shopName = it },
-                    label = { Text("Shop Name") },
+                    label = { Text("Business / Shop Name") },
                     modifier = Modifier.fillMaxWidth(),
                     leadingIcon = { Icon(Icons.Rounded.Store, contentDescription = null) },
                     singleLine = true,
@@ -283,7 +283,7 @@ fun RegistrationScreen(
                 )
             }
 
-            // Security Credentials
+            // Field Group: Security
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -310,18 +310,17 @@ fun RegistrationScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Logical error reporting
             if (registrationState is RegistrationState.Error)
             {
                 Text(
                     text = (registrationState as RegistrationState.Error).message,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(vertical = DesignSystem.Spacing.small),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
 
-            // Primary call to action
             HIGButton(
                 onClick = {
                     if (password == confirmPassword)
@@ -336,12 +335,11 @@ fun RegistrationScreen(
                         )
                     }
                 },
-                text = "Register",
+                text = "Create Account",
                 modifier = Modifier.fillMaxWidth(),
                 enabled = registrationState !is RegistrationState.Loading
             )
 
-            // Asynchronous state indicator
             if (registrationState is RegistrationState.Loading)
             {
                 CircularProgressIndicator(

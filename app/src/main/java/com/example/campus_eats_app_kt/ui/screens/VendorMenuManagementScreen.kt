@@ -15,8 +15,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -30,13 +28,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.example.campus_eats_app_kt.data.entity.MenuItemEntity
+import com.example.campus_eats_app_kt.ui.components.HIGCard
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
- * VendorMenuManagementScreen provides a control panel for vendors to manage their food items.
+ * VendorMenuManagementScreen provides a control panel for shop owners.
+ * It emphasizes high-contrast visibility and intuitive management controls.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,7 +51,7 @@ fun VendorMenuManagementScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Manage Menu",
+                title = "Inventory",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
@@ -64,11 +63,13 @@ fun VendorMenuManagementScreen(
             FloatingActionButton(
                 onClick = onAddItemClick,
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = MaterialTheme.shapes.large
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = "Add Item")
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         if (menuItems.isEmpty())
         {
@@ -79,7 +80,7 @@ fun VendorMenuManagementScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No items in your menu yet.",
+                    text = "No items registered in your menu.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -92,10 +93,10 @@ fun VendorMenuManagementScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
                 contentPadding = PaddingValues(DesignSystem.Spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
             ) {
                 items(menuItems) { item ->
-                    MenuManagementCard(
+                    InventoryManagementCard(
                         item = item,
                         onEdit = { onEditItemClick(item.itemId) },
                         onDelete = { viewModel.deleteItem(item) }
@@ -107,18 +108,10 @@ fun VendorMenuManagementScreen(
 }
 
 @Composable
-fun MenuManagementCard(item: MenuItemEntity, onEdit: () -> Unit, onDelete: () -> Unit)
+fun InventoryManagementCard(item: MenuItemEntity, onEdit: () -> Unit, onDelete: () -> Unit)
 {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Row(
-            modifier = Modifier.padding(DesignSystem.Spacing.medium),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    HIGCard(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.name,
@@ -126,14 +119,15 @@ fun MenuManagementCard(item: MenuItemEntity, onEdit: () -> Unit, onDelete: () ->
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = item.category,
-                    style = MaterialTheme.typography.bodySmall,
+                    text = item.category.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = "R${String.format("%.2f", item.price)} | Stock: ${item.stock}",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "R${String.format("%.2f", item.price)} • Stock: ${item.stock}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline
                 )
             }
 

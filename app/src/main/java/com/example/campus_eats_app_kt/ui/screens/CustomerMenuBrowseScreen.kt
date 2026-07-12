@@ -19,8 +19,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AddShoppingCart
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,12 +35,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.campus_eats_app_kt.data.entity.MenuItemEntity
+import com.example.campus_eats_app_kt.ui.components.HIGCard
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
- * CustomerMenuBrowseScreen allows customers to view food items from a specific vendor.
- * It employs a grid-based layout for optimal item visibility.
+ * CustomerMenuBrowseScreen facilitates vendor-specific discovery. It uses a grid layout
+ * to maximize visual density while maintaining generous whitespace and clear touch targets.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +56,7 @@ fun CustomerMenuBrowseScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Menu",
+                title = "Menu Options",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
@@ -65,11 +64,16 @@ fun CustomerMenuBrowseScreen(
                 },
                 actions = {
                     IconButton(onClick = onCartClick) {
-                        Icon(Icons.Rounded.ShoppingCart, contentDescription = "Cart")
+                        Icon(
+                            Icons.Rounded.ShoppingCart,
+                            contentDescription = "View Cart",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         if (menuItems.isEmpty())
         {
@@ -80,7 +84,7 @@ fun CustomerMenuBrowseScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No items available in this menu.",
+                    text = "This vendor has no active listings.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -89,7 +93,7 @@ fun CustomerMenuBrowseScreen(
         else
         {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 160.dp),
+                columns = GridCells.Adaptive(minSize = 165.dp),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -98,7 +102,7 @@ fun CustomerMenuBrowseScreen(
                 verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
             ) {
                 items(menuItems) { item ->
-                    MenuItemCard(item = item, onAddToCart = { viewModel.addToCart(item) })
+                    MenuItemGridCard(item = item, onAddToCart = { viewModel.addToCart(item) })
                 }
             }
         }
@@ -106,21 +110,20 @@ fun CustomerMenuBrowseScreen(
 }
 
 @Composable
-fun MenuItemCard(item: MenuItemEntity, onAddToCart: () -> Unit)
+fun MenuItemGridCard(item: MenuItemEntity, onAddToCart: () -> Unit)
 {
-    Card(
+    HIGCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        contentPadding = PaddingValues(0.dp)
     ) {
         Column {
-            // Visual item representation
+            // Visual identification with bleed-to-edge layout
             AsyncImage(
                 model = item.imageUrl ?: "https://via.placeholder.com/300?text=${item.name}",
                 contentDescription = item.name,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp),
+                    .height(130.dp),
                 contentScale = ContentScale.Crop
             )
 
@@ -135,7 +138,7 @@ fun MenuItemCard(item: MenuItemEntity, onAddToCart: () -> Unit)
                     text = "R${String.format("%.2f", item.price)}",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Black
                 )
 
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
@@ -149,11 +152,11 @@ fun MenuItemCard(item: MenuItemEntity, onAddToCart: () -> Unit)
                     Icon(
                         imageVector = Icons.Rounded.AddShoppingCart,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(DesignSystem.Spacing.extraSmall))
                     Text(
-                        text = "Add to Cart",
+                        text = "Add",
                         style = MaterialTheme.typography.labelLarge
                     )
                 }

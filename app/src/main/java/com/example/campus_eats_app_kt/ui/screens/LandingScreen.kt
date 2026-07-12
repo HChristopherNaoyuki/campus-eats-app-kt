@@ -31,7 +31,8 @@ import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
  * LandingScreen serves as the welcome page for the application.
- * It provides entry points for authentication and account creation.
+ * It provides entry points for authentication and account creation, adhering to Apple HIG
+ * by using generous whitespace and clear primary actions.
  */
 @Composable
 fun LandingScreen(
@@ -53,9 +54,9 @@ fun LandingScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1.2f))
 
-            // Minimalist Brand Identity
+            // Principle: Metaphor - Familiar visual identity
             Icon(
                 imageVector = Icons.Rounded.Fastfood,
                 contentDescription = null,
@@ -68,22 +69,23 @@ fun LandingScreen(
                 style = MaterialTheme.typography.displayMedium.copy(
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onBackground,
-                    letterSpacing = (-1).sp
+                    letterSpacing = (-1.5).sp
                 )
             )
             
             Text(
                 text = "Rosebank International University College",
-                style = MaterialTheme.typography.bodyMedium.copy(
+                style = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.outline,
                     fontWeight = FontWeight.Medium
                 ),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = DesignSystem.Spacing.large)
             )
 
-            Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
+            Spacer(modifier = Modifier.weight(1f))
 
-            // Primary Authentication Actions
+            // Principle: Consistency - Standardized buttons and hierarchy
             HIGButton(
                 onClick = onLoginClick,
                 text = "Login",
@@ -103,7 +105,7 @@ fun LandingScreen(
             ) {
                 Text(
                     text = "Create Account",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -115,17 +117,18 @@ fun LandingScreen(
                 Text(
                     text = "Forgot Password?",
                     color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1.5f))
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
 
-            // Version Information
+            // Operational information displayed subtly
             Text(
-                text = "v1.0.0",
+                text = "v1.0.0 Stable",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outlineVariant
+                color = MaterialTheme.colorScheme.outlineVariant,
+                letterSpacing = 1.sp
             )
         }
     }
