@@ -26,6 +26,7 @@ import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.AttachMoney
 import androidx.compose.material.icons.rounded.BarChart
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.History
@@ -42,7 +43,6 @@ import androidx.compose.material.icons.rounded.RemoveShoppingCart
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material.icons.rounded.Store
 import androidx.compose.material.icons.rounded.TrendingUp
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -50,6 +50,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -88,6 +89,7 @@ import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.ShopStatus
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.entity.UserStatus
+import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGCard
 import com.example.campus_eats_app_kt.ui.components.HIGServiceRow
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
@@ -111,7 +113,8 @@ fun HomeScreenTab(
     authRepository: AuthRepository,
     statsRepository: StatsRepository,
     menuRepository: MenuRepository,
-    onNavigateToMenuBrowse: (String, String) -> Unit
+    onNavigateToMenuBrowse: (String, String) -> Unit,
+    onExploreVendors: () -> Unit
 )
 {
     val user by authRepository.getUserFlow(userId).collectAsState(null)
@@ -297,7 +300,7 @@ fun HomeScreenTab(
                         title = "Explore Vendors",
                         description = "View all available shops and their menus.",
                         icon = Icons.Rounded.Store,
-                        onClick = { /* Controller handle */ }
+                        onClick = onExploreVendors
                     )
                 }
             }
@@ -423,13 +426,7 @@ fun ServicesScreenTab(
                 .padding(DesignSystem.Spacing.screenPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text(
-                text = "Services",
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Black,
-                letterSpacing = (-1).sp
-            )
-            Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
+            // Principle: Aesthetic Integrity - Removed redundant heading to reduce visual clutter.
 
             when (role)
             {
@@ -564,13 +561,7 @@ fun ActivityScreenTab(
                 .padding(DesignSystem.Spacing.screenPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text(
-                text = "Activity",
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Black,
-                letterSpacing = (-1).sp
-            )
-            Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
+            // Principle: Aesthetic Integrity - Removed redundant heading.
 
             when (userRole)
             {
@@ -1033,226 +1024,204 @@ fun SettingsScreenTab(
     onLogout: () -> Unit
 )
 {
+    var activeSettingView by remember { mutableStateOf("Main") }
     val user by authRepository.getUserFlow(userId).collectAsState(null)
-    var newPassword by remember { mutableStateOf("") }
-    var newEmail by remember { mutableStateOf(user?.email ?: "") }
-
-    LaunchedEffect(user) { if (newEmail.isEmpty()) newEmail = user?.email ?: "" }
-
     val coroutineScope = rememberCoroutineScope()
 
-    var showAddCardDialog by remember { mutableStateOf(false) }
-    var showApplyCouponDialog by remember { mutableStateOf(false) }
-    var showFeedbackDialog by remember { mutableStateOf(false) }
-    var showLinkBankDialog by remember { mutableStateOf(false) }
-    var showIssueCreditsDialog by remember { mutableStateOf(false) }
-    var showCreateCouponDialog by remember { mutableStateOf(false) }
-    var showFeedbackReviewType by remember { mutableStateOf<FeedbackType?>(null) }
-
-    // Logic: Provide direct manipulation and immediate feedback for account settings.
-    if (showAddCardDialog)
+    if (activeSettingView == "Main")
     {
-        var cardNumber by remember { mutableStateOf("") }
-        var expiryDate by remember { mutableStateOf("") }
-        var cvv by remember { mutableStateOf("") }
-        AlertDialog(
-            onDismissRequest = { showAddCardDialog = false },
-            title = { Text("Link Debit Card", fontWeight = FontWeight.Bold) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = cardNumber,
-                        onValueChange = { cardNumber = it },
-                        label = { Text("Card Number") },
-                        modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(DesignSystem.Spacing.screenPadding)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
+        ) {
+            // Principle: Aesthetic Integrity - Removed redundant heading.
+
+            // Account Group
+            HIGCard(modifier = Modifier.fillMaxWidth()) {
+                var newEmail by remember { mutableStateOf(user?.email ?: "") }
+                var newPassword by remember { mutableStateOf("") }
+
+                LaunchedEffect(user) { if (newEmail.isEmpty()) newEmail = user?.email ?: "" }
+
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+                    Text(
+                        text = "Profile Identity",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = expiryDate,
-                            onValueChange = { expiryDate = it },
-                            label = { Text("MM/YY") },
-                            modifier = Modifier.weight(1f)
-                        )
-                        OutlinedTextField(
-                            value = cvv,
-                            onValueChange = { cvv = it },
-                            label = { Text("CVV") },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                Button(onClick = {
-                    coroutineScope.launch {
-                        debitCardRepository.addCard(
-                            userId,
-                            cardNumber,
-                            expiryDate,
-                            cvv
-                        )
-                    }
-                    showAddCardDialog = false
-                }) { Text("Save Card") }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showAddCardDialog = false
-                }) { Text("Cancel") }
-            }
-        )
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(DesignSystem.Spacing.screenPadding)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
-    ) {
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Black,
-            letterSpacing = (-1).sp
-        )
-
-        HIGCard(modifier = Modifier.fillMaxWidth()) {
-            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-                Text(
-                    text = "Profile",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                OutlinedTextField(
-                    value = newEmail,
-                    onValueChange = { newEmail = it },
-                    label = { Text("Email") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium
-                )
-                OutlinedTextField(
-                    value = newPassword,
-                    onValueChange = { newPassword = it },
-                    label = { Text("New Password") },
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                    shape = MaterialTheme.shapes.medium
-                )
-                Button(
-                    onClick = {
-                        coroutineScope.launch {
-                            authRepository.updateProfile(userId, newEmail, newPassword)
-                            newPassword = ""
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text("Save Profile Changes")
-                }
-            }
-        }
-
-        HIGCard(modifier = Modifier.fillMaxWidth()) {
-            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
-                Text(
-                    text = "Wallet & Payments",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                when (role)
-                {
-                    UserRole.STUDENT, UserRole.STANDARD ->
-                    {
-                        Text(
-                            text = "Balance: R${
-                                String.format(
-                                    "%.2f",
-                                    user?.walletBalance ?: 0.0
-                                )
-                            }",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        TextButton(onClick = {
-                            showAddCardDialog = true
-                        }) { Text("Link Debit Card") }
-                        TextButton(onClick = {
-                            showApplyCouponDialog = true
-                        }) { Text("Redeem Coupon") }
-                    }
-
-                    UserRole.VENDOR ->
-                    {
-                        Text(text = if (user?.bankAccountInfo != null) "Linked: ${user?.bankAccountInfo}" else "No bank linked")
-                        TextButton(onClick = {
-                            showLinkBankDialog = true
-                        }) { Text("Update Bank Details") }
-                    }
-
-                    UserRole.ADMIN ->
-                    {
-                        TextButton(onClick = {
-                            showIssueCreditsDialog = true
-                        }) { Text("Issue System Credits") }
-                        TextButton(onClick = {
-                            showCreateCouponDialog = true
-                        }) { Text("Generate Coupons") }
-                    }
-                }
-            }
-        }
-
-        HIGCard(modifier = Modifier.fillMaxWidth()) {
-            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
-                Text(
-                    text = "Support",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                if (role == UserRole.ADMIN)
-                {
-                    TextButton(onClick = {
-                        showFeedbackReviewType = FeedbackType.COMPLAINT
-                    }) { Text("Review Complaints") }
-                    TextButton(onClick = {
-                        showFeedbackReviewType = FeedbackType.COMPLIMENT
-                    }) { Text("Review Compliments") }
-                }
-                else
-                {
-                    Button(
-                        onClick = { showFeedbackDialog = true },
+                    OutlinedTextField(
+                        value = newEmail,
+                        onValueChange = { newEmail = it },
+                        label = { Text("Email Address") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.medium
-                    ) {
-                        Text("Share Feedback")
+                    )
+                    OutlinedTextField(
+                        value = newPassword,
+                        onValueChange = { newPassword = it },
+                        label = { Text("New Security Key") },
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    Button(onClick = {
+                        coroutineScope.launch {
+                            authRepository.updateProfile(
+                                userId,
+                                newEmail,
+                                newPassword
+                            ); newPassword = ""
+                        }
+                    }, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+                        Text("Update Credentials")
                     }
                 }
             }
-        }
 
-        Button(
-            onClick = onLogout,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-            shape = MaterialTheme.shapes.large
-        ) {
-            Icon(Icons.Rounded.Logout, null)
-            Spacer(Modifier.width(DesignSystem.Spacing.small))
-            Text("Logout", fontWeight = FontWeight.Bold)
-        }
+            // Financial Group
+            HIGCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+                    Text(
+                        text = "Financial Controls",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    when (role)
+                    {
+                        UserRole.STUDENT, UserRole.STANDARD ->
+                        {
+                            Text(
+                                text = "Balance: R${
+                                    String.format(
+                                        "%.2f",
+                                        user?.walletBalance ?: 0.0
+                                    )
+                                }",
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            TextButton(onClick = {
+                                activeSettingView = "AddCard"
+                            }) { Text("Link Debit Card") }
+                            TextButton(onClick = {
+                                activeSettingView = "Redeem"
+                            }) { Text("Redeem Coupon") }
+                        }
 
-        Text(
-            "Campus Eats v1.0.0",
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.outline
-        )
+                        UserRole.VENDOR ->
+                        {
+                            Text(text = if (user?.bankAccountInfo != null) "Payout Enabled" else "Payout Not Configured")
+                            TextButton(onClick = {
+                                activeSettingView = "Bank"
+                            }) { Text("Update Bank Details") }
+                        }
+
+                        UserRole.ADMIN ->
+                        {
+                            TextButton(onClick = {
+                                activeSettingView = "Credits"
+                            }) { Text("Issue System Credits") }
+                            TextButton(onClick = {
+                                activeSettingView = "Coupons"
+                            }) { Text("Generate Coupons") }
+                        }
+                    }
+                }
+            }
+
+            // Support Group
+            HIGCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+                    Text(
+                        text = "System Support",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (role == UserRole.ADMIN)
+                    {
+                        TextButton(onClick = {
+                            activeSettingView = "Complaints"
+                        }) { Text("Review Complaints") }
+                        TextButton(onClick = {
+                            activeSettingView = "Compliments"
+                        }) { Text("Review Compliments") }
+                    }
+                    else
+                    {
+                        Button(
+                            onClick = { activeSettingView = "Feedback" },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Text("Submit Feedback")
+                        }
+                    }
+                }
+            }
+
+            Button(
+                onClick = onLogout,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Icon(Icons.Rounded.Logout, null)
+                Spacer(Modifier.width(DesignSystem.Spacing.small))
+                Text("Logout Session", fontWeight = FontWeight.Bold)
+            }
+
+            Text(
+                "Campus Eats v1.0.0 Stable",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline
+            )
+        }
+    }
+    else
+    {
+        // Sub-view Controller
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(DesignSystem.Spacing.medium)
+            ) {
+                IconButton(onClick = {
+                    activeSettingView = "Main"
+                }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") }
+                Text(
+                    text = activeSettingView.replace(Regex("([a-z])([A-Z])"), "$1 $2"),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Box(modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = DesignSystem.Spacing.medium)) {
+                when (activeSettingView)
+                {
+                    "Credits" -> AdminIssueCreditsWindow(adminRepository)
+                    "Coupons" -> AdminGenerateCouponsWindow(couponRepository)
+                    "Complaints" -> AdminFeedbackWindow(feedbackRepository, FeedbackType.COMPLAINT)
+                    "Compliments" -> AdminFeedbackWindow(
+                        feedbackRepository,
+                        FeedbackType.COMPLIMENT
+                    )
+
+                    "Redeem" -> StudentRedeemCouponWindow(couponRepository)
+                    "AddCard" -> StudentAddCardWindow(debitCardRepository, userId)
+                    "Bank" -> VendorBankDetailsWindow(authRepository, userId, user?.bankAccountInfo)
+                    "Feedback" -> UserFeedbackWindow(feedbackRepository, userId)
+                }
+            }
+        }
     }
 }
 
@@ -1317,6 +1286,8 @@ fun StudentCurrentOrderHub(
 )
 {
     val items by cartRepository.getCart(userId).collectAsState(emptyList())
+    val coroutineScope = rememberCoroutineScope()
+
     if (items.isEmpty())
     {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -1327,7 +1298,12 @@ fun StudentCurrentOrderHub(
                     modifier = Modifier.size(64.dp),
                     tint = MaterialTheme.colorScheme.outline
                 )
-                Text("Your cart is empty")
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
+                Text(
+                    text = "Your active cart is empty.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.outline
+                )
                 TextButton(onClick = onReturnHome) { Text("Start Shopping") }
             }
         }
@@ -1335,20 +1311,83 @@ fun StudentCurrentOrderHub(
     else
     {
         Column(
-            Modifier.padding(DesignSystem.Spacing.medium),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
-            Text(
-                text = "You have ${items.size} items ready.",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
+            ) {
+                items(items) { item ->
+                    HIGCard(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = item.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "R${String.format("%.2f", item.price)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = {
+                                    coroutineScope.launch {
+                                        if (item.quantity > 1) cartRepository.removeFromCart(item)
+                                        else cartRepository.deleteCartItem(item)
+                                    }
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.KeyboardArrowDown,
+                                        contentDescription = "Decrease"
+                                    )
+                                }
+
+                                Text(
+                                    text = "${item.quantity}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Black
+                                )
+
+                                IconButton(onClick = {
+                                    coroutineScope.launch { cartRepository.incrementCartItem(item) }
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.KeyboardArrowUp,
+                                        contentDescription = "Increase"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Principle: User Control - Explicit primary action for checkout.
             Button(
                 onClick = onNavigateToCheckout,
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = MaterialTheme.shapes.large,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Proceed to Checkout")
+                val subtotal = items.sumOf { it.price * it.quantity }
+                Text(
+                    text = "Proceed to Checkout • R${String.format("%.2f", subtotal)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -1498,5 +1537,433 @@ fun AdminReportHub(
                 contentAlignment = Alignment.Center
             ) { Text("Data aggregation in progress...") }
         }
+    }
+}
+
+@Composable
+fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
+{
+    var targetId by remember { mutableStateOf("") }
+    var amount by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
+    var successMsg by remember { mutableStateOf("") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+        Text(
+            "Manually add credits to a user's campus wallet for support or refunds.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline
+        )
+        OutlinedTextField(
+            value = targetId,
+            onValueChange = { targetId = it; successMsg = "" },
+            label = { Text("Target User ID") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+        OutlinedTextField(
+            value = amount,
+            onValueChange = { amount = it; successMsg = "" },
+            label = { Text("Amount (R)") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        if (successMsg.isNotEmpty()) Text(
+            successMsg,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+        HIGButton(
+            onClick = {
+                val a = amount.toDoubleOrNull() ?: 0.0
+                if (targetId.isNotBlank() && a > 0)
+                {
+                    coroutineScope.launch { adminRepository.issueCredits(targetId, a) }
+                    successMsg = "Success: R${String.format("%.2f", a)} issued to $targetId"
+                }
+            },
+            text = "Finalize Credit Issue",
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun AdminGenerateCouponsWindow(couponRepository: CouponRepository)
+{
+    var code by remember { mutableStateOf("") }
+    var discount by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
+    var successMsg by remember { mutableStateOf("") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+        Text(
+            "Create unique promotional codes for student discounts.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline
+        )
+        OutlinedTextField(
+            value = code,
+            onValueChange = { code = it; successMsg = "" },
+            label = { Text("Coupon Code") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+        OutlinedTextField(
+            value = discount,
+            onValueChange = { discount = it; successMsg = "" },
+            label = { Text("Discount Percentage") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        if (successMsg.isNotEmpty()) Text(
+            successMsg,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+        HIGButton(
+            onClick = {
+                val d = discount.toDoubleOrNull() ?: 0.0
+                if (code.isNotBlank() && d > 0)
+                {
+                    coroutineScope.launch { couponRepository.createCoupon(code, d) }
+                    successMsg = "Success: Coupon $code (${d}%) generated."
+                }
+            },
+            text = "Generate Promo Code",
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun AdminFeedbackWindow(feedbackRepository: FeedbackRepository, type: FeedbackType)
+{
+    val feedbacks by (if (type == FeedbackType.COMPLAINT) feedbackRepository.getComplaints() else feedbackRepository.getCompliments()).collectAsState(
+        emptyList()
+    )
+
+    if (feedbacks.isEmpty())
+    {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No feedback items in this category.", color = MaterialTheme.colorScheme.outline)
+        }
+    }
+    else
+    {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+            items(feedbacks) { fb ->
+                var response by remember { mutableStateOf("") }
+                var resolved by remember { mutableStateOf(false) }
+
+                HIGCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(fb.subject, fontWeight = FontWeight.Black)
+                            if (resolved) Icon(
+                                Icons.Rounded.CheckCircle,
+                                null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Text(fb.message, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "From: ${fb.userId}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+
+                        HorizontalDivider(modifier = Modifier.padding(vertical = DesignSystem.Spacing.small))
+
+                        OutlinedTextField(
+                            value = response,
+                            onValueChange = { response = it },
+                            label = { Text("Administrator Response") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.small
+                        )
+                        val context = LocalContext.current
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            TextButton(onClick = { resolved = !resolved }) {
+                                Text(if (resolved) "Reopen" else "Mark Resolved")
+                            }
+                            TextButton(onClick = {
+                                if (response.isNotBlank())
+                                {
+                                    Toast.makeText(
+                                        context,
+                                        "Response sent to user.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    response = ""
+                                    resolved = true
+                                }
+                            }) {
+                                Text("Send Response")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StudentRedeemCouponWindow(couponRepository: CouponRepository)
+{
+    var code by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+        Text(
+            "Enter a promotional code to apply a discount to your next order.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline
+        )
+        OutlinedTextField(
+            value = code,
+            onValueChange = { code = it; status = "" },
+            label = { Text("Promo Code") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        if (status.isNotEmpty()) Text(
+            status,
+            color = if (status.startsWith("Valid")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+        HIGButton(
+            onClick = {
+                coroutineScope.launch {
+                    val c = couponRepository.validateCoupon(code)
+                    status =
+                        if (c != null) "Valid: ${c.discountPercent}% discount activated." else "Error: Code not found or inactive."
+                }
+            },
+            text = "Verify Code",
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: String)
+{
+    var cardNumber by remember { mutableStateOf("") }
+    var expiryDate by remember { mutableStateOf("") }
+    var cvv by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
+    var successMsg by remember { mutableStateOf("") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+        Text(
+            "Link a debit card for secure campus wallet top-ups.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline
+        )
+        OutlinedTextField(
+            value = cardNumber,
+            onValueChange = { cardNumber = it; successMsg = "" },
+            label = { Text("16-Digit Card Number") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+            OutlinedTextField(
+                value = expiryDate,
+                onValueChange = { expiryDate = it },
+                label = { Text("MM/YY") },
+                modifier = Modifier.weight(1f),
+                shape = MaterialTheme.shapes.medium
+            )
+            OutlinedTextField(
+                value = cvv,
+                onValueChange = { cvv = it },
+                label = { Text("CVV") },
+                modifier = Modifier.weight(1f),
+                shape = MaterialTheme.shapes.medium
+            )
+        }
+
+        if (successMsg.isNotEmpty()) Text(
+            successMsg,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+        HIGButton(
+            onClick = {
+                if (cardNumber.length == 16)
+                {
+                    coroutineScope.launch {
+                        debitCardRepository.addCard(
+                            userId,
+                            cardNumber,
+                            expiryDate,
+                            cvv
+                        )
+                    }
+                    successMsg = "Success: Card ending in ${cardNumber.takeLast(4)} linked."
+                }
+            },
+            text = "Securely Save Card",
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, currentInfo: String?)
+{
+    var bankName by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(0) ?: "") }
+    var accNum by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(1) ?: "") }
+    var holder by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(2) ?: "") }
+    var branch by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(3) ?: "") }
+    val coroutineScope = rememberCoroutineScope()
+    var successMsg by remember { mutableStateOf("") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+        Text(
+            "Provide your banking information to receive periodic revenue payouts.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline
+        )
+        OutlinedTextField(
+            value = bankName,
+            onValueChange = { bankName = it; successMsg = "" },
+            label = { Text("Financial Institution (Bank Name)") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+        OutlinedTextField(
+            value = accNum,
+            onValueChange = { accNum = it },
+            label = { Text("Account Number") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+        OutlinedTextField(
+            value = holder,
+            onValueChange = { holder = it },
+            label = { Text("Account Holder Name") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+        OutlinedTextField(
+            value = branch,
+            onValueChange = { branch = it },
+            label = { Text("Branch Code") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        if (successMsg.isNotEmpty()) Text(
+            successMsg,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+        HIGButton(
+            onClick = {
+                val info = "$bankName | $accNum | $holder | $branch"
+                coroutineScope.launch { authRepository.linkBankAccount(userId, info) }
+                successMsg = "Success: Banking details updated."
+            },
+            text = "Update Payout Details",
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
+{
+    var subj by remember { mutableStateOf("") }
+    var msg by remember { mutableStateOf("") }
+    var type by remember { mutableStateOf(FeedbackType.COMPLIMENT) }
+    val coroutineScope = rememberCoroutineScope()
+    var successMsg by remember { mutableStateOf("") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+        Text(
+            "Your feedback helps us improve the campus dining experience.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+            FilterChip(
+                selected = type == FeedbackType.COMPLIMENT,
+                onClick = { type = FeedbackType.COMPLIMENT },
+                label = { Text("Compliment") },
+                shape = MaterialTheme.shapes.medium
+            )
+            FilterChip(
+                selected = type == FeedbackType.COMPLAINT,
+                onClick = { type = FeedbackType.COMPLAINT },
+                label = { Text("Complaint") },
+                shape = MaterialTheme.shapes.medium
+            )
+        }
+        OutlinedTextField(
+            value = subj,
+            onValueChange = { subj = it; successMsg = "" },
+            label = { Text("Topic / Subject") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        )
+        OutlinedTextField(
+            value = msg,
+            onValueChange = { msg = it },
+            label = { Text("Detailed Message") },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 4,
+            shape = MaterialTheme.shapes.medium
+        )
+
+        if (successMsg.isNotEmpty()) Text(
+            successMsg,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+        HIGButton(
+            onClick = {
+                if (subj.isNotBlank() && msg.isNotBlank())
+                {
+                    coroutineScope.launch {
+                        feedbackRepository.submitFeedback(
+                            userId,
+                            subj,
+                            msg,
+                            type
+                        )
+                    }
+                    successMsg = "Thank you: Feedback submitted successfully."
+                    subj = ""; msg = ""
+                }
+            },
+            text = "Send Feedback",
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

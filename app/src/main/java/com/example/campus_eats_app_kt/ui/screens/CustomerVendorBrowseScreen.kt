@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Restaurant
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,6 +46,7 @@ import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 fun CustomerVendorBrowseScreen(
     onVendorClick: (String) -> Unit,
     onCartClick: () -> Unit,
+    onReturnHome: () -> Unit,
     onLogout: () -> Unit,
     viewModel: VendorBrowseViewModel
 )
@@ -55,6 +57,11 @@ fun CustomerVendorBrowseScreen(
         topBar = {
             HIGTopAppBar(
                 title = "Campus Dining",
+                navigationIcon = {
+                    IconButton(onClick = onReturnHome) {
+                        Icon(Icons.Rounded.Home, contentDescription = "Return Home")
+                    }
+                },
                 actions = {
                     IconButton(onClick = onCartClick) {
                         Icon(

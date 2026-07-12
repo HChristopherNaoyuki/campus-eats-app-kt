@@ -169,7 +169,21 @@ class MainActivity : ComponentActivity()
                                 onNavigateToVendorMenu = { vendorId -> backStack.add(Route.VendorMenuManagement(vendorId)) },
                                 onNavigateToAddMenuItem = { vendorId, itemId -> backStack.add(Route.AddEditMenuItem(vendorId, itemId)) },
                                 onNavigateToCart = { backStack.add(Route.Cart(route.userId)) },
-                                onNavigateToMenuBrowse = { userId, vendorId -> backStack.add(Route.CustomerMenuBrowse(userId, vendorId)) }
+                                onNavigateToMenuBrowse = { userId, vendorId ->
+                                    backStack.add(
+                                        Route.CustomerMenuBrowse(
+                                            userId,
+                                            vendorId
+                                        )
+                                    )
+                                },
+                                onNavigateToVendorBrowse = { userId ->
+                                    backStack.add(
+                                        Route.CustomerVendorBrowse(
+                                            userId
+                                        )
+                                    )
+                                }
                             )
                         }
 
@@ -198,6 +212,7 @@ class MainActivity : ComponentActivity()
                             CustomerVendorBrowseScreen(
                                 onVendorClick = { vendorId -> backStack.add(Route.CustomerMenuBrowse(route.userId, vendorId)) },
                                 onCartClick = { backStack.add(Route.Cart(route.userId)) },
+                                onReturnHome = { backStack.removeLastOrNull() },
                                 onLogout = {
                                     backStack.clear()
                                     backStack.add(Route.Landing)

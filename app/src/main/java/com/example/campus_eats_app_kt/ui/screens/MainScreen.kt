@@ -54,7 +54,8 @@ fun MainScreen(
     onNavigateToVendorMenu: (String) -> Unit,
     onNavigateToAddMenuItem: (String, Long?) -> Unit,
     onNavigateToCart: () -> Unit,
-    onNavigateToMenuBrowse: (String, String) -> Unit
+    onNavigateToMenuBrowse: (String, String) -> Unit,
+    onNavigateToVendorBrowse: (String) -> Unit
 )
 {
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -134,7 +135,8 @@ fun MainScreen(
                     authRepository = authRepository,
                     statsRepository = statsRepository,
                     menuRepository = menuRepository,
-                    onNavigateToMenuBrowse = onNavigateToMenuBrowse
+                    onNavigateToMenuBrowse = onNavigateToMenuBrowse,
+                    onExploreVendors = { onNavigateToVendorBrowse(userId) }
                 )
                 1 -> ServicesScreenTab(
                     userId = userId,
