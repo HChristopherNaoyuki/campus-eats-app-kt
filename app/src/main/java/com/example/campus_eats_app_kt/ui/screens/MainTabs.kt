@@ -84,7 +84,9 @@ import com.example.campus_eats_app_kt.data.FeedbackRepository
 import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
+import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.FeedbackType
+import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.ShopStatus
 import com.example.campus_eats_app_kt.data.entity.UserRole
@@ -417,6 +419,7 @@ fun ServicesScreenTab(
 )
 {
     var activeView by remember { mutableStateOf("Main") }
+    var selectedOrder by remember { mutableStateOf<OrderEntity?>(null) }
 
     if (activeView == "Main")
     {
@@ -493,14 +496,17 @@ fun ServicesScreenTab(
                     .padding(DesignSystem.Spacing.medium),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { activeView = "Main" }) {
+                IconButton(onClick = {
+                    if (activeView == "OrderDetail") activeView = "Receipts"
+                    else activeView = "Main"
+                }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                         contentDescription = "Back"
                     )
                 }
                 Text(
-                    text = activeView,
+                    text = if (activeView == "OrderDetail") "Detailed Receipt" else activeView,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -510,9 +516,11 @@ fun ServicesScreenTab(
                 }
             }
 
-            Box(modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = DesignSystem.Spacing.medium)) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = DesignSystem.Spacing.medium)
+            ) {
                 when (activeView)
                 {
                     "VendorsList" -> StudentVendorList(
@@ -520,17 +528,27 @@ fun ServicesScreenTab(
                         menuRepository,
                         onNavigateToMenuBrowse
                     )
+
                     "Users" -> AdminUserManagement(adminRepository = adminRepository)
                     "Vendors" -> AdminVendorManagement(adminRepository = adminRepository)
                     "Orders" -> AdminOrderManagement(orderRepository = orderRepository)
                     "Receipts" -> StudentReceipts(
                         userId = userId,
-                        orderRepository = orderRepository
+                        orderRepository = orderRepository,
+                        onOrderClick = {
+                            selectedOrder = it
+                            activeView = "OrderDetail"
+                        }
                     )
 
                     "Spending" -> StudentTotalSpending(
                         userId = userId,
                         orderRepository = orderRepository
+                    )
+
+                    "OrderDetail" -> OrderDetailWindow(
+                        order = selectedOrder,
+                        onReturnHome = onReturnHome
                     )
                 }
             }
@@ -551,7 +569,10 @@ fun ActivityScreenTab(
 )
 {
     var currentHubView by remember { mutableStateOf("Main") }
-    val userRole = remember(role) { UserRole.valueOf(role) }
+    val userRole = remember(role) {
+        UserRole.entries.find { it.name == role } ?: UserRole.STANDARD
+    }
+    var selectedOrder by remember { mutableStateOf<OrderEntity?>(null) }
 
     if (currentHubView == "Main")
     {
@@ -636,14 +657,17 @@ fun ActivityScreenTab(
                     .padding(DesignSystem.Spacing.medium),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { currentHubView = "Main" }) {
+                IconButton(onClick = {
+                    if (currentHubView == "OrderDetail") currentHubView = "ReceiptsHub"
+                    else currentHubView = "Main"
+                }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                         contentDescription = "Back"
                     )
                 }
                 Text(
-                    text = currentHubView,
+                    text = if (currentHubView == "OrderDetail") "Detailed Receipt" else currentHubView,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -651,9 +675,11 @@ fun ActivityScreenTab(
                 TextButton(onClick = onReturnHome) { Text(text = "Home") }
             }
 
-            Box(modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = DesignSystem.Spacing.medium)) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = DesignSystem.Spacing.medium)
+            ) {
                 when (currentHubView)
                 {
                     "Current" -> StudentCurrentOrderHub(
@@ -663,13 +689,25 @@ fun ActivityScreenTab(
                         onReturnHome
                     )
 
-                    "ReceiptsHub" -> StudentReceipts(userId, orderRepository)
+                    "ReceiptsHub" -> StudentReceipts(
+                        userId,
+                        orderRepository,
+                        onOrderClick = {
+                            selectedOrder = it
+                            currentHubView = "OrderDetail"
+                        }
+                    )
+
                     "ReportsHub" -> StudentActivityReports(userId, orderRepository)
                     "VendorOrders" -> VendorOrderHub(userId, orderRepository)
                     "VendorReports" -> VendorReportHub(userId, orderRepository)
                     "AdminReceipts" -> AdminReceiptsHub(orderRepository)
                     "AdminSummary" -> AdminGlobalSummary(orderRepository)
                     "AdminReports" -> AdminReportHub(statsRepository, adminRepository, onReturnHome)
+                    "OrderDetail" -> OrderDetailWindow(
+                        order = selectedOrder,
+                        onReturnHome = onReturnHome
+                    )
                 }
             }
         }
@@ -868,7 +906,11 @@ fun AdminOrderManagement(orderRepository: OrderRepository)
 }
 
 @Composable
-fun StudentReceipts(userId: String, orderRepository: OrderRepository)
+fun StudentReceipts(
+    userId: String,
+    orderRepository: OrderRepository,
+    onOrderClick: (OrderEntity) -> Unit
+)
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
 
@@ -959,7 +1001,10 @@ fun StudentReceipts(userId: String, orderRepository: OrderRepository)
                 }
             }
             items(filteredOrders) { order ->
-                HIGCard(modifier = Modifier.fillMaxWidth()) {
+                HIGCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onOrderClick(order) }
+                ) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
@@ -1541,6 +1586,165 @@ fun AdminReportHub(
 }
 
 @Composable
+fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
+{
+    if (order == null)
+    {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Detailed receipt data is unavailable.", color = MaterialTheme.colorScheme.error)
+        }
+    }
+    else
+    {
+        val items = remember(order) {
+            try
+            {
+                Json.decodeFromString<List<CartItemEntity>>(order.itemsJson)
+            }
+            catch (e: Exception)
+            {
+                emptyList()
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+        ) {
+            HIGCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+                    Text(
+                        "Order Audit",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Serial: #${order.orderId}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                    Text(
+                        "Merchant: ${order.vendorId}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Transaction Date: ${
+                            SimpleDateFormat(
+                                "dd/MM/yyyy HH:mm",
+                                Locale.getDefault()
+                            ).format(Date(order.timestamp))
+                        }", style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        "Scheduled Pickup: ${order.pickupTime}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Status: ${order.status.name}",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
+
+            Text(
+                "Inventory Breakdown",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = DesignSystem.Spacing.small)
+            )
+
+            items.forEach { item ->
+                HIGCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("${item.quantity}x ${item.name}", modifier = Modifier.weight(1f))
+                        Text(
+                            "R${String.format("%.2f", item.price * item.quantity)}",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = DesignSystem.Spacing.small))
+
+            HIGCard(
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.extraSmall)) {
+                    val subtotal = items.sumOf { it.price * it.quantity }
+                    DetailRow("Cart Subtotal", subtotal)
+                    DetailRow("Platform Fees & Tax", order.totalAmount - subtotal)
+                    DetailRow("Settlement Method", 0.0) // Mock zero for label
+                    Text(
+                        text = order.paymentMethod.name,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f),
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            "Total Settlement",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "R${String.format("%.2f", order.totalAmount)}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                }
+            }
+
+            if (!order.specialRequests.isNullOrBlank())
+            {
+                HIGCard(modifier = Modifier.fillMaxWidth()) {
+                    Column {
+                        Text("Customer Instructions", fontWeight = FontWeight.Bold)
+                        Text(order.specialRequests, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            HIGButton(
+                onClick = onReturnHome,
+                text = "Back to Campus Hub",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
+        }
+    }
+}
+
+@Composable
+fun DetailRow(label: String, amount: Double)
+{
+    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text("R${String.format("%.2f", amount)}", style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
 fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
 {
     var targetId by remember { mutableStateOf("") }
@@ -1548,46 +1752,65 @@ fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
     val coroutineScope = rememberCoroutineScope()
     var successMsg by remember { mutableStateOf("") }
 
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-        Text(
-            "Manually add credits to a user's campus wallet for support or refunds.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
-        )
-        OutlinedTextField(
-            value = targetId,
-            onValueChange = { targetId = it; successMsg = "" },
-            label = { Text("Target User ID") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
-        OutlinedTextField(
-            value = amount,
-            onValueChange = { amount = it; successMsg = "" },
-            label = { Text("Amount (R)") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+        ) {
+            Text(
+                "Manually add credits to a user's campus wallet for support or refunds.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline
+            )
+            OutlinedTextField(
+                value = targetId,
+                onValueChange = {
+                    targetId = it
+                    successMsg = ""
+                },
+                label = { Text("Target User ID") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = amount,
+                onValueChange = {
+                    amount = it
+                    successMsg = ""
+                },
+                label = { Text("Amount (R)") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
 
-        if (successMsg.isNotEmpty()) Text(
-            successMsg,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
-        )
+            if (successMsg.isNotEmpty()) Text(
+                successMsg,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
-        Spacer(modifier = Modifier.weight(1f))
+        // Principle: Direct Manipulation - Fixed action button for clarity.
+        val isFormValid = targetId.isNotBlank() && (amount.toDoubleOrNull() ?: 0.0) > 0
         HIGButton(
             onClick = {
                 val a = amount.toDoubleOrNull() ?: 0.0
-                if (targetId.isNotBlank() && a > 0)
+                if (isFormValid)
                 {
                     coroutineScope.launch { adminRepository.issueCredits(targetId, a) }
                     successMsg = "Success: R${String.format("%.2f", a)} issued to $targetId"
+                    targetId = ""; amount = ""
                 }
             },
             text = "Finalize Credit Issue",
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = isFormValid
         )
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
 
@@ -1599,46 +1822,64 @@ fun AdminGenerateCouponsWindow(couponRepository: CouponRepository)
     val coroutineScope = rememberCoroutineScope()
     var successMsg by remember { mutableStateOf("") }
 
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-        Text(
-            "Create unique promotional codes for student discounts.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
-        )
-        OutlinedTextField(
-            value = code,
-            onValueChange = { code = it; successMsg = "" },
-            label = { Text("Coupon Code") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
-        OutlinedTextField(
-            value = discount,
-            onValueChange = { discount = it; successMsg = "" },
-            label = { Text("Discount Percentage") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+        ) {
+            Text(
+                "Create unique promotional codes for student discounts.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline
+            )
+            OutlinedTextField(
+                value = code,
+                onValueChange = {
+                    code = it
+                    successMsg = ""
+                },
+                label = { Text("Coupon Code") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = discount,
+                onValueChange = {
+                    discount = it
+                    successMsg = ""
+                },
+                label = { Text("Discount Percentage") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
 
-        if (successMsg.isNotEmpty()) Text(
-            successMsg,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
-        )
+            if (successMsg.isNotEmpty()) Text(
+                successMsg,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
-        Spacer(modifier = Modifier.weight(1f))
+        val isFormValid = code.isNotBlank() && (discount.toDoubleOrNull() ?: 0.0) > 0
         HIGButton(
             onClick = {
                 val d = discount.toDoubleOrNull() ?: 0.0
-                if (code.isNotBlank() && d > 0)
+                if (isFormValid)
                 {
                     coroutineScope.launch { couponRepository.createCoupon(code, d) }
                     successMsg = "Success: Coupon $code (${d}%) generated."
+                    code = ""; discount = ""
                 }
             },
             text = "Generate Promo Code",
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = isFormValid
         )
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
 
@@ -1677,9 +1918,10 @@ fun AdminFeedbackWindow(feedbackRepository: FeedbackRepository, type: FeedbackTy
                         }
                         Text(fb.message, style = MaterialTheme.typography.bodySmall)
                         Text(
-                            "From: ${fb.userId}",
+                            "Audit Trace: ${fb.feedbackId} • From: ${fb.userId}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.outline
+                        )
                         )
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = DesignSystem.Spacing.small))
@@ -1728,27 +1970,38 @@ fun StudentRedeemCouponWindow(couponRepository: CouponRepository)
     var status by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
 
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-        Text(
-            "Enter a promotional code to apply a discount to your next order.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
-        )
-        OutlinedTextField(
-            value = code,
-            onValueChange = { code = it; status = "" },
-            label = { Text("Promo Code") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+        ) {
+            Text(
+                "Enter a promotional code to apply a discount to your next order.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline
+            )
+            OutlinedTextField(
+                value = code,
+                onValueChange = {
+                    code = it
+                    status = ""
+                },
+                label = { Text("Promo Code") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
 
-        if (status.isNotEmpty()) Text(
-            status,
-            color = if (status.startsWith("Valid")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-            fontWeight = FontWeight.Bold
-        )
+            if (status.isNotEmpty()) Text(
+                status,
+                color = if (status.startsWith("Valid")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
-        Spacer(modifier = Modifier.weight(1f))
+        val isFormValid = code.isNotBlank()
         HIGButton(
             onClick = {
                 coroutineScope.launch {
@@ -1758,8 +2011,10 @@ fun StudentRedeemCouponWindow(couponRepository: CouponRepository)
                 }
             },
             text = "Verify Code",
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = isFormValid
         )
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
 
@@ -1772,46 +2027,65 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
     val coroutineScope = rememberCoroutineScope()
     var successMsg by remember { mutableStateOf("") }
 
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-        Text(
-            "Link a debit card for secure campus wallet top-ups.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
-        )
-        OutlinedTextField(
-            value = cardNumber,
-            onValueChange = { cardNumber = it; successMsg = "" },
-            label = { Text("16-Digit Card Number") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-            OutlinedTextField(
-                value = expiryDate,
-                onValueChange = { expiryDate = it },
-                label = { Text("MM/YY") },
-                modifier = Modifier.weight(1f),
-                shape = MaterialTheme.shapes.medium
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+        ) {
+            Text(
+                "Link a debit card for secure campus wallet top-ups.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline
             )
             OutlinedTextField(
-                value = cvv,
-                onValueChange = { cvv = it },
-                label = { Text("CVV") },
-                modifier = Modifier.weight(1f),
-                shape = MaterialTheme.shapes.medium
+                value = cardNumber,
+                onValueChange = {
+                    cardNumber = it
+                    successMsg = ""
+                },
+                label = { Text("16-Digit Card Number") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+                OutlinedTextField(
+                    value = expiryDate,
+                    onValueChange = {
+                        expiryDate = it
+                        successMsg = ""
+                    },
+                    label = { Text("MM/YY") },
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = cvv,
+                    onValueChange = {
+                        cvv = it
+                        successMsg = ""
+                    },
+                    label = { Text("CVV") },
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true
+                )
+            }
+
+            if (successMsg.isNotEmpty()) Text(
+                successMsg,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
             )
         }
 
-        if (successMsg.isNotEmpty()) Text(
-            successMsg,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
+        val isFormValid = cardNumber.length == 16 && expiryDate.isNotBlank() && cvv.isNotBlank()
         HIGButton(
             onClick = {
-                if (cardNumber.length == 16)
+                if (isFormValid)
                 {
                     coroutineScope.launch {
                         debitCardRepository.addCard(
@@ -1822,11 +2096,14 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
                         )
                     }
                     successMsg = "Success: Card ending in ${cardNumber.takeLast(4)} linked."
+                    cardNumber = ""; expiryDate = ""; cvv = ""
                 }
             },
             text = "Securely Save Card",
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = isFormValid
         )
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
 
@@ -1837,60 +2114,157 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
     var accNum by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(1) ?: "") }
     var holder by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(2) ?: "") }
     var branch by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(3) ?: "") }
+    var confirmAccNum by remember { mutableStateOf("") }
+
     val coroutineScope = rememberCoroutineScope()
     var successMsg by remember { mutableStateOf("") }
+    var errorMsg by remember { mutableStateOf("") }
 
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-        Text(
-            "Provide your banking information to receive periodic revenue payouts.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
-        )
-        OutlinedTextField(
-            value = bankName,
-            onValueChange = { bankName = it; successMsg = "" },
-            label = { Text("Financial Institution (Bank Name)") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
-        OutlinedTextField(
-            value = accNum,
-            onValueChange = { accNum = it },
-            label = { Text("Account Number") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
-        OutlinedTextField(
-            value = holder,
-            onValueChange = { holder = it },
-            label = { Text("Account Holder Name") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
-        OutlinedTextField(
-            value = branch,
-            onValueChange = { branch = it },
-            label = { Text("Branch Code") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+        ) {
+            Text(
+                "Provide your banking information to receive periodic revenue payouts.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline
+            )
 
-        if (successMsg.isNotEmpty()) Text(
-            successMsg,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
-        )
+            OutlinedTextField(
+                value = bankName,
+                onValueChange = {
+                    bankName = it
+                    successMsg = ""
+                    errorMsg = ""
+                },
+                label = { Text("Financial Institution (Bank Name)") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = accNum,
+                onValueChange = {
+                    accNum = it
+                    errorMsg = ""
+                },
+                label = { Text("Account Number") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = confirmAccNum,
+                onValueChange = {
+                    confirmAccNum = it
+                    errorMsg = ""
+                },
+                label = { Text("Confirm Account Number") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = holder,
+                onValueChange = {
+                    holder = it
+                    errorMsg = ""
+                },
+                label = { Text("Account Holder Name") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = branch,
+                onValueChange = {
+                    branch = it
+                    errorMsg = ""
+                },
+                label = { Text("Branch Code") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
 
-        Spacer(modifier = Modifier.weight(1f))
+            if (successMsg.isNotEmpty()) Text(
+                successMsg,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+            if (errorMsg.isNotEmpty()) Text(
+                errorMsg,
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        val isFormValid =
+            bankName.isNotBlank() && accNum.isNotBlank() && holder.isNotBlank() && branch.isNotBlank() && confirmAccNum.isNotBlank()
+
         HIGButton(
             onClick = {
-                val info = "$bankName | $accNum | $holder | $branch"
-                coroutineScope.launch { authRepository.linkBankAccount(userId, info) }
-                successMsg = "Success: Banking details updated."
+                if (accNum != confirmAccNum)
+                {
+                    errorMsg = "Error: Account numbers do not match."
+                }
+                else
+                {
+                    val info = "$bankName | $accNum | $holder | $branch"
+                    coroutineScope.launch { authRepository.linkBankAccount(userId, info) }
+                    successMsg = "Success: Banking details updated."
+                }
             },
             text = "Update Payout Details",
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = isFormValid
         )
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
+    }
+}
+
+@Composable
+fun AdminReportHub(
+    statsRepository: StatsRepository,
+    adminRepository: AdminRepository,
+    onReturnHome: () -> Unit
+)
+{
+    var reportType by remember { mutableStateOf("Main") }
+    if (reportType == "Main")
+    {
+        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+            HIGServiceRow(
+                "Daily Trends",
+                "View platform activity over time.",
+                Icons.Rounded.TrendingUp,
+                { reportType = "Trends" })
+            HIGServiceRow(
+                "Vendor Rankings",
+                "Top performers by revenue.",
+                Icons.Rounded.AttachMoney,
+                { reportType = "Vendors" })
+        }
+    }
+    else
+    {
+        Column {
+            IconButton(onClick = {
+                reportType = "Main"
+            }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, null) }
+            Text(
+                "Report: $reportType",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) { Text("Data aggregation in progress...") }
+        }
     }
 }
 
@@ -1903,52 +2277,74 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
     val coroutineScope = rememberCoroutineScope()
     var successMsg by remember { mutableStateOf("") }
 
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-        Text(
-            "Your feedback helps us improve the campus dining experience.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
-            FilterChip(
-                selected = type == FeedbackType.COMPLIMENT,
-                onClick = { type = FeedbackType.COMPLIMENT },
-                label = { Text("Compliment") },
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+        ) {
+            Text(
+                "Your feedback helps us improve the campus dining experience.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+                FilterChip(
+                    selected = type == FeedbackType.COMPLIMENT,
+                    onClick = {
+                        type = FeedbackType.COMPLIMENT
+                        successMsg = ""
+                    },
+                    label = { Text("Compliment") },
+                    shape = MaterialTheme.shapes.medium
+                )
+                FilterChip(
+                    selected = type == FeedbackType.COMPLAINT,
+                    onClick = {
+                        type = FeedbackType.COMPLAINT
+                        successMsg = ""
+                    },
+                    label = { Text("Complaint") },
+                    shape = MaterialTheme.shapes.medium
+                )
+            }
+
+            OutlinedTextField(
+                value = subj,
+                onValueChange = {
+                    subj = it
+                    successMsg = ""
+                },
+                label = { Text("Topic / Subject") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = msg,
+                onValueChange = {
+                    msg = it
+                    successMsg = ""
+                },
+                label = { Text("Detailed Message") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 4,
                 shape = MaterialTheme.shapes.medium
             )
-            FilterChip(
-                selected = type == FeedbackType.COMPLAINT,
-                onClick = { type = FeedbackType.COMPLAINT },
-                label = { Text("Complaint") },
-                shape = MaterialTheme.shapes.medium
+
+            if (successMsg.isNotEmpty()) Text(
+                successMsg,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
             )
         }
-        OutlinedTextField(
-            value = subj,
-            onValueChange = { subj = it; successMsg = "" },
-            label = { Text("Topic / Subject") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
-        OutlinedTextField(
-            value = msg,
-            onValueChange = { msg = it },
-            label = { Text("Detailed Message") },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 4,
-            shape = MaterialTheme.shapes.medium
-        )
 
-        if (successMsg.isNotEmpty()) Text(
-            successMsg,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
+        val isFormValid = subj.isNotBlank() && msg.isNotBlank()
         HIGButton(
             onClick = {
-                if (subj.isNotBlank() && msg.isNotBlank())
+                if (isFormValid)
                 {
                     coroutineScope.launch {
                         feedbackRepository.submitFeedback(
@@ -1962,8 +2358,52 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
                     subj = ""; msg = ""
                 }
             },
-            text = "Send Feedback",
-            modifier = Modifier.fillMaxWidth()
+            text = "Finalize Submission",
+            modifier = Modifier.fillMaxWidth(),
+            enabled = isFormValid
         )
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
+    }
+}
+
+@Composable
+fun AdminReportHub(
+    statsRepository: StatsRepository,
+    adminRepository: AdminRepository,
+    onReturnHome: () -> Unit
+)
+{
+    var reportType by remember { mutableStateOf("Main") }
+    if (reportType == "Main")
+    {
+        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+            HIGServiceRow(
+                "Daily Trends",
+                "View platform activity over time.",
+                Icons.Rounded.TrendingUp,
+                { reportType = "Trends" })
+            HIGServiceRow(
+                "Vendor Rankings",
+                "Top performers by revenue.",
+                Icons.Rounded.AttachMoney,
+                { reportType = "Vendors" })
+        }
+    }
+    else
+    {
+        Column {
+            IconButton(onClick = {
+                reportType = "Main"
+            }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, null) }
+            Text(
+                "Report: $reportType",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) { Text("Data aggregation in progress...") }
+        }
     }
 }

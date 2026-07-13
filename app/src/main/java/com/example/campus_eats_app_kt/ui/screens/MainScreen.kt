@@ -59,7 +59,9 @@ fun MainScreen(
 )
 {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val userRole = remember(role) { UserRole.valueOf(role) }
+    val userRole = remember(role) {
+        UserRole.entries.find { it.name == role } ?: UserRole.STANDARD
+    }
 
     Scaffold(
         topBar = {
