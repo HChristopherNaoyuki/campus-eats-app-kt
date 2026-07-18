@@ -38,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 /**
  * CartViewModel manages the state of the user's shopping cart.
@@ -122,6 +124,7 @@ fun CartScreen(
 {
     val cartItems by viewModel.cartItems.collectAsState()
     val role by viewModel.userRole.collectAsState()
+    val locale = LocalConfiguration.current.locales[0]
 
     val subtotal = cartItems.sumOf { it.price * it.quantity }
     val summary = CheckoutEngine.calculateSummary(subtotal, role)
@@ -154,15 +157,16 @@ fun CartScreen(
                     color = MaterialTheme.colorScheme.surface
                 ) {
                     Column(modifier = Modifier.padding(DesignSystem.Spacing.screenPadding)) {
-                        CalculationRow("Subtotal", summary.subtotal)
-                        CalculationRow("Tax (20%)", summary.tax)
-                        CalculationRow("Service Fee", summary.serviceFee)
+                        CalculationRow("Subtotal", summary.subtotal, locale)
+                        CalculationRow("Tax (20%)", summary.tax, locale)
+                        CalculationRow("Service Fee", summary.serviceFee, locale)
 
                         if (summary.studentDiscount > 0)
                         {
                             CalculationRow(
                                 label = "Student Discount (2.5%)",
                                 amount = -summary.studentDiscount,
+                                locale = locale,
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -172,7 +176,7 @@ fun CartScreen(
                             summary.total - (summary.subtotal + summary.tax + summary.serviceFee - summary.studentDiscount)
                         if (kotlin.math.abs(rounding) > 0.001)
                         {
-                            CalculationRow("Rounding Adjustment", rounding)
+                            CalculationRow("Rounding Adjustment", rounding, locale)
                         }
 
                         HorizontalDivider(Modifier.padding(vertical = DesignSystem.Spacing.medium))
@@ -187,7 +191,7 @@ fun CartScreen(
                                 fontWeight = FontWeight.ExtraBold
                             )
                             Text(
-                                text = "R${String.format("%.2f", summary.total)}",
+                                text = "R${String.format(locale, "%.2f", summary.total)}",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.primary
@@ -246,7 +250,7 @@ fun CartScreen(
                 verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.itemSpacing)
             ) {
                 items(cartItems) { item ->
-                    CartItemCard(item = item, viewModel = viewModel)
+                    CartItemCard(item = item, viewModel = viewModel, locale = locale)
                 }
             }
         }
@@ -254,7 +258,7 @@ fun CartScreen(
 }
 
 @Composable
-fun CartItemCard(item: CartItemEntity, viewModel: CartViewModel)
+fun CartItemCard(item: CartItemEntity, viewModel: CartViewModel, locale: Locale)
 {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -271,11 +275,17 @@ fun CartItemCard(item: CartItemEntity, viewModel: CartViewModel)
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "R${String.format("%.2f", item.price)} each",
+                    text = "R${String.format(locale, "%.2f", item.price)} each",
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = "Subtotal: R${String.format("%.2f", item.price * item.quantity)}",
+                    text = "Subtotal: R${
+                        String.format(
+                            locale,
+                            "%.2f",
+                            item.price * item.quantity
+                        )
+                    }",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -320,6 +330,7 @@ fun CartItemCard(item: CartItemEntity, viewModel: CartViewModel)
 fun CalculationRow(
     label: String,
     amount: Double,
+    locale: Locale,
     color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
 )
 {
@@ -335,8 +346,8 @@ fun CalculationRow(
             color = MaterialTheme.colorScheme.outline
         )
         Text(
-            text = if (amount >= 0) "R${String.format("%.2f", amount)}"
-            else "-R${String.format("%.2f", -amount)}",
+            text = if (amount >= 0) "R${String.format(locale, "%.2f", amount)}"
+            else "-R${String.format(locale, "%.2f", -amount)}",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = color

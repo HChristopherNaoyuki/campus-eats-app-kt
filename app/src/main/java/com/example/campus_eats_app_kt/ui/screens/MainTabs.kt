@@ -20,6 +20,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.automirrored.rounded.ListAlt
+import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Analytics
@@ -33,16 +38,11 @@ import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Inventory
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
-import androidx.compose.material.icons.rounded.List
-import androidx.compose.material.icons.rounded.ListAlt
-import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.Receipt
-import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.RemoveShoppingCart
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material.icons.rounded.Store
-import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -69,6 +69,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -101,7 +102,6 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 
 /**
  * HomeScreenTab provides the primary landing page for authenticated users,
@@ -123,6 +123,7 @@ fun HomeScreenTab(
     val vendorStats by statsRepository.getVendorStats(userId).collectAsState(null)
     val adminStats by statsRepository.getAdminStats().collectAsState(null)
     val coroutineScope = rememberCoroutineScope()
+    val locale = LocalConfiguration.current.locales[0]
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -240,7 +241,7 @@ fun HomeScreenTab(
                         Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
                             StatCardFull(
                                 label = "All-time Earnings",
-                                value = "R${String.format("%.2f", stats.allTimeEarnings)}"
+                                value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}"
                             )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -259,7 +260,7 @@ fun HomeScreenTab(
                             }
                             StatCardFull(
                                 label = "Today's Revenue",
-                                value = "R${String.format("%.2f", stats.todayRevenue)}",
+                                value = "R${String.format(locale, "%.2f", stats.todayRevenue)}",
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer
                             )
                         }
@@ -274,12 +275,12 @@ fun HomeScreenTab(
                         Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
                             StatCardFull(
                                 label = "System-wide Earnings",
-                                value = "R${String.format("%.2f", stats.allTimeEarnings)}"
+                                value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}"
                             )
                             AdminGridStats(stats = stats)
                             StatCardFull(
                                 label = "Today's Summary",
-                                value = "R${String.format("%.2f", stats.todayRevenue)}",
+                                value = "R${String.format(locale, "%.2f", stats.todayRevenue)}",
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer
                             )
                         }
@@ -481,7 +482,7 @@ fun ServicesScreenTab(
                     HIGServiceRow(
                         title = "System Orders",
                         description = "Supervise all active and past transactions.",
-                        icon = Icons.Rounded.List,
+                        icon = Icons.AutoMirrored.Rounded.List,
                         onClick = { activeView = "Orders" })
                 }
             }
@@ -613,7 +614,7 @@ fun ActivityScreenTab(
                     HIGServiceRow(
                         title = "Live Orders",
                         description = "Fulfill pending and active customer tasks.",
-                        icon = Icons.Rounded.ListAlt,
+                        icon = Icons.AutoMirrored.Rounded.ListAlt,
                         onClick = { currentHubView = "VendorOrders" }
                     )
                     HIGServiceRow(
@@ -629,7 +630,7 @@ fun ActivityScreenTab(
                     HIGServiceRow(
                         title = "Global Receipts",
                         description = "Audit every transaction on the platform.",
-                        icon = Icons.Rounded.ReceiptLong,
+                        icon = Icons.AutoMirrored.Rounded.ReceiptLong,
                         onClick = { currentHubView = "AdminReceipts" }
                     )
                     HIGServiceRow(
@@ -856,6 +857,7 @@ fun AdminOrderManagement(orderRepository: OrderRepository)
 {
     val orders by orderRepository.getAllOrders().collectAsState(emptyList())
     val coroutineScope = rememberCoroutineScope()
+    val locale = LocalConfiguration.current.locales[0]
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
@@ -871,7 +873,7 @@ fun AdminOrderManagement(orderRepository: OrderRepository)
                     ) {
                         Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
                         Text(
-                            text = "R${String.format("%.2f", order.totalAmount)}",
+                            text = "R${String.format(locale, "%.2f", order.totalAmount)}",
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Black
                         )
@@ -913,6 +915,7 @@ fun StudentReceipts(
 )
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
+    val locale = LocalConfiguration.current.locales[0]
 
     var selectedMonth by remember { mutableIntStateOf(-1) }
     var selectedYear by remember { mutableIntStateOf(-1) }
@@ -1013,7 +1016,7 @@ fun StudentReceipts(
                         Column {
                             Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
                             Text(
-                                text = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(
+                                text = SimpleDateFormat("dd MMM yyyy", locale).format(
                                     Date(order.timestamp)
                                 ),
                                 style = MaterialTheme.typography.labelSmall,
@@ -1021,7 +1024,7 @@ fun StudentReceipts(
                             )
                         }
                         Text(
-                            text = "R${String.format("%.2f", order.totalAmount)}",
+                            text = "R${String.format(locale, "%.2f", order.totalAmount)}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.primary
@@ -1038,6 +1041,7 @@ fun StudentTotalSpending(userId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
     val total = orders.sumOf { it.totalAmount }
+    val locale = LocalConfiguration.current.locales[0]
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1047,7 +1051,7 @@ fun StudentTotalSpending(userId: String, orderRepository: OrderRepository)
                 color = MaterialTheme.colorScheme.outline
             )
             Text(
-                text = "R${String.format("%.2f", total)}",
+                text = "R${String.format(locale, "%.2f", total)}",
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.primary,
@@ -1072,6 +1076,7 @@ fun SettingsScreenTab(
     var activeSettingView by remember { mutableStateOf("Main") }
     val user by authRepository.getUserFlow(userId).collectAsState(null)
     val coroutineScope = rememberCoroutineScope()
+    val locale = LocalConfiguration.current.locales[0]
 
     if (activeSettingView == "Main")
     {
@@ -1141,6 +1146,7 @@ fun SettingsScreenTab(
                             Text(
                                 text = "Balance: R${
                                     String.format(
+                                        locale,
                                         "%.2f",
                                         user?.walletBalance ?: 0.0
                                     )
@@ -1215,7 +1221,7 @@ fun SettingsScreenTab(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 shape = MaterialTheme.shapes.large
             ) {
-                Icon(Icons.Rounded.Logout, null)
+                Icon(Icons.AutoMirrored.Rounded.Logout, null)
                 Spacer(Modifier.width(DesignSystem.Spacing.small))
                 Text("Logout Session", fontWeight = FontWeight.Bold)
             }
@@ -1332,6 +1338,7 @@ fun StudentCurrentOrderHub(
 {
     val items by cartRepository.getCart(userId).collectAsState(emptyList())
     val coroutineScope = rememberCoroutineScope()
+    val locale = LocalConfiguration.current.locales[0]
 
     if (items.isEmpty())
     {
@@ -1378,7 +1385,7 @@ fun StudentCurrentOrderHub(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "R${String.format("%.2f", item.price)}",
+                                    text = "R${String.format(locale, "%.2f", item.price)}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Bold
@@ -1429,7 +1436,7 @@ fun StudentCurrentOrderHub(
             ) {
                 val subtotal = items.sumOf { it.price * it.quantity }
                 Text(
-                    text = "Proceed to Checkout • R${String.format("%.2f", subtotal)}",
+                    text = "Proceed to Checkout • R${String.format(locale, "%.2f", subtotal)}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -1461,6 +1468,7 @@ fun StudentActivityReports(userId: String, orderRepository: OrderRepository)
 fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
+    val locale = LocalConfiguration.current.locales[0]
     LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
         items(orders) { order ->
             HIGCard(modifier = Modifier.fillMaxWidth()) {
@@ -1472,7 +1480,7 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
                     )
                     Text(
                         text = "Time: ${
-                            SimpleDateFormat("HH:mm", Locale.getDefault()).format(
+                            SimpleDateFormat("HH:mm", locale).format(
                                 Date(
                                     order.timestamp
                                 )
@@ -1490,6 +1498,7 @@ fun VendorReportHub(vendorId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
     val total = orders.filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
+    val locale = LocalConfiguration.current.locales[0]
     HIGCard(
         modifier = Modifier.fillMaxWidth(),
         containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -1497,7 +1506,7 @@ fun VendorReportHub(vendorId: String, orderRepository: OrderRepository)
         Column {
             Text("Total Revenue", style = MaterialTheme.typography.labelMedium)
             Text(
-                "R${String.format("%.2f", total)}",
+                "R${String.format(locale, "%.2f", total)}",
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Black
             )
@@ -1509,6 +1518,7 @@ fun VendorReportHub(vendorId: String, orderRepository: OrderRepository)
 fun AdminReceiptsHub(orderRepository: OrderRepository)
 {
     val orders by orderRepository.getAllOrders().collectAsState(emptyList())
+    val locale = LocalConfiguration.current.locales[0]
     LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
         items(orders) { order ->
             HIGCard(modifier = Modifier.fillMaxWidth()) {
@@ -1519,7 +1529,7 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
                         style = MaterialTheme.typography.labelSmall
                     )
                     Text(
-                        "Amount: R${String.format("%.2f", order.totalAmount)}",
+                        "Amount: R${String.format(locale, "%.2f", order.totalAmount)}",
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -1533,8 +1543,9 @@ fun AdminGlobalSummary(orderRepository: OrderRepository)
 {
     val orders by orderRepository.getAllOrders().collectAsState(emptyList())
     val total = orders.filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
+    val locale = LocalConfiguration.current.locales[0]
     Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-        StatCardFull(label = "Platform Revenue", value = "R${String.format("%.2f", total)}")
+        StatCardFull(label = "Platform Revenue", value = "R${String.format(locale, "%.2f", total)}")
         StatCardHalf(
             label = "Total Transactions",
             value = "${orders.size}",
@@ -1557,7 +1568,7 @@ fun AdminReportHub(
             HIGServiceRow(
                 "Daily Trends",
                 "View platform activity over time.",
-                Icons.Rounded.TrendingUp,
+                Icons.AutoMirrored.Rounded.TrendingUp,
                 { reportType = "Trends" })
             HIGServiceRow(
                 "Vendor Rankings",
@@ -1596,6 +1607,7 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
     }
     else
     {
+        val locale = LocalConfiguration.current.locales[0]
         val items = remember(order) {
             try
             {
@@ -1634,7 +1646,7 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
                         "Transaction Date: ${
                             SimpleDateFormat(
                                 "dd/MM/yyyy HH:mm",
-                                Locale.getDefault()
+                                locale
                             ).format(Date(order.timestamp))
                         }", style = MaterialTheme.typography.bodySmall
                     )
@@ -1666,7 +1678,7 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
                     ) {
                         Text("${item.quantity}x ${item.name}", modifier = Modifier.weight(1f))
                         Text(
-                            "R${String.format("%.2f", item.price * item.quantity)}",
+                            "R${String.format(locale, "%.2f", item.price * item.quantity)}",
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -1681,9 +1693,9 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.extraSmall)) {
                     val subtotal = items.sumOf { it.price * it.quantity }
-                    DetailRow("Cart Subtotal", subtotal)
-                    DetailRow("Platform Fees & Tax", order.totalAmount - subtotal)
-                    DetailRow("Settlement Method", 0.0) // Mock zero for label
+                    DetailRow("Cart Subtotal", subtotal, locale)
+                    DetailRow("Platform Fees & Tax", order.totalAmount - subtotal, locale)
+                    DetailRow("Settlement Method", 0.0, locale) // Mock zero for label
                     Text(
                         text = order.paymentMethod.name,
                         style = MaterialTheme.typography.labelSmall,
@@ -1704,7 +1716,7 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "R${String.format("%.2f", order.totalAmount)}",
+                            "R${String.format(locale, "%.2f", order.totalAmount)}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Black
                         )
@@ -1736,11 +1748,14 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
 }
 
 @Composable
-fun DetailRow(label: String, amount: Double)
+fun DetailRow(label: String, amount: Double, locale: java.util.Locale)
 {
     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
-        Text("R${String.format("%.2f", amount)}", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            "R${String.format(locale, "%.2f", amount)}",
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
@@ -1751,6 +1766,7 @@ fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
     var amount by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     var successMsg by remember { mutableStateOf("") }
+    val locale = LocalConfiguration.current.locales[0]
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -1802,7 +1818,7 @@ fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
                 if (isFormValid)
                 {
                     coroutineScope.launch { adminRepository.issueCredits(targetId, a) }
-                    successMsg = "Success: R${String.format("%.2f", a)} issued to $targetId"
+                    successMsg = "Success: R${String.format(locale, "%.2f", a)} issued to $targetId"
                     targetId = ""; amount = ""
                 }
             },
@@ -1921,7 +1937,6 @@ fun AdminFeedbackWindow(feedbackRepository: FeedbackRepository, type: FeedbackTy
                             "Audit Trace: ${fb.feedbackId} • From: ${fb.userId}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.outline
-                        )
                         )
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = DesignSystem.Spacing.small))
@@ -2227,48 +2242,6 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
 }
 
 @Composable
-fun AdminReportHub(
-    statsRepository: StatsRepository,
-    adminRepository: AdminRepository,
-    onReturnHome: () -> Unit
-)
-{
-    var reportType by remember { mutableStateOf("Main") }
-    if (reportType == "Main")
-    {
-        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-            HIGServiceRow(
-                "Daily Trends",
-                "View platform activity over time.",
-                Icons.Rounded.TrendingUp,
-                { reportType = "Trends" })
-            HIGServiceRow(
-                "Vendor Rankings",
-                "Top performers by revenue.",
-                Icons.Rounded.AttachMoney,
-                { reportType = "Vendors" })
-        }
-    }
-    else
-    {
-        Column {
-            IconButton(onClick = {
-                reportType = "Main"
-            }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, null) }
-            Text(
-                "Report: $reportType",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Box(
-                Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) { Text("Data aggregation in progress...") }
-        }
-    }
-}
-
-@Composable
 fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
 {
     var subj by remember { mutableStateOf("") }
@@ -2363,47 +2336,5 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
             enabled = isFormValid
         )
         Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
-    }
-}
-
-@Composable
-fun AdminReportHub(
-    statsRepository: StatsRepository,
-    adminRepository: AdminRepository,
-    onReturnHome: () -> Unit
-)
-{
-    var reportType by remember { mutableStateOf("Main") }
-    if (reportType == "Main")
-    {
-        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-            HIGServiceRow(
-                "Daily Trends",
-                "View platform activity over time.",
-                Icons.Rounded.TrendingUp,
-                { reportType = "Trends" })
-            HIGServiceRow(
-                "Vendor Rankings",
-                "Top performers by revenue.",
-                Icons.Rounded.AttachMoney,
-                { reportType = "Vendors" })
-        }
-    }
-    else
-    {
-        Column {
-            IconButton(onClick = {
-                reportType = "Main"
-            }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, null) }
-            Text(
-                "Report: $reportType",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Box(
-                Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) { Text("Data aggregation in progress...") }
-        }
     }
 }

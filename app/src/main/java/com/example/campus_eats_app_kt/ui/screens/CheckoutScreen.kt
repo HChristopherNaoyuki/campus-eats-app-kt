@@ -25,6 +25,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -37,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -133,6 +135,8 @@ fun CheckoutScreen(
     var selectedPickupTime by remember { mutableStateOf("12:00") }
     var specialRequests by remember { mutableStateOf("") }
 
+    val locale = LocalConfiguration.current.locales[0]
+
     // Hardcoded logic for valid pickup intervals (10:00 AM to 16:00 PM)
     val pickupTimes = remember {
         (10..15).flatMap { hour ->
@@ -176,7 +180,7 @@ fun CheckoutScreen(
                             Text(
                                 text = "Place Order - R${
                                     String.format(
-                                        Locale.getDefault(),
+                                        locale,
                                         "%.2f",
                                         sum.total
                                     )
@@ -202,7 +206,7 @@ fun CheckoutScreen(
                 SectionHeader(title = "Items")
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 cartItems.forEach { item ->
-                    ItemSummaryRow(item = item)
+                    ItemSummaryRow(item = item, locale = locale)
                 }
             }
 
@@ -247,16 +251,17 @@ fun CheckoutScreen(
                     SectionHeader(title = "Totals")
                     Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                     Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
-                        SummaryRow("Subtotal", sum.subtotal)
-                        SummaryRow("Tax (20%)", sum.tax)
-                        SummaryRow("Service Fee", sum.serviceFee)
+                        SummaryRow("Subtotal", sum.subtotal, locale = locale)
+                        SummaryRow("Tax (20%)", sum.tax, locale = locale)
+                        SummaryRow("Service Fee", sum.serviceFee, locale = locale)
 
                         if (sum.studentDiscount > 0)
                         {
                             SummaryRow(
                                 label = "Student Discount (2.5%)",
                                 amount = -sum.studentDiscount,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
+                                locale = locale
                             )
                         }
 
@@ -264,7 +269,7 @@ fun CheckoutScreen(
                             sum.total - (sum.subtotal + sum.tax + sum.serviceFee - sum.studentDiscount)
                         if (kotlin.math.abs(rounding) > 0.001)
                         {
-                            SummaryRow("Rounding Adjustment", rounding)
+                            SummaryRow("Rounding Adjustment", rounding, locale = locale)
                         }
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = DesignSystem.Spacing.small))
@@ -279,7 +284,7 @@ fun CheckoutScreen(
                                 fontWeight = FontWeight.ExtraBold
                             )
                             Text(
-                                text = "R${String.format(Locale.getDefault(), "%.2f", sum.total)}",
+                                text = "R${String.format(locale, "%.2f", sum.total)}",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.primary
@@ -295,7 +300,7 @@ fun CheckoutScreen(
 }
 
 @Composable
-fun ItemSummaryRow(item: CartItemEntity)
+fun ItemSummaryRow(item: CartItemEntity, locale: Locale)
 {
     Row(
         modifier = Modifier
@@ -308,7 +313,7 @@ fun ItemSummaryRow(item: CartItemEntity)
             style = MaterialTheme.typography.bodyLarge
         )
         Text(
-            text = "R${String.format(Locale.getDefault(), "%.2f", item.price * item.quantity)}",
+            text = "R${String.format(locale, "%.2f", item.price * item.quantity)}",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium
         )
@@ -335,7 +340,7 @@ fun PickupTimePicker(
             leadingIcon = { Icon(Icons.Rounded.AccessTime, null) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth(),
             shape = MaterialTheme.shapes.medium
         )
@@ -399,6 +404,7 @@ fun SectionHeader(title: String)
 fun SummaryRow(
     label: String,
     amount: Double,
+    locale: Locale,
     color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
 )
 {
@@ -408,8 +414,8 @@ fun SummaryRow(
     ) {
         Text(text = label, color = color)
         Text(
-            text = if (amount >= 0) "R${String.format(Locale.getDefault(), "%.2f", amount)}"
-            else "-R${String.format(Locale.getDefault(), "%.2f", -amount)}",
+            text = if (amount >= 0) "R${String.format(locale, "%.2f", amount)}"
+            else "-R${String.format(locale, "%.2f", -amount)}",
             color = color,
             fontWeight = FontWeight.SemiBold
         )

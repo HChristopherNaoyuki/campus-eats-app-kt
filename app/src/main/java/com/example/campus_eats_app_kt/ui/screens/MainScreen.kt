@@ -3,8 +3,8 @@ package com.example.campus_eats_app_kt.ui.screens
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.List
 import androidx.compose.material.icons.rounded.MiscellaneousServices
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
@@ -107,7 +107,12 @@ fun MainScreen(
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Rounded.List, contentDescription = "Activity") },
+                    icon = {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.List,
+                            contentDescription = "Activity"
+                        )
+                    },
                     label = { Text("Activity") },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = MaterialTheme.colorScheme.primary,
