@@ -53,7 +53,6 @@ fun MainScreen(
     onNavigateToCheckout: () -> Unit,
     onNavigateToVendorMenu: (String) -> Unit,
     onNavigateToAddMenuItem: (String, Long?) -> Unit,
-    onNavigateToCart: () -> Unit,
     onNavigateToMenuBrowse: (String, String) -> Unit,
     onNavigateToVendorBrowse: (String) -> Unit
 )
@@ -141,8 +140,6 @@ fun MainScreen(
                     role = userRole,
                     authRepository = authRepository,
                     statsRepository = statsRepository,
-                    menuRepository = menuRepository,
-                    onNavigateToMenuBrowse = onNavigateToMenuBrowse,
                     onExploreVendors = { onNavigateToVendorBrowse(userId) }
                 )
                 1 -> ServicesScreenTab(
@@ -151,10 +148,8 @@ fun MainScreen(
                     menuRepository = menuRepository,
                     adminRepository = adminRepository,
                     orderRepository = orderRepository,
-                    statsRepository = statsRepository,
                     onNavigateToVendorMenu = onNavigateToVendorMenu,
                     onNavigateToMenuBrowse = onNavigateToMenuBrowse,
-                    onNavigateToCart = onNavigateToCart,
                     onNavigateToAddMenuItem = onNavigateToAddMenuItem,
                     onReturnHome = { selectedTab = 0 }
                 )
@@ -164,7 +159,6 @@ fun MainScreen(
                     orderRepository = orderRepository,
                     cartRepository = cartRepository,
                     statsRepository = statsRepository,
-                    adminRepository = adminRepository,
                     onNavigateToCheckout = onNavigateToCheckout,
                     onReturnHome = { selectedTab = 0 }
                 )

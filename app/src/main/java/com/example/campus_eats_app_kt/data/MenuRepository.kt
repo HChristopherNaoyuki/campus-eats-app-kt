@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.map
  */
 class MenuRepository(
     private val menuItemDao: MenuItemDao,
-    private val userDao: UserDao
+    private val userDao: UserDao,
 )
 {
     /**
@@ -61,7 +61,7 @@ class MenuRepository(
                     emit(networkItems)
                 }
             }
-            catch (e: Exception)
+            catch (_: Exception)
             {
                 // Network failure
             }
@@ -71,6 +71,7 @@ class MenuRepository(
     /**
      * Searches for menu items by name across both local and remote sources.
      */
+    @Suppress("unused")
     fun searchMenuItems(query: String): Flow<List<MenuItemEntity>> = flow {
         // Search local items
         menuItemDao.searchMenuItems(query).collect { emit(it) }
@@ -96,7 +97,7 @@ class MenuRepository(
                 emit(networkItems)
             }
         }
-        catch (e: Exception)
+        catch (_: Exception)
         {
             // Network failure
         }
@@ -134,7 +135,7 @@ class MenuRepository(
                 emit(networkVendors)
             }
         }
-        catch (e: Exception)
+        catch (_: Exception)
         {
             // Network error, fall back to local only
         }

@@ -25,7 +25,7 @@ class AuthRepository(private val userDao: UserDao)
         email: String,
         password: String,
         role: UserRole,
-        shopName: String? = null
+        shopName: String? = null,
     ): Result<UserEntity>
     {
         return kotlin.runCatching {
@@ -46,7 +46,7 @@ class AuthRepository(private val userDao: UserDao)
                     remoteUsercode = response.body()?.usercode
                 }
             }
-            catch (e: Exception)
+            catch (_: Exception)
             {
                 // Network failure during registration, we'll continue with local only for now
             }
@@ -77,7 +77,7 @@ class AuthRepository(private val userDao: UserDao)
     {
         return kotlin.runCatching {
             val user = userDao.getUserByEmail(email)
-            if (user != null && user.passwordHash == password)
+            if ((user != null) && (user.passwordHash == password))
             {
                 // If usercode is missing locally, try to fetch it from the API
                 if (user.usercode == null)
@@ -96,7 +96,7 @@ class AuthRepository(private val userDao: UserDao)
                             }
                         }
                     }
-                    catch (e: Exception)
+                    catch (_: Exception)
                     {
                         // Network error, return local user as is
                     }
@@ -126,7 +126,7 @@ class AuthRepository(private val userDao: UserDao)
                     {
                         RetrofitClient.instance.updatePassword(user.usercode, newPassword)
                     }
-                    catch (e: Exception)
+                    catch (_: Exception)
                     {
                         // Ignore network failure for local password reset
                     }
@@ -147,8 +147,7 @@ class AuthRepository(private val userDao: UserDao)
     suspend fun updateProfile(userId: String, email: String, password: String): Result<Unit>
     {
         return kotlin.runCatching {
-            val user = userDao.getUserById(userId)
-            if (user == null) throw Exception("User not found")
+            val user = userDao.getUserById(userId) ?: throw Exception("User not found")
 
             if (user.email != email)
             {
@@ -166,7 +165,7 @@ class AuthRepository(private val userDao: UserDao)
                     {
                         RetrofitClient.instance.updatePassword(user.usercode, password)
                     }
-                    catch (e: Exception)
+                    catch (_: Exception)
                     {
                         // Ignore network failure for local password reset
                     }
@@ -215,6 +214,7 @@ class AuthRepository(private val userDao: UserDao)
     /**
      * Deletes a user account from both local and remote systems.
      */
+    @Suppress("unused")
     suspend fun deleteAccount(userId: String): Result<Unit>
     {
         return kotlin.runCatching {
@@ -228,7 +228,7 @@ class AuthRepository(private val userDao: UserDao)
                     {
                         RetrofitClient.instance.deleteUser(user.usercode)
                     }
-                    catch (e: Exception)
+                    catch (_: Exception)
                     {
                         // Ignore network failure
                     }

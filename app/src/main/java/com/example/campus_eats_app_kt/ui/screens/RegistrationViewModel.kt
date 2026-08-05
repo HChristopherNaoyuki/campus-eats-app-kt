@@ -38,7 +38,7 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
         email: String,
         password: String,
         role: UserRole,
-        shopName: String? = null
+        shopName: String? = null,
     )
     {
         // Preliminary input validation
@@ -49,7 +49,7 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
         }
 
         // Conditional validation for vendor roles
-        if (role == UserRole.VENDOR && shopName.isNullOrBlank())
+        if ((role == UserRole.VENDOR) && shopName.isNullOrBlank())
         {
             _registrationState.value = RegistrationState.Error("Shop name is required for vendors")
             return
@@ -67,7 +67,7 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
                     email = email,
                     password = password,
                     role = role,
-                    shopName = shopName
+                    shopName = shopName,
                 )
 
                 result.onSuccess { user ->
@@ -91,6 +91,7 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
     /**
      * Resets the registration state to Idle.
      */
+    @Suppress("unused")
     fun resetState()
     {
         _registrationState.value = RegistrationState.Idle

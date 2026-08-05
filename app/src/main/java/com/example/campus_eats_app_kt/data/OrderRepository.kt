@@ -22,7 +22,7 @@ import kotlinx.serialization.json.Json
 class OrderRepository(
     private val orderDao: OrderDao,
     private val cartDao: CartDao,
-    private val userDao: UserDao
+    private val userDao: UserDao,
 )
 {
     /**
@@ -44,7 +44,7 @@ class OrderRepository(
         val user = userDao.getUserById(userId)
         val apikey = user?.usercode
 
-        if (numericVendorId != null && apikey != null)
+        if ((numericVendorId != null) && (apikey != null))
         {
             try
             {
@@ -57,7 +57,7 @@ class OrderRepository(
                 // Note: We ignore the response as the API mock is non-persistent for many users,
                 // but we perform the call to demonstrate "Usage" of the API.
             }
-            catch (e: Exception)
+            catch (_: Exception)
             {
                 // Network order failed, we continue with local persistence
             }
@@ -91,6 +91,7 @@ class OrderRepository(
     /**
      * Retrieves orders from the remote API for the given user.
      */
+    @Suppress("unused")
     fun getRemoteOrders(userId: String): Flow<List<MasterOrder>> = flow {
         val user = userDao.getUserById(userId)
         val apikey = user?.usercode
@@ -104,7 +105,7 @@ class OrderRepository(
                     emit(response.body() ?: emptyList())
                 }
             }
-            catch (e: Exception)
+            catch (_: Exception)
             {
                 // Network error
             }
@@ -128,6 +129,7 @@ class OrderRepository(
     /**
      * Deletes a remote master order.
      */
+    @Suppress("unused")
     suspend fun deleteRemoteMasterOrder(userId: String, masterId: Int): Boolean
     {
         val user = userDao.getUserById(userId)

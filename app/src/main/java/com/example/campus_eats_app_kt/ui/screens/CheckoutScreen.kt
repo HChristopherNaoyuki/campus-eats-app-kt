@@ -66,10 +66,10 @@ import java.util.Locale
  * It combines cart items and user profile data to generate a definitive financial summary.
  */
 class CheckoutViewModel(
-    private val cartRepository: CartRepository,
+    cartRepository: CartRepository,
     private val orderRepository: OrderRepository,
-    private val authRepository: AuthRepository,
-    val userId: String
+    authRepository: AuthRepository,
+    val userId: String,
 ) : ViewModel()
 {
     val cartItems: StateFlow<List<CartItemEntity>> = cartRepository.getCart(userId)
@@ -92,13 +92,13 @@ class CheckoutViewModel(
         paymentMethod: PaymentMethod,
         pickupTime: String,
         specialRequests: String?,
-        onSuccess: (Long) -> Unit
+        onSuccess: (Long) -> Unit,
     )
     {
         viewModelScope.launch {
             val items = cartItems.value
             val sum = summary.value
-            if (items.isNotEmpty() && sum != null)
+            if (items.isNotEmpty() && (sum != null))
             {
                 val vendorId = items.first().vendorId
                 val orderId = orderRepository.placeOrder(
@@ -216,9 +216,8 @@ fun CheckoutScreen(
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 PickupTimePicker(
                     selectedTime = selectedPickupTime,
-                    times = pickupTimes,
-                    onTimeSelected = { selectedPickupTime = it }
-                )
+                    times = pickupTimes
+                ) { selectedPickupTime = it }
             }
 
             // Financial transaction method module
@@ -266,7 +265,7 @@ fun CheckoutScreen(
                         }
 
                         val rounding =
-                            sum.total - (sum.subtotal + sum.tax + sum.serviceFee - sum.studentDiscount)
+                            sum.total - ((sum.subtotal + sum.tax + sum.serviceFee) - sum.studentDiscount)
                         if (kotlin.math.abs(rounding) > 0.001)
                         {
                             SummaryRow("Rounding Adjustment", rounding, locale = locale)
@@ -328,7 +327,7 @@ fun PickupTimePicker(
     onTimeSelected: (String) -> Unit
 )
 {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(value = false) }
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
@@ -369,19 +368,16 @@ fun PaymentMethodSelector(
 {
     Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
         PaymentOption(
-            method = PaymentMethod.DEBIT_CARD,
             label = "Debit Card",
             selected = selectedMethod == PaymentMethod.DEBIT_CARD,
             onClick = { onMethodSelected(PaymentMethod.DEBIT_CARD) }
         )
         PaymentOption(
-            method = PaymentMethod.CAMPUS_WALLET,
             label = "Campus Wallet",
             selected = selectedMethod == PaymentMethod.CAMPUS_WALLET,
             onClick = { onMethodSelected(PaymentMethod.CAMPUS_WALLET) }
         )
         PaymentOption(
-            method = PaymentMethod.COUPON,
             label = "Apply Coupon",
             selected = selectedMethod == PaymentMethod.COUPON,
             onClick = { onMethodSelected(PaymentMethod.COUPON) }
@@ -424,7 +420,6 @@ fun SummaryRow(
 
 @Composable
 fun PaymentOption(
-    method: PaymentMethod,
     label: String,
     selected: Boolean,
     onClick: () -> Unit

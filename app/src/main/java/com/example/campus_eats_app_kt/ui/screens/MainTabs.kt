@@ -114,8 +114,6 @@ fun HomeScreenTab(
     role: UserRole,
     authRepository: AuthRepository,
     statsRepository: StatsRepository,
-    menuRepository: MenuRepository,
-    onNavigateToMenuBrowse: (String, String) -> Unit,
     onExploreVendors: () -> Unit
 )
 {
@@ -161,7 +159,7 @@ fun HomeScreenTab(
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
-                            catch (e: Exception)
+                            catch (_: Exception)
                             {
                                 Toast.makeText(context, "Failed to copy ID", Toast.LENGTH_SHORT)
                                     .show()
@@ -411,10 +409,8 @@ fun ServicesScreenTab(
     menuRepository: MenuRepository,
     adminRepository: AdminRepository,
     orderRepository: OrderRepository,
-    statsRepository: StatsRepository,
     onNavigateToVendorMenu: (String) -> Unit,
     onNavigateToMenuBrowse: (String, String) -> Unit,
-    onNavigateToCart: () -> Unit,
     onNavigateToAddMenuItem: (String, Long?) -> Unit,
     onReturnHome: () -> Unit
 )
@@ -564,7 +560,6 @@ fun ActivityScreenTab(
     orderRepository: OrderRepository,
     cartRepository: CartRepository,
     statsRepository: StatsRepository,
-    adminRepository: AdminRepository,
     onNavigateToCheckout: () -> Unit,
     onReturnHome: () -> Unit
 )
@@ -704,7 +699,7 @@ fun ActivityScreenTab(
                     "VendorReports" -> VendorReportHub(userId, orderRepository)
                     "AdminReceipts" -> AdminReceiptsHub(orderRepository)
                     "AdminSummary" -> AdminGlobalSummary(orderRepository)
-                    "AdminReports" -> AdminReportHub(statsRepository, adminRepository, onReturnHome)
+                    "AdminReports" -> AdminReportHub(statsRepository)
                     "OrderDetail" -> OrderDetailWindow(
                         order = selectedOrder,
                         onReturnHome = onReturnHome
@@ -1556,9 +1551,7 @@ fun AdminGlobalSummary(orderRepository: OrderRepository)
 
 @Composable
 fun AdminReportHub(
-    statsRepository: StatsRepository,
-    adminRepository: AdminRepository,
-    onReturnHome: () -> Unit
+    statsRepository: StatsRepository
 )
 {
     var reportType by remember { mutableStateOf("Main") }
@@ -1613,7 +1606,7 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
             {
                 Json.decodeFromString<List<CartItemEntity>>(order.itemsJson)
             }
-            catch (e: Exception)
+            catch (_: Exception)
             {
                 emptyList()
             }

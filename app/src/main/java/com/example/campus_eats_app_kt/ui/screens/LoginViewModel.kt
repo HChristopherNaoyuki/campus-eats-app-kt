@@ -67,6 +67,7 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel()
     /**
      * Resets the login state to Idle.
      */
+    @Suppress("unused")
     fun resetState()
     {
         _loginState.value = LoginState.Idle

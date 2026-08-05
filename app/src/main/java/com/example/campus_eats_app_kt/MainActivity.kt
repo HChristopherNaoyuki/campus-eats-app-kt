@@ -64,7 +64,8 @@ class MainActivity : ComponentActivity()
         val authRepository = AuthRepository(database.userDao())
         val menuRepository = MenuRepository(database.menuItemDao(), database.userDao())
         val cartRepository = CartRepository(database.cartDao())
-        val orderRepository = OrderRepository(database.orderDao(), database.cartDao())
+        val orderRepository =
+            OrderRepository(database.orderDao(), database.cartDao(), database.userDao())
         val adminRepository = AdminRepository(database.userDao())
         val statsRepository =
             StatsRepository(database.userDao(), database.menuItemDao(), database.orderDao())
@@ -168,7 +169,6 @@ class MainActivity : ComponentActivity()
                                 onNavigateToCheckout = { backStack.add(Route.Checkout(route.userId)) },
                                 onNavigateToVendorMenu = { vendorId -> backStack.add(Route.VendorMenuManagement(vendorId)) },
                                 onNavigateToAddMenuItem = { vendorId, itemId -> backStack.add(Route.AddEditMenuItem(vendorId, itemId)) },
-                                onNavigateToCart = { backStack.add(Route.Cart(route.userId)) },
                                 onNavigateToMenuBrowse = { userId, vendorId ->
                                     backStack.add(
                                         Route.CustomerMenuBrowse(
