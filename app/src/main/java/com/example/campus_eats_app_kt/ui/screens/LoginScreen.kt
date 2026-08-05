@@ -2,6 +2,7 @@ package com.example.campus_eats_app_kt.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -41,6 +43,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
+import com.example.campus_eats_app_kt.ui.theme.ActionBlue
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
@@ -52,6 +55,7 @@ import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 @Composable
 fun LoginScreen(
     onLoginSuccess: (String, String) -> Unit, // userId, role
+    onRegisterClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -100,12 +104,21 @@ fun LoginScreen(
         ) {
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
 
-            // Textual guidance following HIG simplicity
             Text(
-                text = "Welcome back. Please sign in to your account.",
+                text = "Welcome back",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = "Please sign in to your account.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.padding(bottom = DesignSystem.Spacing.medium)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = DesignSystem.Spacing.medium)
             )
 
             // Principle: Aesthetic Integrity - Purposeful inputs with clear icons
@@ -113,6 +126,7 @@ fun LoginScreen(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email Address") },
+                placeholder = { Text("aisha@coebank.ac.za") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -120,36 +134,38 @@ fun LoginScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
 
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            imageVector = if (passwordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                            contentDescription = "Toggle password visibility"
-                        )
-                    }
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
-            )
-
-            // Contextual link for recovery
-            TextButton(
-                onClick = onForgotPasswordClick,
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text(
-                    text = "Forgot Password?",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                                contentDescription = "Toggle password visibility"
+                            )
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    singleLine = true,
+                    shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
                 )
+
+                // Contextual link for recovery
+                TextButton(
+                    onClick = onForgotPasswordClick,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text(
+                        text = "Forgot Password?",
+                        color = ActionBlue,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -169,8 +185,10 @@ fun LoginScreen(
             // Principle: Feedback - Action status indicators
             HIGButton(
                 onClick = { viewModel.login(email, password) },
-                text = "Sign In",
+                text = "Login",
                 modifier = Modifier.fillMaxWidth(),
+                containerColor = ActionBlue,
+                contentColor = Color.White,
                 enabled = loginState !is LoginState.Loading
             )
 
@@ -178,9 +196,28 @@ fun LoginScreen(
             {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = ActionBlue,
                     strokeWidth = 2.dp
                 )
+            }
+
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
+
+            TextButton(
+                onClick = onRegisterClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row {
+                    Text(
+                        text = "No account? ",
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = "Register",
+                        color = ActionBlue,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))

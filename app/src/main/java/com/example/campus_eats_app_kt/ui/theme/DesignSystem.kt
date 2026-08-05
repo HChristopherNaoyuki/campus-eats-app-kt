@@ -27,9 +27,9 @@ object DesignSystem
 
     object CornerRadius
     {
-        val small = 8.dp
-        val medium = 12.dp
-        val large = 16.dp
-        val extraLarge = 24.dp
+        val small = 10.dp
+        val medium = 14.dp
+        val large = 20.dp
+        val extraLarge = 28.dp
     }
 }

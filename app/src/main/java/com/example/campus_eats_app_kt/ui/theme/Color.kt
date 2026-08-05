@@ -2,8 +2,9 @@ package com.example.campus_eats_app_kt.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Minimalist High-Contrast Palette: Black, Orange, White
+// Minimalist High-Contrast Palette: Black, Orange, White, Blue
 val CampusOrange = Color(0xFFFF8C00) // Energetic Orange
+val ActionBlue = Color(0xFF007AFF)   // iOS Action Blue
 val CampusBlack = Color(0xFF000000)
 val CampusWhite = Color(0xFFFFFFFF)
 

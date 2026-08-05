@@ -11,22 +11,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.AccessTime
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Payment
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -50,6 +49,7 @@ import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.PaymentMethod
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
+import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.CheckoutEngine
 import com.example.campus_eats_app_kt.util.CheckoutSummary
@@ -147,7 +147,7 @@ fun CheckoutScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Checkout Summary",
+                title = "Order summary",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
@@ -175,10 +175,14 @@ fun CheckoutScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
-                            shape = MaterialTheme.shapes.large
+                            shape = MaterialTheme.shapes.large,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = CampusOrange,
+                                contentColor = Color.White
+                            )
                         ) {
                             Text(
-                                text = "Place Order - R${
+                                text = "Place order, R${
                                     String.format(
                                         locale,
                                         "%.2f",
@@ -201,7 +205,7 @@ fun CheckoutScreen(
             contentPadding = PaddingValues(DesignSystem.Spacing.large),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
         ) {
-            // Summary of items to be purchased
+            // Items Section
             item {
                 SectionHeader(title = "Items")
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
@@ -210,19 +214,35 @@ fun CheckoutScreen(
                 }
             }
 
-            // Pickup Time Selection module
+            // Pickup Time Section
             item {
-                SectionHeader(title = "Pickup Time")
+                SectionHeader(title = "Pickup time")
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
-                PickupTimePicker(
-                    selectedTime = selectedPickupTime,
-                    times = pickupTimes
-                ) { selectedPickupTime = it }
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
+                ) {
+                    items(pickupTimes) { time ->
+                        val isSelected = selectedPickupTime == time
+                        Surface(
+                            onClick = { selectedPickupTime = time },
+                            shape = MaterialTheme.shapes.medium,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        ) {
+                            Text(
+                                text = time,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
             }
 
-            // Financial transaction method module
+            // Payment Section
             item {
-                SectionHeader(title = "Payment Method")
+                SectionHeader(title = "Payment")
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 PaymentMethodSelector(
                     selectedMethod = selectedPaymentMethod,
@@ -319,46 +339,6 @@ fun ItemSummaryRow(item: CartItemEntity, locale: Locale)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PickupTimePicker(
-    selectedTime: String,
-    times: List<String>,
-    onTimeSelected: (String) -> Unit
-)
-{
-    var expanded by remember { mutableStateOf(value = false) }
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
-        OutlinedTextField(
-            value = selectedTime,
-            onValueChange = {},
-            readOnly = true,
-            leadingIcon = { Icon(Icons.Rounded.AccessTime, null) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            times.forEach { time ->
-                DropdownMenuItem(
-                    text = { Text(time) },
-                    onClick = {
-                        onTimeSelected(time)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun PaymentMethodSelector(
@@ -368,7 +348,7 @@ fun PaymentMethodSelector(
 {
     Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
         PaymentOption(
-            label = "Debit Card",
+            label = "Debit card",
             selected = selectedMethod == PaymentMethod.DEBIT_CARD,
             onClick = { onMethodSelected(PaymentMethod.DEBIT_CARD) }
         )
@@ -378,7 +358,7 @@ fun PaymentMethodSelector(
             onClick = { onMethodSelected(PaymentMethod.CAMPUS_WALLET) }
         )
         PaymentOption(
-            label = "Apply Coupon",
+            label = "Coupons",
             selected = selectedMethod == PaymentMethod.COUPON,
             onClick = { onMethodSelected(PaymentMethod.COUPON) }
         )
@@ -401,7 +381,7 @@ fun SummaryRow(
     label: String,
     amount: Double,
     locale: Locale,
-    color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+    color: Color = MaterialTheme.colorScheme.onSurface
 )
 {
     Row(
@@ -428,25 +408,20 @@ fun PaymentOption(
     Surface(
         onClick = onClick,
         shape = MaterialTheme.shapes.medium,
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-        border = if (selected) androidx.compose.foundation.BorderStroke(
-            2.dp,
-            MaterialTheme.colorScheme.primary
-        )
-        else null
+        color = Color.Transparent
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(DesignSystem.Spacing.medium),
+                .padding(vertical = DesignSystem.Spacing.small),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.Payment,
-                contentDescription = null,
-                tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            RadioButton(
+                selected = selected,
+                onClick = onClick,
+                colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
             )
-            Spacer(modifier = Modifier.width(DesignSystem.Spacing.medium))
+            Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,

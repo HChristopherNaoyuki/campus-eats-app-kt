@@ -112,6 +112,7 @@ class MainActivity : ComponentActivity()
                                         backStack.removeAt(0)
                                     }
                                 },
+                                onRegisterClick = { backStack.add(Route.Register()) },
                                 onForgotPasswordClick = { backStack.add(Route.ForgotPassword) },
                                 onBackClick = { backStack.removeLastOrNull() },
                                 viewModel = viewModel
@@ -174,13 +175,6 @@ class MainActivity : ComponentActivity()
                                         Route.CustomerMenuBrowse(
                                             userId,
                                             vendorId
-                                        )
-                                    )
-                                },
-                                onNavigateToVendorBrowse = { userId ->
-                                    backStack.add(
-                                        Route.CustomerVendorBrowse(
-                                            userId
                                         )
                                     )
                                 }

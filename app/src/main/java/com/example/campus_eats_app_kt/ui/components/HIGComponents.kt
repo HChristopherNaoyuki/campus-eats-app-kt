@@ -1,11 +1,15 @@
 package com.example.campus_eats_app_kt.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,11 +32,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.campus_eats_app_kt.ui.theme.ActionBlue
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
@@ -70,14 +76,15 @@ fun HIGTopAppBar(
 /**
  * HIGButton provides a consistent primary action style.
  * It features a 50dp height for optimal touch target accessibility.
+ * Default color is ActionBlue for standard interactions.
  */
 @Composable
 fun HIGButton(
     onClick: () -> Unit,
     text: String,
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.primary,
-    contentColor: Color = MaterialTheme.colorScheme.onPrimary,
+    containerColor: Color = ActionBlue,
+    contentColor: Color = Color.White,
     enabled: Boolean = true
 )
 {
@@ -87,7 +94,9 @@ fun HIGButton(
         shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
-            contentColor = contentColor
+            contentColor = contentColor,
+            disabledContainerColor = containerColor.copy(alpha = 0.5f),
+            disabledContentColor = contentColor.copy(alpha = 0.5f)
         ),
         enabled = enabled
     ) {
@@ -98,6 +107,59 @@ fun HIGButton(
                 letterSpacing = 0.5.sp
             )
         )
+    }
+}
+
+/**
+ * HIGSegmentedControl provides a toggle between mutually exclusive options.
+ * It follows the Apple iOS style for segmented controls.
+ */
+@Composable
+fun <T> HIGSegmentedControl(
+    options: List<T>,
+    selectedOption: T,
+    onOptionSelected: (T) -> Unit,
+    labelProvider: (T) -> String,
+    modifier: Modifier = Modifier
+)
+{
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(40.dp),
+        shape = RoundedCornerShape(DesignSystem.CornerRadius.small),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(2.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            options.forEach { option ->
+                val isSelected = option == selectedOption
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(DesignSystem.CornerRadius.small))
+                        .clickable { onOptionSelected(option) }
+                        .then(
+                            if (isSelected) Modifier.background(MaterialTheme.colorScheme.surface)
+                            else Modifier
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = labelProvider(option),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
 }
 

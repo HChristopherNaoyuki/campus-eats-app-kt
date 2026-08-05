@@ -14,13 +14,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.RemoveShoppingCart
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,15 +29,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -47,7 +48,9 @@ import com.example.campus_eats_app_kt.data.AuthRepository
 import com.example.campus_eats_app_kt.data.CartRepository
 import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
+import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
+import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.CheckoutEngine
 import kotlinx.coroutines.flow.SharingStarted
@@ -132,18 +135,10 @@ fun CartScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Your Cart",
+                title = "My cart",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    if (cartItems.isNotEmpty())
-                    {
-                        TextButton(onClick = { viewModel.clearCart() }) {
-                            Text("Clear Cart", color = MaterialTheme.colorScheme.error)
-                        }
                     }
                 }
             )
@@ -159,15 +154,15 @@ fun CartScreen(
                     Column(modifier = Modifier.padding(DesignSystem.Spacing.screenPadding)) {
                         CalculationRow("Subtotal", summary.subtotal, locale)
                         CalculationRow("Tax (20%)", summary.tax, locale)
-                        CalculationRow("Service Fee", summary.serviceFee, locale)
+                        CalculationRow("Service fee (10%)", summary.serviceFee, locale)
 
                         if (summary.studentDiscount > 0)
                         {
                             CalculationRow(
-                                label = "Student Discount (2.5%)",
+                                label = "Student discount",
                                 amount = -summary.studentDiscount,
                                 locale = locale,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.error
                             )
                         }
 
@@ -176,7 +171,7 @@ fun CartScreen(
                             summary.total - (summary.subtotal + summary.tax + summary.serviceFee - summary.studentDiscount)
                         if (kotlin.math.abs(rounding) > 0.001)
                         {
-                            CalculationRow("Rounding Adjustment", rounding, locale)
+                            CalculationRow("Rounding adjustment", rounding, locale)
                         }
 
                         HorizontalDivider(Modifier.padding(vertical = DesignSystem.Spacing.medium))
@@ -187,30 +182,44 @@ fun CartScreen(
                         ) {
                             Text(
                                 text = "Total",
-                                style = MaterialTheme.typography.headlineSmall,
+                                style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold
                             )
                             Text(
                                 text = "R${String.format(locale, "%.2f", summary.total)}",
-                                style = MaterialTheme.typography.headlineSmall,
+                                style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = CampusOrange
                             )
                         }
 
                         Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
-                        
-                        Button(
-                            onClick = onCheckoutClick,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = MaterialTheme.shapes.large
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
                         ) {
-                            Text(
-                                text = "Proceed to Checkout",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                            OutlinedButton(
+                                onClick = { viewModel.clearCart() },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(50.dp),
+                                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp,
+                                    CampusOrange
+                                )
+                            ) {
+                                Text("Clear cart", color = CampusOrange)
+                            }
+                            HIGButton(
+                                onClick = onCheckoutClick,
+                                text = "Checkout",
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(50.dp),
+                                containerColor = CampusOrange,
+                                contentColor = Color.White
                             )
                         }
                     }
@@ -234,9 +243,18 @@ fun CartScreen(
                         tint = MaterialTheme.colorScheme.outline
                     )
                     Spacer(Modifier.height(DesignSystem.Spacing.medium))
-                    Text("Your cart is empty.", style = MaterialTheme.typography.titleMedium)
+                    Text("Your cart is empty", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Add items from a vendor to get started",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
                     Spacer(Modifier.height(DesignSystem.Spacing.large))
-                    Button(onClick = onBackClick) { Text("Browse Items") }
+                    HIGButton(
+                        onClick = onBackClick,
+                        text = "Browse items",
+                        containerColor = CampusOrange
+                    )
                 }
             }
         }
@@ -249,6 +267,16 @@ fun CartScreen(
                 contentPadding = PaddingValues(DesignSystem.Spacing.medium),
                 verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.itemSpacing)
             ) {
+                item {
+                    Text(
+                        text = cartItems.firstOrNull()?.vendorId
+                            ?: "Vendor", // Placeholder for vendor name mapping if needed
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
+                }
                 items(cartItems) { item ->
                     CartItemCard(item = item, viewModel = viewModel, locale = locale)
                 }
@@ -331,7 +359,7 @@ fun CalculationRow(
     label: String,
     amount: Double,
     locale: Locale,
-    color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+    color: Color = MaterialTheme.colorScheme.onSurface
 )
 {
     Row(

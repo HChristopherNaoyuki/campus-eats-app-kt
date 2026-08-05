@@ -12,8 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Key
-import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,12 +29,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
+import com.example.campus_eats_app_kt.ui.theme.ActionBlue
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
@@ -54,6 +54,7 @@ fun ForgotPasswordScreen(
 {
     var userId by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
 
     val resetState by viewModel.resetState.collectAsState()
 
@@ -68,7 +69,7 @@ fun ForgotPasswordScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Recover Account",
+                title = "Reset password",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
@@ -89,33 +90,40 @@ fun ForgotPasswordScreen(
         ) {
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
 
-            // Guidance text aligned with minimalist principles
             Text(
-                text = "Please enter your unique 16-character User ID to establish a new password for your account.",
+                text = "Enter your 10 character User ID to reset your password.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.outline,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.padding(bottom = DesignSystem.Spacing.medium)
             )
 
-            // Principle: Metaphor - Key icon for identification
             OutlinedTextField(
                 value = userId,
                 onValueChange = { userId = it },
-                label = { Text("Unique User ID") },
+                label = { Text("User ID") },
                 modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Rounded.Key, contentDescription = null) },
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
-                placeholder = { Text("XXXX-XXXX-XXXX-XXXX") }
+                placeholder = { Text("A8F3-KL21-ZX80-QWER") }
             )
 
             OutlinedTextField(
                 value = newPassword,
                 onValueChange = { newPassword = it },
-                label = { Text("New Secure Password") },
+                label = { Text("New password") },
                 modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+            )
+
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = { Text("Confirm new password") },
+                modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
@@ -136,9 +144,16 @@ fun ForgotPasswordScreen(
             }
 
             HIGButton(
-                onClick = { viewModel.resetPassword(userId, newPassword) },
-                text = "Update Password",
+                onClick = {
+                    if (newPassword == confirmPassword)
+                    {
+                        viewModel.resetPassword(userId, newPassword)
+                    }
+                },
+                text = "Confirm reset",
                 modifier = Modifier.fillMaxWidth(),
+                containerColor = ActionBlue,
+                contentColor = Color.White,
                 enabled = resetState !is ResetState.Loading
             )
 
@@ -146,7 +161,7 @@ fun ForgotPasswordScreen(
             {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = ActionBlue,
                     strokeWidth = 2.dp
                 )
             }

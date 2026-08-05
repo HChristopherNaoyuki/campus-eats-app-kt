@@ -1,7 +1,6 @@
 package com.example.campus_eats_app_kt.ui.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -32,15 +32,16 @@ import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.AttachMoney
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Inventory
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.Receipt
 import androidx.compose.material.icons.rounded.RemoveShoppingCart
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material.icons.rounded.Store
 import androidx.compose.material3.Button
@@ -49,13 +50,14 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -69,6 +71,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -95,6 +98,7 @@ import com.example.campus_eats_app_kt.data.entity.UserStatus
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGCard
 import com.example.campus_eats_app_kt.ui.components.HIGServiceRow
+import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -103,10 +107,6 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 
-/**
- * HomeScreenTab provides the primary landing page for authenticated users,
- * displaying greetings and role-specific dashboard metrics.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenTab(
@@ -128,181 +128,220 @@ fun HomeScreenTab(
         contentPadding = PaddingValues(DesignSystem.Spacing.screenPadding),
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
     ) {
-        // Welcome Header Section
+        // Welcoming Header Card
         item {
-            Column {
-                Text(
-                    text = "Hello, ${user?.fullName ?: "User"}.",
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = (-1).sp
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "User ID: $userId",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                    val context = LocalContext.current
-                    IconButton(
-                        onClick = {
-                            try
-                            {
-                                val clipboard =
-                                    context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                                val clip = android.content.ClipData.newPlainText("User ID", userId)
-                                clipboard.setPrimaryClip(clip)
-                                Toast.makeText(
-                                    context,
-                                    "User ID copied to clipboard",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            catch (_: Exception)
-                            {
-                                Toast.makeText(context, "Failed to copy ID", Toast.LENGTH_SHORT)
-                                    .show()
-                            }
-                        },
-                        modifier = Modifier.size(36.dp)
+            if (role != UserRole.ADMIN)
+            {
+                Surface(
+                    color = if (role == UserRole.VENDOR) Color(0xFF1C1C1E) else CampusOrange,
+                    shape = MaterialTheme.shapes.extraLarge,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(DesignSystem.Spacing.large)
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.ContentCopy,
-                            contentDescription = "Copy User ID",
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column {
+                                val greeting =
+                                    when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY))
+                                    {
+                                        in 0..11 -> "Good morning"
+                                        in 12..16 -> "Good afternoon"
+                                        else -> "Good evening"
+                                    }
+                                Text(
+                                    text = "$greeting,",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                                Text(
+                                    text = user?.fullName?.split(" ")?.firstOrNull() ?: "User",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Rounded.Notifications,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                                Spacer(modifier = Modifier.width(DesignSystem.Spacing.medium))
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color.White.copy(alpha = 0.2f),
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = user?.fullName?.firstOrNull()?.toString() ?: "U",
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (role == UserRole.VENDOR)
+                        {
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = if (user?.shopStatus == ShopStatus.OPEN) Color.Green else Color.Red,
+                                        modifier = Modifier.size(8.dp)
+                                    ) {}
+                                    Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
+                                    Text(
+                                        text = if (user?.shopStatus == ShopStatus.OPEN) "Open" else "Closed",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                }
+                                Switch(
+                                    checked = user?.shopStatus == ShopStatus.OPEN,
+                                    onCheckedChange = { isChecked: Boolean ->
+                                        coroutineScope.launch {
+                                            authRepository.updateShopStatus(
+                                                userId,
+                                                if (isChecked) ShopStatus.OPEN else ShopStatus.CLOSED
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        }
                     }
-                }
-                if (role == UserRole.VENDOR && user?.shopName != null)
-                {
-                    Text(
-                        text = "Operating as ${user?.shopName}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.outline
-                    )
                 }
             }
         }
 
-        // Shop Status Module (Vendor-Exclusive)
+        // Student Search and Vendor List
+        if (role == UserRole.STUDENT || role == UserRole.STANDARD)
+        {
+            item {
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    placeholder = { Text("Search vendors or items") },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                    shape = CircleShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                            alpha = 0.3f
+                        ),
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    )
+                )
+            }
+
+            item {
+                Text(
+                    text = "Vendors on campus",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-0.5).sp
+                )
+            }
+
+            item {
+                HIGServiceRow(
+                    title = "Pizza Palace",
+                    description = "Authentic Italian wood-fired pizzas.",
+                    icon = Icons.Rounded.Store,
+                    onClick = onExploreVendors
+                )
+                HIGServiceRow(
+                    title = "Green Bowl",
+                    description = "Fresh salads and healthy power bowls.",
+                    icon = Icons.Rounded.Store,
+                    onClick = onExploreVendors
+                )
+                HIGServiceRow(
+                    title = "Brew & Co",
+                    description = "Premium coffee and artisan pastries.",
+                    icon = Icons.Rounded.Store,
+                    onClick = onExploreVendors
+                )
+            }
+        }
+
+        // Vendor Dashboard
         if (role == UserRole.VENDOR)
         {
             item {
-                Text(
-                    text = "Shop Visibility",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
-                ) {
-                    ShopStatus.entries.forEach { shopStatus ->
-                        val isSelected = user?.shopStatus == shopStatus
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                coroutineScope.launch {
-                                    authRepository.updateShopStatus(userId, shopStatus)
-                                }
-                            },
-                            label = {
-                                Text(
-                                    text = shopStatus.name.replace("_", " ").lowercase()
-                                        .replaceFirstChar { it.uppercase() }
-                                )
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                            ),
-                            shape = MaterialTheme.shapes.medium
+                vendorStats?.let { stats ->
+                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+                        Text(
+                            text = "Overview",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        StatCardFull(
+                            label = "All-time Earnings",
+                            value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}"
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+                        ) {
+                            StatCardHalf(
+                                label = "Menu Items",
+                                value = "${stats.menuItemCount}",
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatCardHalf(
+                                label = "Active Orders",
+                                value = "${stats.activeOrders}",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        StatCardFull(
+                            label = "Today's Revenue",
+                            value = "R${String.format(locale, "%.2f", stats.todayRevenue)}",
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
                         )
                     }
                 }
             }
         }
 
-        // Analytical Dashboard Metrics
-        when (role)
+        // Admin Dashboard remains similar or adjusted for HIG
+        if (role == UserRole.ADMIN)
         {
-            UserRole.VENDOR ->
-            {
-                item {
-                    vendorStats?.let { stats ->
-                        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-                            StatCardFull(
-                                label = "All-time Earnings",
-                                value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}"
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-                            ) {
-                                StatCardHalf(
-                                    label = "Menu Items",
-                                    value = "${stats.menuItemCount}",
-                                    modifier = Modifier.weight(1f)
-                                )
-                                StatCardHalf(
-                                    label = "Active Orders",
-                                    value = "${stats.activeOrders}",
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                            StatCardFull(
-                                label = "Today's Revenue",
-                                value = "R${String.format(locale, "%.2f", stats.todayRevenue)}",
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                            )
-                        }
+            item {
+                adminStats?.let { stats ->
+                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+                        Text(
+                            text = "Administrator",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Black
+                        )
+                        StatCardFull(
+                            label = "System-wide Earnings",
+                            value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}"
+                        )
+                        AdminGridStats(stats = stats)
+                        StatCardFull(
+                            label = "Today's Summary",
+                            value = "R${String.format(locale, "%.2f", stats.todayRevenue)}",
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        )
                     }
-                }
-            }
-
-            UserRole.ADMIN ->
-            {
-                item {
-                    adminStats?.let { stats ->
-                        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-                            StatCardFull(
-                                label = "System-wide Earnings",
-                                value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}"
-                            )
-                            AdminGridStats(stats = stats)
-                            StatCardFull(
-                                label = "Today's Summary",
-                                value = "R${String.format(locale, "%.2f", stats.todayRevenue)}",
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                            )
-                        }
-                    }
-                }
-            }
-
-            UserRole.STUDENT, UserRole.STANDARD ->
-            {
-                item {
-                    Text(
-                        text = "Browse Campus Dining",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = (-0.5).sp
-                    )
-                }
-                item {
-                    HIGServiceRow(
-                        title = "Explore Vendors",
-                        description = "View all available shops and their menus.",
-                        icon = Icons.Rounded.Store,
-                        onClick = onExploreVendors
-                    )
                 }
             }
         }
@@ -313,7 +352,7 @@ fun HomeScreenTab(
 fun StatCardFull(
     label: String,
     value: String,
-    containerColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primaryContainer
+    containerColor: Color = MaterialTheme.colorScheme.primaryContainer
 )
 {
     HIGCard(

@@ -1,6 +1,7 @@
 package com.example.campus_eats_app_kt.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,12 +15,13 @@ import androidx.compose.material.icons.rounded.Fastfood
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,12 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
+import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
  * LandingScreen serves as the welcome page for the application.
- * It provides entry points for authentication and account creation, adhering to Apple HIG
- * by using generous whitespace and clear primary actions.
+ * It features a full-bleed brand orange background and clear primary actions.
  */
 @Composable
 fun LandingScreen(
@@ -42,71 +44,82 @@ fun LandingScreen(
     modifier: Modifier = Modifier
 )
 {
-    Scaffold(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(CampusOrange)
+            .padding(DesignSystem.Spacing.screenPadding)
+    ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(DesignSystem.Spacing.screenPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.weight(1.2f))
+            Spacer(modifier = Modifier.weight(1f))
 
-            // Principle: Metaphor - Familiar visual identity
-            Icon(
-                imageVector = Icons.Rounded.Fastfood,
-                contentDescription = null,
-                modifier = Modifier.size(120.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            // App Icon in white rounded square
+            Surface(
+                modifier = Modifier.size(100.dp),
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.large),
+                color = Color.White
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Rounded.Fastfood,
+                        contentDescription = null,
+                        modifier = Modifier.size(60.dp),
+                        tint = CampusOrange
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
             
             Text(
                 text = "Campus Eats",
                 style = MaterialTheme.typography.displayMedium.copy(
                     fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = Color.White,
                     letterSpacing = (-1.5).sp
                 )
             )
             
             Text(
-                text = "Rosebank International University College",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.outline,
-                    fontWeight = FontWeight.Medium
+                text = "Order. Track. Pickup.",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.Bold
                 ),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = DesignSystem.Spacing.large)
+                textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1.5f))
 
-            // Principle: Consistency - Standardized buttons and hierarchy
+            // Stacked Buttons
             HIGButton(
-                onClick = onLoginClick,
-                text = "Login",
-                modifier = Modifier.fillMaxWidth()
-            )
-            
-            OutlinedButton(
                 onClick = onRegisterClick,
+                text = "Register",
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = Color.White,
+                contentColor = CampusOrange
+            )
+
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
+
+            OutlinedButton(
+                onClick = onLoginClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                 border = androidx.compose.foundation.BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.primary
+                    width = 2.dp,
+                    color = Color.White
                 )
             ) {
                 Text(
-                    text = "Create Account",
+                    text = "Login",
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.primary
+                    color = Color.White
                 )
             }
 
@@ -116,20 +129,12 @@ fun LandingScreen(
             ) {
                 Text(
                     text = "Forgot Password?",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color.White,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
 
-            Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
-
-            // Operational information displayed subtly
-            Text(
-                text = "v1.0.0 Stable",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outlineVariant,
-                letterSpacing = 1.sp
-            )
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
         }
     }
 }

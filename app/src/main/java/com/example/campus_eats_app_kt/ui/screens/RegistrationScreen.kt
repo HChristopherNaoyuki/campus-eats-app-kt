@@ -20,23 +20,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.ContentCopy
-import androidx.compose.material.icons.rounded.Email
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.LockReset
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Store
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -51,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -59,7 +51,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.ui.components.HIGButton
+import com.example.campus_eats_app_kt.ui.components.HIGSegmentedControl
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
+import com.example.campus_eats_app_kt.ui.theme.ActionBlue
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
@@ -82,7 +76,6 @@ fun RegistrationScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var shopName by remember { mutableStateOf("") }
     var selectedRole by remember { mutableStateOf(UserRole.STUDENT) }
-    var expanded by remember { mutableStateOf(false) }
 
     val registrationState by viewModel.registrationState.collectAsState()
     var showIdDialog by remember { mutableStateOf(false) }
@@ -180,7 +173,7 @@ fun RegistrationScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Join Campus Eats",
+                title = "Create account",
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
@@ -200,23 +193,13 @@ fun RegistrationScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         ) {
-            // Field Group: Basic Profile
+            // Form Fields
             OutlinedTextField(
                 value = fullName,
                 onValueChange = { fullName = it },
                 label = { Text("Full Name") },
+                placeholder = { Text("Aisha Patel") },
                 modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
-                singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
-            )
-
-            OutlinedTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = { Text("Username") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
@@ -225,45 +208,51 @@ fun RegistrationScreen(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email Address") },
+                placeholder = { Text("aisha@coebank.ac.za") },
                 modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
 
-            // Principle: Metaphor - Badge icon for role selection
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = selectedRole.name.lowercase().replaceFirstChar { it.uppercase() },
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Account Role") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier
-                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                        .fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.Rounded.Badge, contentDescription = null) },
-                    shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+            )
+
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = { Text("Confirm Password") },
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+            )
+
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
+
+            // Account Type Segmented Control
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Account type",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    UserRole.entries.forEach { role ->
-                        DropdownMenuItem(
-                            text = { Text(role.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                            onClick = {
-                                selectedRole = role
-                                expanded = false
-                            }
-                        )
-                    }
-                }
+                HIGSegmentedControl(
+                    options = listOf(UserRole.STANDARD, UserRole.VENDOR, UserRole.ADMIN),
+                    selectedOption = selectedRole,
+                    onOptionSelected = { selectedRole = it },
+                    labelProvider = { it.name.lowercase().replaceFirstChar { it.uppercase() } }
+                )
             }
 
             // Vendor-specific contextual input
@@ -282,31 +271,6 @@ fun RegistrationScreen(
                     shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
                 )
             }
-
-            // Field Group: Security
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
-            )
-
-            OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                label = { Text("Confirm Password") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Rounded.LockReset, contentDescription = null) },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
-            )
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -327,7 +291,7 @@ fun RegistrationScreen(
                     {
                         viewModel.register(
                             fullName,
-                            username,
+                            username.ifBlank { fullName.lowercase().replace(" ", "_") },
                             email,
                             password,
                             selectedRole,
@@ -335,8 +299,10 @@ fun RegistrationScreen(
                         )
                     }
                 },
-                text = "Create Account",
+                text = "Create account",
                 modifier = Modifier.fillMaxWidth(),
+                containerColor = ActionBlue,
+                contentColor = Color.White,
                 enabled = registrationState !is RegistrationState.Loading
             )
 
@@ -344,7 +310,7 @@ fun RegistrationScreen(
             {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = ActionBlue,
                     strokeWidth = 2.dp
                 )
             }
