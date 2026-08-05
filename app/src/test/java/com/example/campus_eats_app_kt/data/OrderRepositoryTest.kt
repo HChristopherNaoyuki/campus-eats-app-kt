@@ -59,12 +59,23 @@ class OrderRepositoryTest
     @Test
     fun updateOrderStatus_updatesInDao() = runTest {
         // Given
-        val order = mockk<com.example.campus_eats_app_kt.data.entity.OrderEntity>(relaxed = true)
+        val order = com.example.campus_eats_app_kt.data.entity.OrderEntity(
+            orderId = 123L,
+            customerId = "C1",
+            vendorId = "V1",
+            itemsJson = "[]",
+            totalAmount = 100.0,
+            status = OrderStatus.PENDING,
+            paymentMethod = PaymentMethod.DEBIT_CARD,
+            pickupTime = "12:00"
+        )
+        // Stub the update call even though it's relaxed, to be safe with match
+        coEvery { orderDao.updateOrder(any()) } returns Unit
 
         // When
         repository.updateOrderStatus(order, OrderStatus.ACCEPTED)
 
         // Then
-        coVerify { orderDao.updateOrder(match { it.status == OrderStatus.ACCEPTED }) }
+        coVerify { orderDao.updateOrder(match { it.orderId == 123L && it.status == OrderStatus.ACCEPTED }) }
     }
 }

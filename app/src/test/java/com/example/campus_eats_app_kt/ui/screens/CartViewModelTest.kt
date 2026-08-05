@@ -72,12 +72,22 @@ class CartViewModelTest
         val items = listOf(CartItemEntity(1, userId, 101, "V1", "Item", 10.0, 1))
         every { cartRepository.getCart(userId) } returns flowOf(items)
 
-        // Re-init to pickup new flow
+        // When
         val vm = CartViewModel(cartRepository, authRepository, userId)
 
         // Then
         vm.cartItems.test {
-            assertEquals(items, awaitItem())
+            // StateFlow always starts with the initial value in most collection scenarios,
+            // but in runTest with StandardTestDispatcher, it depends on when collection starts.
+            val first = awaitItem()
+            if (first.isEmpty())
+            {
+                assertEquals(items, awaitItem())
+            }
+            else
+            {
+                assertEquals(items, first)
+            }
             cancelAndIgnoreRemainingEvents()
         }
     }

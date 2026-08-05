@@ -4,18 +4,20 @@ import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.ShopStatus
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
+import com.example.campus_eats_app_kt.data.network.RegistrationRequest
+import com.example.campus_eats_app_kt.data.network.RetrofitClient
 import com.example.campus_eats_app_kt.util.IdGenerator
 import kotlinx.coroutines.flow.Flow
 
 /**
  * AuthRepository handles user-related authentication and profile management operations.
- * It interacts with the local Room database via the UserDao.
+ * It interacts with the local Room database and the remote Fake Restaurant API.
  */
 class AuthRepository(private val userDao: UserDao)
 {
     /**
      * Registers a new user in the system.
-     * Generates a unique 16-character alphanumeric User ID.
+     * Synchronizes with the remote Fake Restaurant API to obtain a usercode (API Key).
      */
     suspend fun register(
         fullName: String,
@@ -33,6 +35,22 @@ class AuthRepository(private val userDao: UserDao)
                 throw Exception("Email already registered")
             }
 
+            // Attempt to register on the remote API first
+            var remoteUsercode: String? = null
+            try
+            {
+                val response =
+                    RetrofitClient.instance.registerUser(RegistrationRequest(email, password))
+                if (response.isSuccessful)
+                {
+                    remoteUsercode = response.body()?.usercode
+                }
+            }
+            catch (e: Exception)
+            {
+                // Network failure during registration, we'll continue with local only for now
+            }
+
             val userId = IdGenerator.generateUserId()
             val user = UserEntity(
                 userId = userId,
@@ -42,7 +60,8 @@ class AuthRepository(private val userDao: UserDao)
                 passwordHash = password,
                 role = role,
                 shopName = if (role == UserRole.VENDOR) shopName else null,
-                shopStatus = if (role == UserRole.VENDOR) ShopStatus.OPEN else null
+                shopStatus = if (role == UserRole.VENDOR) ShopStatus.OPEN else null,
+                usercode = remoteUsercode
             )
 
             userDao.insertUser(user)
@@ -52,7 +71,7 @@ class AuthRepository(private val userDao: UserDao)
 
     /**
      * Attempts to log in a user with the provided email and password.
-     * Returns a Result containing the UserEntity if successful, or a failure if not.
+     * Updates the user's API key from the remote server if missing.
      */
     suspend fun login(email: String, password: String): Result<UserEntity>
     {
@@ -60,6 +79,28 @@ class AuthRepository(private val userDao: UserDao)
             val user = userDao.getUserByEmail(email)
             if (user != null && user.passwordHash == password)
             {
+                // If usercode is missing locally, try to fetch it from the API
+                if (user.usercode == null)
+                {
+                    try
+                    {
+                        val response = RetrofitClient.instance.getUserCode(email, password)
+                        if (response.isSuccessful)
+                        {
+                            val code = response.body()?.usercode
+                            if (code != null)
+                            {
+                                val updatedUser = user.copy(usercode = code)
+                                userDao.updateUser(updatedUser)
+                                return@runCatching updatedUser
+                            }
+                        }
+                    }
+                    catch (e: Exception)
+                    {
+                        // Network error, return local user as is
+                    }
+                }
                 user
             }
             else
@@ -78,6 +119,18 @@ class AuthRepository(private val userDao: UserDao)
             val user = userDao.getUserById(userId)
             if (user != null)
             {
+                // Attempt to update on remote API if usercode exists
+                if (user.usercode != null)
+                {
+                    try
+                    {
+                        RetrofitClient.instance.updatePassword(user.usercode, newPassword)
+                    }
+                    catch (e: Exception)
+                    {
+                        // Ignore network failure for local password reset
+                    }
+                }
                 val updatedUser = user.copy(passwordHash = newPassword)
                 userDao.updateUser(updatedUser)
             }
@@ -106,6 +159,18 @@ class AuthRepository(private val userDao: UserDao)
             var updatedUser = user.copy(email = email)
             if (password.isNotBlank())
             {
+                // Attempt to update on remote API if usercode exists
+                if (user.usercode != null)
+                {
+                    try
+                    {
+                        RetrofitClient.instance.updatePassword(user.usercode, password)
+                    }
+                    catch (e: Exception)
+                    {
+                        // Ignore network failure for local password reset
+                    }
+                }
                 updatedUser = updatedUser.copy(passwordHash = password)
             }
             userDao.updateUser(updatedUser)
@@ -139,6 +204,36 @@ class AuthRepository(private val userDao: UserDao)
             if (user != null)
             {
                 userDao.updateUser(user.copy(bankAccountInfo = bankInfo))
+            }
+            else
+            {
+                throw Exception("User not found")
+            }
+        }
+    }
+
+    /**
+     * Deletes a user account from both local and remote systems.
+     */
+    suspend fun deleteAccount(userId: String): Result<Unit>
+    {
+        return kotlin.runCatching {
+            val user = userDao.getUserById(userId)
+            if (user != null)
+            {
+                // Attempt to delete on remote API if usercode exists
+                if (user.usercode != null)
+                {
+                    try
+                    {
+                        RetrofitClient.instance.deleteUser(user.usercode)
+                    }
+                    catch (e: Exception)
+                    {
+                        // Ignore network failure
+                    }
+                }
+                userDao.deleteUser(user)
             }
             else
             {

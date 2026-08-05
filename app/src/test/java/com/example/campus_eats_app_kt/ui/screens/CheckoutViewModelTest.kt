@@ -15,6 +15,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -82,13 +83,11 @@ class CheckoutViewModelTest
 
         // Then
         vm.summary.test {
-            val summary = awaitItem()
+            var summary = awaitItem()
+            // Skip initial null if it appears
+            if (summary == null) summary = awaitItem()
+            
             assertNotNull(summary)
-            // Subtotal 100
-            // Tax 20
-            // Fee 10 (under 500)
-            // Discount 2.5
-            // Total 127.5 -> Rounded 130
             assertEquals(130.0, summary?.total ?: 0.0, 0.001)
             cancelAndIgnoreRemainingEvents()
         }
@@ -103,6 +102,9 @@ class CheckoutViewModelTest
         val items = listOf(CartItemEntity(1, userId, 101, "V1", "Item", 100.0, 1))
         every { cartRepository.getCart(userId) } returns flowOf(items)
         val vm = CheckoutViewModel(cartRepository, orderRepository, authRepository, userId)
+
+        // Start collection to trigger WhileSubscribed
+        backgroundScope.launch { vm.summary.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         // When

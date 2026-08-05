@@ -57,5 +57,6 @@ data class UserEntity(
     val shopName: String? = null,
     val shopStatus: ShopStatus? = null,
     val bankAccountInfo: String? = null,
-    val registrationDate: Long = System.currentTimeMillis()
+    val registrationDate: Long = System.currentTimeMillis(),
+    val usercode: String? = null // API key for external "Fake Restaurant" API
 )

@@ -43,4 +43,10 @@ interface MenuItemDao
      */
     @Query("SELECT * FROM menu_items")
     fun getAllMenuItems(): Flow<List<MenuItemEntity>>
+
+    /**
+     * Searches for menu items by name.
+     */
+    @Query("SELECT * FROM menu_items WHERE name LIKE '%' || :query || '%'")
+    fun searchMenuItems(query: String): Flow<List<MenuItemEntity>>
 }

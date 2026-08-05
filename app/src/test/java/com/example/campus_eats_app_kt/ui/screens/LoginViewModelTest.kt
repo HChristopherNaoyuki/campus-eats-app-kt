@@ -66,13 +66,13 @@ class LoginViewModelTest
             )
         } returns Result.success(testUser)
 
-        // When
-        viewModel.login("test@example.com", "pass")
-
         // Then
         viewModel.loginState.test {
             // Initial state is Idle
             assertEquals(LoginState.Idle, awaitItem())
+
+            // When
+            viewModel.login("test@example.com", "pass")
 
             // Should transition to Loading then Success
             assertEquals(LoginState.Loading, awaitItem())
@@ -89,12 +89,13 @@ class LoginViewModelTest
      */
     @Test
     fun login_withEmptyFields_emitsErrorState() = runTest {
-        // When
-        viewModel.login("", "")
-
         // Then
         viewModel.loginState.test {
             assertEquals(LoginState.Idle, awaitItem())
+
+            // When
+            viewModel.login("", "")
+
             val error = awaitItem()
             assertTrue(error is LoginState.Error)
             assertEquals("Please fill in all fields", (error as LoginState.Error).message)
@@ -115,12 +116,13 @@ class LoginViewModelTest
             )
         } returns Result.failure(Exception("Network error"))
 
-        // When
-        viewModel.login("test@example.com", "pass")
-
         // Then
         viewModel.loginState.test {
             assertEquals(LoginState.Idle, awaitItem())
+
+            // When
+            viewModel.login("test@example.com", "pass")
+
             assertEquals(LoginState.Loading, awaitItem())
             val error = awaitItem()
             assertTrue(error is LoginState.Error)

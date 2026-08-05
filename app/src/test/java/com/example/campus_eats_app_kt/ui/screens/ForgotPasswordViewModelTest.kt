@@ -48,12 +48,13 @@ class ForgotPasswordViewModelTest
         // Given
         coEvery { authRepository.resetPassword("ID-001", "newpass") } returns Result.success(Unit)
 
-        // When
-        viewModel.resetPassword("ID-001", "newpass")
-
         // Then
         viewModel.resetState.test {
             assertEquals(ResetState.Idle, awaitItem())
+
+            // When
+            viewModel.resetPassword("ID-001", "newpass")
+
             assertEquals(ResetState.Loading, awaitItem())
             assertEquals(ResetState.Success, awaitItem())
             cancelAndIgnoreRemainingEvents()
@@ -73,12 +74,13 @@ class ForgotPasswordViewModelTest
             )
         } returns Result.failure(Exception("Invalid User ID"))
 
-        // When
-        viewModel.resetPassword("WRONG", "any")
-
         // Then
         viewModel.resetState.test {
             assertEquals(ResetState.Idle, awaitItem())
+
+            // When
+            viewModel.resetPassword("WRONG", "any")
+
             assertEquals(ResetState.Loading, awaitItem())
             val error = awaitItem()
             assertTrue(error is ResetState.Error)
@@ -92,12 +94,13 @@ class ForgotPasswordViewModelTest
      */
     @Test
     fun resetPassword_withEmptyFields_emitsErrorState() = runTest {
-        // When
-        viewModel.resetPassword("", "")
-
         // Then
         viewModel.resetState.test {
             assertEquals(ResetState.Idle, awaitItem())
+
+            // When
+            viewModel.resetPassword("", "")
+
             val error = awaitItem()
             assertTrue(error is ResetState.Error)
             assertEquals("Please fill in all fields", (error as ResetState.Error).message)

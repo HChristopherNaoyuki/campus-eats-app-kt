@@ -65,6 +65,7 @@ class VendorBrowseViewModelTest
 
         // Then
         viewModel.vendors.test {
+            assertEquals(emptyList<UserEntity>(), awaitItem())
             assertEquals(vendors, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }

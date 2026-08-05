@@ -70,12 +70,13 @@ class RegistrationViewModelTest
             )
         } returns Result.success(testUser)
 
-        // When
-        viewModel.register("Full Name", "user", "email@test.com", "pass", UserRole.STUDENT)
-
         // Then
         viewModel.registrationState.test {
             assertEquals(RegistrationState.Idle, awaitItem())
+
+            // When
+            viewModel.register("Full Name", "user", "email@test.com", "pass", UserRole.STUDENT)
+
             assertEquals(RegistrationState.Loading, awaitItem())
             val success = awaitItem()
             assertTrue(success is RegistrationState.Success)
@@ -89,12 +90,13 @@ class RegistrationViewModelTest
      */
     @Test
     fun register_vendorWithoutShopName_emitsErrorState() = runTest {
-        // When
-        viewModel.register("Vendor Name", "vendor", "v@test.com", "pass", UserRole.VENDOR, null)
-
         // Then
         viewModel.registrationState.test {
             assertEquals(RegistrationState.Idle, awaitItem())
+
+            // When
+            viewModel.register("Vendor Name", "vendor", "v@test.com", "pass", UserRole.VENDOR, null)
+
             val error = awaitItem()
             assertTrue(error is RegistrationState.Error)
             assertEquals(
@@ -110,12 +112,13 @@ class RegistrationViewModelTest
      */
     @Test
     fun register_withEmptyFields_emitsErrorState() = runTest {
-        // When
-        viewModel.register("", "", "", "", UserRole.STUDENT)
-
         // Then
         viewModel.registrationState.test {
             assertEquals(RegistrationState.Idle, awaitItem())
+
+            // When
+            viewModel.register("", "", "", "", UserRole.STUDENT)
+
             val error = awaitItem()
             assertTrue(error is RegistrationState.Error)
             assertEquals("Please fill in all fields", (error as RegistrationState.Error).message)

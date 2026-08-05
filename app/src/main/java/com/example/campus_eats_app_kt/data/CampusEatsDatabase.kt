@@ -39,7 +39,7 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
         CouponEntity::class,
         DebitCardEntity::class
     ],
-    version = 7, // Incremented from 6 to 7 due to schema changes in UserEntity, OrderEntity, and FeedbackEntity
+    version = 8, // Incremented to 8 for usercode column
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -57,6 +57,14 @@ abstract class CampusEatsDatabase : RoomDatabase()
     {
         @Volatile
         private var INSTANCE: CampusEatsDatabase? = null
+
+        private val MIGRATION_7_8 = object : Migration(7, 8)
+        {
+            override fun migrate(db: SupportSQLiteDatabase)
+            {
+                addColumnIfNotExists(db, "users", "usercode", "TEXT")
+            }
+        }
 
         /**
          * Migration from version 6 to 7.
@@ -145,7 +153,7 @@ abstract class CampusEatsDatabase : RoomDatabase()
                     CampusEatsDatabase::class.java,
                     "campus_eats_database"
                 )
-                    .addMigrations(MIGRATION_6_7)
+                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8)
                     .fallbackToDestructiveMigration() // Last resort if no valid migration path is found
                 .build()
                 INSTANCE = instance
