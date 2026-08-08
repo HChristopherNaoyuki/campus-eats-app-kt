@@ -79,7 +79,8 @@ fun MainScreen(
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 tonalElevation = 8.dp
-            ) {
+            )
+            {
                 // Home Tab
                 NavigationBarItem(
                     selected = selectedTab == 0,
@@ -117,8 +118,10 @@ fun MainScreen(
                 )
             }
         }
-    ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
+    )
+    { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding))
+        {
             when (selectedTab)
             {
                 0 -> HomeScreenTab(

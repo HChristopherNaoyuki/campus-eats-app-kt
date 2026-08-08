@@ -99,7 +99,8 @@ fun HIGButton(
             disabledContentColor = contentColor.copy(alpha = 0.5f)
         ),
         enabled = enabled
-    ) {
+    )
+    {
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge.copy(
@@ -129,13 +130,15 @@ fun <T> HIGSegmentedControl(
             .height(40.dp),
         shape = RoundedCornerShape(DesignSystem.CornerRadius.small),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-    ) {
+    )
+    {
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(2.dp),
             horizontalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
+        )
+        {
             options.forEach { option ->
                 val isSelected = option == selectedOption
                 Box(
@@ -143,13 +146,17 @@ fun <T> HIGSegmentedControl(
                         .weight(1f)
                         .fillMaxSize()
                         .clip(RoundedCornerShape(DesignSystem.CornerRadius.small))
-                        .clickable { onOptionSelected(option) }
+                        .clickable
+                        {
+                            onOptionSelected(option)
+                        }
                         .then(
                             if (isSelected) Modifier.background(MaterialTheme.colorScheme.surface)
                             else Modifier
                         ),
                     contentAlignment = Alignment.Center
-                ) {
+                )
+                {
                     Text(
                         text = labelProvider(option),
                         style = MaterialTheme.typography.labelMedium,
@@ -187,7 +194,12 @@ fun HIGCard(
                 defaultElevation = 0.dp,
                 pressedElevation = 2.dp
             ),
-            content = { Box(modifier = Modifier.padding(contentPadding)) { content() } }
+            content = {
+                Box(modifier = Modifier.padding(contentPadding))
+                {
+                    content()
+                }
+            }
         )
     }
     else
@@ -197,7 +209,12 @@ fun HIGCard(
             shape = MaterialTheme.shapes.extraLarge,
             colors = CardDefaults.cardColors(containerColor = containerColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            content = { Box(modifier = Modifier.padding(contentPadding)) { content() } }
+            content = {
+                Box(modifier = Modifier.padding(contentPadding))
+                {
+                    content()
+                }
+            }
         )
     }
 }
@@ -218,14 +235,18 @@ fun HIGServiceRow(
     HIGCard(
         modifier = modifier.padding(vertical = DesignSystem.Spacing.extraSmall),
         onClick = onClick
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    )
+    {
+        Row(verticalAlignment = Alignment.CenterVertically)
+        {
             Surface(
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.primaryContainer,
                 modifier = Modifier.size(52.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
+            )
+            {
+                Box(contentAlignment = Alignment.Center)
+                {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
@@ -237,7 +258,8 @@ fun HIGServiceRow(
 
             Spacer(modifier = Modifier.width(DesignSystem.Spacing.medium))
 
-            Column {
+            Column()
+            {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,

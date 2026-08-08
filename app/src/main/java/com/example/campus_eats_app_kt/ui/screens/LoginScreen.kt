@@ -69,7 +69,8 @@ fun LoginScreen(
     val loginState by viewModel.loginState.collectAsState()
 
     // Reactive navigation triggered by authentication success
-    LaunchedEffect(loginState) {
+    LaunchedEffect(loginState)
+    {
         if (loginState is LoginState.Success)
         {
             val user = (loginState as LoginState.Success).user
@@ -82,7 +83,8 @@ fun LoginScreen(
             HIGTopAppBar(
                 title = "Login",
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick)
+                    {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = "Back"
@@ -93,7 +95,8 @@ fun LoginScreen(
         },
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
+    )
+    { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -101,7 +104,8 @@ fun LoginScreen(
                 .padding(DesignSystem.Spacing.screenPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+        )
+        {
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
 
             Text(
@@ -134,7 +138,8 @@ fun LoginScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
             )
 
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.fillMaxWidth())
+            {
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
@@ -143,7 +148,8 @@ fun LoginScreen(
                     leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        IconButton(onClick = { passwordVisible = !passwordVisible })
+                        {
                             Icon(
                                 imageVector = if (passwordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
                                 contentDescription = "Toggle password visibility"
@@ -159,7 +165,8 @@ fun LoginScreen(
                 TextButton(
                     onClick = onForgotPasswordClick,
                     modifier = Modifier.align(Alignment.End)
-                ) {
+                )
+                {
                     Text(
                         text = "Forgot Password?",
                         color = ActionBlue,
@@ -206,8 +213,10 @@ fun LoginScreen(
             TextButton(
                 onClick = onRegisterClick,
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Row {
+            )
+            {
+                Row()
+                {
                     Text(
                         text = "No account? ",
                         color = MaterialTheme.colorScheme.onBackground

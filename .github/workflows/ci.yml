@@ -1,22 +1,20 @@
-# GitHub Actions workflow for CI pipeline for the Campus Eats
-# Android application. This workflow ONLY validates source code and
-# runs unit tests. No APK, AAB, or artifacts are generated.
-
-name: CI - Code Validation and Unit Tests
+name: CI - Continuous Integration
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "release" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "release" ]
   workflow_dispatch:
 
 jobs:
-  validate-and-test:
+  validate-codebase:
+    name: Validate Codebase
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -26,26 +24,31 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Make Gradle wrapper executable
-        run: chmod +x ./gradlew
+      - name: Grant Execute Permission for Gradle Wrapper
+        run: chmod +x gradlew
 
-      - name: Run lint to check for errors and warnings
+      - name: Run Static Analysis (Lint)
         run: ./gradlew lint
+        continue-on-error: false
 
-      - name: Run unit tests
+      - name: Compile Debug Build
+        run: ./gradlew assembleDebug
+        continue-on-error: false
+
+      - name: Run Unit Tests
         run: ./gradlew test
+        continue-on-error: false
 
-      - name: Generate test coverage report
-        run: ./gradlew testDebugCoverage
+      - name: Upload Lint Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: app/build/reports/lint-results-*
 
-      - name: Check for lint issues
-        if: failure()
-        run: |
-          echo "Lint issues found. Please fix all errors and warnings."
-          exit 1
-
-      - name: Check for test failures
-        if: failure()
-        run: |
-          echo "Unit tests failed. Please fix failing tests."
-          exit 1
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: app/build/reports/tests/testDebugUnitTest/

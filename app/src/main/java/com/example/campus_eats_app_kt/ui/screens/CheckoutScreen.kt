@@ -149,7 +149,8 @@ fun CheckoutScreen(
             HIGTopAppBar(
                 title = "Order summary",
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick)
+                    {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -161,8 +162,10 @@ fun CheckoutScreen(
                     tonalElevation = 8.dp,
                     shadowElevation = 8.dp,
                     color = MaterialTheme.colorScheme.surface
-                ) {
-                    Column(modifier = Modifier.padding(DesignSystem.Spacing.screenPadding)) {
+                )
+                {
+                    Column(modifier = Modifier.padding(DesignSystem.Spacing.screenPadding))
+                    {
                         Button(
                             onClick = {
                                 viewModel.placeOrder(
@@ -180,7 +183,8 @@ fun CheckoutScreen(
                                 containerColor = CampusOrange,
                                 contentColor = Color.White
                             )
-                        ) {
+                        )
+                        {
                             Text(
                                 text = "Place order, R${
                                     String.format(
@@ -197,16 +201,19 @@ fun CheckoutScreen(
                 }
             }
         }
-    ) { innerPadding ->
+    )
+    { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
             contentPadding = PaddingValues(DesignSystem.Spacing.large),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
-        ) {
+        )
+        {
             // Items Section
-            item {
+            item()
+            {
                 SectionHeader(title = "Items")
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 cartItems.forEach { item ->
@@ -215,20 +222,24 @@ fun CheckoutScreen(
             }
 
             // Pickup Time Section
-            item {
+            item()
+            {
                 SectionHeader(title = "Pickup time")
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
-                ) {
-                    items(pickupTimes) { time ->
+                )
+                {
+                    items(pickupTimes)
+                    { time ->
                         val isSelected = selectedPickupTime == time
                         Surface(
                             onClick = { selectedPickupTime = time },
                             shape = MaterialTheme.shapes.medium,
                             color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                        ) {
+                        )
+                        {
                             Text(
                                 text = time,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -241,7 +252,8 @@ fun CheckoutScreen(
             }
 
             // Payment Section
-            item {
+            item()
+            {
                 SectionHeader(title = "Payment")
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 PaymentMethodSelector(
@@ -251,7 +263,8 @@ fun CheckoutScreen(
             }
 
             // User-provided fulfillment instructions
-            item {
+            item()
+            {
                 SectionHeader(title = "Special Requests")
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 OutlinedTextField(
@@ -266,10 +279,12 @@ fun CheckoutScreen(
 
             // Final financial breakdown
             summary?.let { sum ->
-                item {
+                item()
+                {
                     SectionHeader(title = "Totals")
                     Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
-                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+                    {
                         SummaryRow("Subtotal", sum.subtotal, locale = locale)
                         SummaryRow("Tax (20%)", sum.tax, locale = locale)
                         SummaryRow("Service Fee", sum.serviceFee, locale = locale)
@@ -296,7 +311,8 @@ fun CheckoutScreen(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
+                        )
+                        {
                             Text(
                                 text = "Total",
                                 style = MaterialTheme.typography.titleLarge,

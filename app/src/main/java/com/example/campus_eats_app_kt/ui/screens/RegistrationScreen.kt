@@ -82,7 +82,8 @@ fun RegistrationScreen(
     var registeredUserId by remember { mutableStateOf("") }
 
     // Navigation trigger upon successful persistence
-    LaunchedEffect(registrationState) {
+    LaunchedEffect(registrationState)
+    {
         if (registrationState is RegistrationState.Success)
         {
             registeredUserId = (registrationState as RegistrationState.Success).user.userId
@@ -106,7 +107,8 @@ fun RegistrationScreen(
                 )
             },
             text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally)
+                {
                     Text(
                         text = "Your unique 16-character User ID has been generated. Please store it securely.",
                         style = MaterialTheme.typography.bodyMedium,
@@ -118,7 +120,8 @@ fun RegistrationScreen(
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
                         shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                         modifier = Modifier.fillMaxWidth()
-                    ) {
+                    )
+                    {
                         Text(
                             text = registeredUserId,
                             style = MaterialTheme.typography.headlineSmall.copy(
@@ -146,7 +149,8 @@ fun RegistrationScreen(
                             .fillMaxWidth()
                             .height(50.dp),
                         shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
-                    ) {
+                    )
+                    {
                         Icon(
                             Icons.Rounded.ContentCopy,
                             contentDescription = null,
@@ -175,7 +179,8 @@ fun RegistrationScreen(
             HIGTopAppBar(
                 title = "Create account",
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick)
+                    {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -183,7 +188,8 @@ fun RegistrationScreen(
         },
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
+    )
+    { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -192,7 +198,8 @@ fun RegistrationScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+        )
+        {
             // Form Fields
             OutlinedTextField(
                 value = fullName,
@@ -240,7 +247,8 @@ fun RegistrationScreen(
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
 
             // Account Type Segmented Control
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.fillMaxWidth())
+            {
                 Text(
                     text = "Account type",
                     style = MaterialTheme.typography.labelMedium,
@@ -260,7 +268,8 @@ fun RegistrationScreen(
                 visible = selectedRole == UserRole.VENDOR,
                 enter = expandVertically() + fadeIn(),
                 exit = shrinkVertically() + fadeOut()
-            ) {
+            )
+            {
                 OutlinedTextField(
                     value = shopName,
                     onValueChange = { shopName = it },

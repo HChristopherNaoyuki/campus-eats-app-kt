@@ -127,25 +127,35 @@ fun HomeScreenTab(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(DesignSystem.Spacing.screenPadding),
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
-    ) {
-        // Welcoming Header Card
-        item {
+    )
+    {
+        // Welcoming Header Card - Professional Minimalist Refinement
+        item()
+        {
             if (role != UserRole.ADMIN)
             {
                 Surface(
-                    color = if (role == UserRole.VENDOR) Color(0xFF1C1C1E) else CampusOrange,
+                    color = Color.White,
                     shape = MaterialTheme.shapes.extraLarge,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        CampusOrange.copy(alpha = 0.2f)
+                    ),
                     modifier = Modifier.fillMaxWidth()
-                ) {
+                )
+                {
                     Column(
                         modifier = Modifier.padding(DesignSystem.Spacing.large)
-                    ) {
+                    )
+                    {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column {
+                        )
+                        {
+                            Column()
+                            {
                                 val greeting =
                                     when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY))
                                     {
@@ -156,32 +166,35 @@ fun HomeScreenTab(
                                 Text(
                                     text = "$greeting,",
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = Color.White.copy(alpha = 0.8f)
+                                    color = Color.Black.copy(alpha = 0.6f)
                                 )
                                 Text(
                                     text = user?.fullName?.split(" ")?.firstOrNull() ?: "User",
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = Color.Black
                                 )
                             }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(verticalAlignment = Alignment.CenterVertically)
+                            {
                                 Icon(
                                     Icons.Rounded.Notifications,
                                     contentDescription = null,
-                                    tint = Color.White,
+                                    tint = CampusOrange,
                                     modifier = Modifier.size(28.dp)
                                 )
                                 Spacer(modifier = Modifier.width(DesignSystem.Spacing.medium))
                                 Surface(
                                     shape = CircleShape,
-                                    color = Color.White.copy(alpha = 0.2f),
+                                    color = CampusOrange.copy(alpha = 0.1f),
                                     modifier = Modifier.size(40.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
+                                )
+                                {
+                                    Box(contentAlignment = Alignment.Center)
+                                    {
                                         Text(
                                             text = user?.fullName?.firstOrNull()?.toString() ?: "U",
-                                            color = Color.White,
+                                            color = CampusOrange,
                                             fontWeight = FontWeight.Bold
                                         )
                                     }
@@ -196,8 +209,10 @@ fun HomeScreenTab(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                            )
+                            {
+                                Row(verticalAlignment = Alignment.CenterVertically)
+                                {
                                     Surface(
                                         shape = CircleShape,
                                         color = if (user?.shopStatus == ShopStatus.OPEN) Color.Green else Color.Red,
@@ -206,14 +221,15 @@ fun HomeScreenTab(
                                     Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
                                     Text(
                                         text = if (user?.shopStatus == ShopStatus.OPEN) "Open" else "Closed",
-                                        color = Color.White,
+                                        color = Color.Black.copy(alpha = 0.8f),
                                         style = MaterialTheme.typography.labelLarge
                                     )
                                 }
                                 Switch(
                                     checked = user?.shopStatus == ShopStatus.OPEN,
                                     onCheckedChange = { isChecked: Boolean ->
-                                        coroutineScope.launch {
+                                        coroutineScope.launch()
+                                        {
                                             authRepository.updateShopStatus(
                                                 userId,
                                                 if (isChecked) ShopStatus.OPEN else ShopStatus.CLOSED
@@ -231,7 +247,8 @@ fun HomeScreenTab(
         // Student Search and Vendor List
         if (role == UserRole.STUDENT || role == UserRole.STANDARD)
         {
-            item {
+            item()
+            {
                 OutlinedTextField(
                     value = "",
                     onValueChange = {},
@@ -249,7 +266,8 @@ fun HomeScreenTab(
                 )
             }
 
-            item {
+            item()
+            {
                 Text(
                     text = "Vendors on campus",
                     style = MaterialTheme.typography.titleLarge,
@@ -258,7 +276,8 @@ fun HomeScreenTab(
                 )
             }
 
-            item {
+            item()
+            {
                 HIGServiceRow(
                     title = "Pizza Palace",
                     description = "Authentic Italian wood-fired pizzas.",
@@ -604,7 +623,8 @@ fun ActivityScreenTab(
 )
 {
     var currentHubView by remember { mutableStateOf("Main") }
-    val userRole = remember(role) {
+    val userRole = remember(role)
+    {
         UserRole.entries.find { it.name == role } ?: UserRole.STANDARD
     }
     var selectedOrder by remember { mutableStateOf<OrderEntity?>(null) }
@@ -616,7 +636,8 @@ fun ActivityScreenTab(
                 .fillMaxSize()
                 .padding(DesignSystem.Spacing.screenPadding)
                 .verticalScroll(rememberScrollState())
-        ) {
+        )
+        {
             // Principle: Aesthetic Integrity - Removed redundant heading.
 
             when (userRole)
@@ -685,17 +706,20 @@ fun ActivityScreenTab(
     }
     else
     {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize())
+        {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(DesignSystem.Spacing.medium),
                 verticalAlignment = Alignment.CenterVertically
-            ) {
+            )
+            {
                 IconButton(onClick = {
                     if (currentHubView == "OrderDetail") currentHubView = "ReceiptsHub"
                     else currentHubView = "Main"
-                }) {
+                })
+                {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                         contentDescription = "Back"
@@ -714,7 +738,8 @@ fun ActivityScreenTab(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = DesignSystem.Spacing.medium)
-            ) {
+            )
+            {
                 when (currentHubView)
                 {
                     "Current" -> StudentCurrentOrderHub(
@@ -760,19 +785,25 @@ fun StudentVendorList(
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
-    ) {
-        items(vendors) { vendor ->
+    )
+    {
+        items(vendors)
+        { vendor ->
             HIGCard(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onNavigateToMenuBrowse(userId, vendor.userId) }
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            )
+            {
+                Row(verticalAlignment = Alignment.CenterVertically)
+                {
                     Surface(
                         shape = MaterialTheme.shapes.medium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(56.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
+                    )
+                    {
+                        Box(contentAlignment = Alignment.Center)
+                        {
                             Icon(
                                 imageVector = Icons.Rounded.Store,
                                 contentDescription = null,
@@ -781,7 +812,8 @@ fun StudentVendorList(
                         }
                     }
                     Spacer(modifier = Modifier.width(DesignSystem.Spacing.medium))
-                    Column {
+                    Column()
+                    {
                         Text(
                             text = vendor.shopName ?: vendor.fullName,
                             style = MaterialTheme.typography.titleLarge,
@@ -807,10 +839,14 @@ fun AdminUserManagement(adminRepository: AdminRepository)
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
-    ) {
-        items(users) { user ->
-            HIGCard(modifier = Modifier.fillMaxWidth()) {
-                Column {
+    )
+    {
+        items(users)
+        { user ->
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                Column()
+                {
                     Text(
                         text = "ID: ${user.userId}",
                         style = MaterialTheme.typography.labelSmall,
@@ -829,26 +865,33 @@ fun AdminUserManagement(adminRepository: AdminRepository)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
-                    ) {
+                    )
+                    {
                         TextButton(
                             onClick = {
-                                coroutineScope.launch {
+                                coroutineScope.launch()
+                                {
                                     if (user.status == UserStatus.ACTIVE) adminRepository.suspendUser(
                                         user.userId
                                     )
                                     else adminRepository.activateUser(user.userId)
                                 }
                             }
-                        ) {
+                        )
+                        {
                             Text(text = if (user.status == UserStatus.ACTIVE) "Suspend" else "Activate")
                         }
 
                         TextButton(
                             onClick = {
-                                coroutineScope.launch { adminRepository.deleteUser(user) }
+                                coroutineScope.launch()
+                                {
+                                    adminRepository.deleteUser(user)
+                                }
                             },
                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                        ) {
+                        )
+                        {
                             Text("Delete")
                         }
                     }
@@ -866,10 +909,14 @@ fun AdminVendorManagement(adminRepository: AdminRepository)
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
-    ) {
-        items(vendors) { vendor ->
-            HIGCard(modifier = Modifier.fillMaxWidth()) {
-                Column {
+    )
+    {
+        items(vendors)
+        { vendor ->
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                Column()
+                {
                     Text(
                         text = vendor.shopName ?: vendor.fullName,
                         style = MaterialTheme.typography.titleMedium,
@@ -896,15 +943,20 @@ fun AdminOrderManagement(orderRepository: OrderRepository)
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
-    ) {
-        items(orders) { order ->
+    )
+    {
+        items(orders)
+        { order ->
             var expanded by remember { mutableStateOf(false) }
-            HIGCard(modifier = Modifier.fillMaxWidth()) {
-                Column {
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                Column()
+                {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
-                    ) {
+                    )
+                    {
                         Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
                         Text(
                             text = "R${String.format(locale, "%.2f", order.totalAmount)}",
@@ -917,16 +969,20 @@ fun AdminOrderManagement(orderRepository: OrderRepository)
                         style = MaterialTheme.typography.bodySmall
                     )
 
-                    Box(modifier = Modifier.align(Alignment.End)) {
-                        TextButton(onClick = { expanded = true }) {
+                    Box(modifier = Modifier.align(Alignment.End))
+                    {
+                        TextButton(onClick = { expanded = true })
+                        {
                             Text(text = "Update Status")
                         }
-                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false })
+                        {
                             OrderStatus.entries.forEach { status ->
                                 DropdownMenuItem(
                                     text = { Text(text = status.name) },
                                     onClick = {
-                                        coroutineScope.launch {
+                                        coroutineScope.launch()
+                                        {
                                             orderRepository.updateOrderStatus(order, status)
                                             expanded = false
                                         }
@@ -975,7 +1031,8 @@ fun StudentReceipts(
     val sortOptions =
         listOf("Amount (High to Low)", "Amount (Low to High)", "Date (Newest)", "Date (Oldest)")
 
-    val filteredOrders = remember(orders, selectedMonth, selectedYear, sortBy) {
+    val filteredOrders = remember(orders, selectedMonth, selectedYear, sortBy)
+    {
         orders.filter { order ->
             val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
             val monthMatch = selectedMonth == -1 || cal.get(Calendar.MONTH) == selectedMonth
@@ -993,8 +1050,10 @@ fun StudentReceipts(
         }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+    {
+        Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+        {
             MinimalDropdown(
                 label = "Month",
                 selectedOption = if (selectedMonth == -1) "All" else months[selectedMonth + 1],
@@ -1023,31 +1082,38 @@ fun StudentReceipts(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
             contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
-        ) {
+        )
+        {
             if (filteredOrders.isEmpty())
             {
-                item {
+                item()
+                {
                     Box(
                         Modifier
                             .fillMaxWidth()
                             .padding(DesignSystem.Spacing.extraLarge),
                         contentAlignment = Alignment.Center
-                    ) {
+                    )
+                    {
                         Text("No records found.", color = MaterialTheme.colorScheme.outline)
                     }
                 }
             }
-            items(filteredOrders) { order ->
+            items(filteredOrders)
+            { order ->
                 HIGCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { onOrderClick(order) }
-                ) {
+                )
+                {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column {
+                    )
+                    {
+                        Column()
+                        {
                             Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
                             Text(
                                 text = SimpleDateFormat("dd MMM yyyy", locale).format(
@@ -1077,8 +1143,10 @@ fun StudentTotalSpending(userId: String, orderRepository: OrderRepository)
     val total = orders.sumOf { it.totalAmount }
     val locale = LocalConfiguration.current.locales[0]
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+    {
+        Column(horizontalAlignment = Alignment.CenterHorizontally)
+        {
             Text(
                 text = "Lifetime Spending",
                 style = MaterialTheme.typography.bodyLarge,
@@ -1120,17 +1188,23 @@ fun SettingsScreenTab(
                 .padding(DesignSystem.Spacing.screenPadding)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
-        ) {
+        )
+        {
             // Principle: Aesthetic Integrity - Removed redundant heading.
 
             // Account Group
-            HIGCard(modifier = Modifier.fillMaxWidth()) {
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
                 var newEmail by remember { mutableStateOf(user?.email ?: "") }
                 var newPassword by remember { mutableStateOf("") }
 
-                LaunchedEffect(user) { if (newEmail.isEmpty()) newEmail = user?.email ?: "" }
+                LaunchedEffect(user)
+                {
+                    if (newEmail.isEmpty()) newEmail = user?.email ?: ""
+                }
 
-                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+                {
                     Text(
                         text = "Profile Identity",
                         style = MaterialTheme.typography.titleMedium,
@@ -1151,23 +1225,31 @@ fun SettingsScreenTab(
                         visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                         shape = MaterialTheme.shapes.medium
                     )
-                    Button(onClick = {
-                        coroutineScope.launch {
-                            authRepository.updateProfile(
-                                userId,
-                                newEmail,
-                                newPassword
-                            ); newPassword = ""
-                        }
-                    }, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+                    Button(
+                        onClick = {
+                            coroutineScope.launch()
+                            {
+                                authRepository.updateProfile(
+                                    userId,
+                                    newEmail,
+                                    newPassword
+                                ); newPassword = ""
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium
+                    )
+                    {
                         Text("Update Credentials")
                     }
                 }
             }
 
             // Financial Group
-            HIGCard(modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+                {
                     Text(
                         text = "Financial Controls",
                         style = MaterialTheme.typography.titleMedium,
@@ -1190,10 +1272,16 @@ fun SettingsScreenTab(
                             )
                             TextButton(onClick = {
                                 activeSettingView = "AddCard"
-                            }) { Text("Link Debit Card") }
+                            })
+                            {
+                                Text("Link Debit Card")
+                            }
                             TextButton(onClick = {
                                 activeSettingView = "Redeem"
-                            }) { Text("Redeem Coupon") }
+                            })
+                            {
+                                Text("Redeem Coupon")
+                            }
                         }
 
                         UserRole.VENDOR ->
@@ -1201,25 +1289,36 @@ fun SettingsScreenTab(
                             Text(text = if (user?.bankAccountInfo != null) "Payout Enabled" else "Payout Not Configured")
                             TextButton(onClick = {
                                 activeSettingView = "Bank"
-                            }) { Text("Update Bank Details") }
+                            })
+                            {
+                                Text("Update Bank Details")
+                            }
                         }
 
                         UserRole.ADMIN ->
                         {
                             TextButton(onClick = {
                                 activeSettingView = "Credits"
-                            }) { Text("Issue System Credits") }
+                            })
+                            {
+                                Text("Issue System Credits")
+                            }
                             TextButton(onClick = {
                                 activeSettingView = "Coupons"
-                            }) { Text("Generate Coupons") }
+                            })
+                            {
+                                Text("Generate Coupons")
+                            }
                         }
                     }
                 }
             }
 
             // Support Group
-            HIGCard(modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+                {
                     Text(
                         text = "System Support",
                         style = MaterialTheme.typography.titleMedium,
@@ -1229,10 +1328,16 @@ fun SettingsScreenTab(
                     {
                         TextButton(onClick = {
                             activeSettingView = "Complaints"
-                        }) { Text("Review Complaints") }
+                        })
+                        {
+                            Text("Review Complaints")
+                        }
                         TextButton(onClick = {
                             activeSettingView = "Compliments"
-                        }) { Text("Review Compliments") }
+                        })
+                        {
+                            Text("Review Compliments")
+                        }
                     }
                     else
                     {
@@ -1240,7 +1345,8 @@ fun SettingsScreenTab(
                             onClick = { activeSettingView = "Feedback" },
                             modifier = Modifier.fillMaxWidth(),
                             shape = MaterialTheme.shapes.medium
-                        ) {
+                        )
+                        {
                             Text("Submit Feedback")
                         }
                     }
@@ -1254,7 +1360,8 @@ fun SettingsScreenTab(
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 shape = MaterialTheme.shapes.large
-            ) {
+            )
+            {
                 Icon(Icons.AutoMirrored.Rounded.Logout, null)
                 Spacer(Modifier.width(DesignSystem.Spacing.small))
                 Text("Logout Session", fontWeight = FontWeight.Bold)
@@ -1272,14 +1379,19 @@ fun SettingsScreenTab(
     else
     {
         // Sub-view Controller
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize())
+        {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(DesignSystem.Spacing.medium)
-            ) {
+            )
+            {
                 IconButton(onClick = {
                     activeSettingView = "Main"
-                }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") }
+                })
+                {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
+                }
                 Text(
                     text = activeSettingView.replace(Regex("([a-z])([A-Z])"), "$1 $2"),
                     style = MaterialTheme.typography.titleLarge,
@@ -1289,7 +1401,9 @@ fun SettingsScreenTab(
 
             Box(modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = DesignSystem.Spacing.medium)) {
+                .padding(horizontal = DesignSystem.Spacing.medium)
+            )
+            {
                 when (activeSettingView)
                 {
                     "Credits" -> AdminIssueCreditsWindow(adminRepository)
@@ -1321,19 +1435,23 @@ fun MinimalDropdown(
 )
 {
     var expanded by remember { mutableStateOf(false) }
-    Box(modifier = modifier) {
+    Box(modifier = modifier)
+    {
         Surface(
             onClick = { expanded = true },
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceVariant,
             modifier = Modifier.fillMaxWidth()
-        ) {
+        )
+        {
             Row(
                 modifier = Modifier.padding(DesignSystem.Spacing.medium),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
+            )
+            {
+                Column()
+                {
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelSmall,
@@ -1352,8 +1470,10 @@ fun MinimalDropdown(
                 )
             }
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { option ->
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false })
+        {
+            options.forEach()
+            { option ->
                 DropdownMenuItem(
                     text = { Text(option) },
                     onClick = { onOptionSelected(option); expanded = false })
@@ -1484,14 +1604,18 @@ fun StudentActivityReports(userId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
     val context = LocalContext.current
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth())
+    {
         Text("Generate financial activity report.", color = MaterialTheme.colorScheme.outline)
         Spacer(Modifier.height(DesignSystem.Spacing.large))
-        Button(onClick = {
-            val json = Json.encodeToString(orders)
-            File(context.getExternalFilesDir(null), "order_history.json").writeText(json)
-            Toast.makeText(context, "Report saved to local storage", Toast.LENGTH_SHORT).show()
-        }) {
+        Button(
+            onClick = {
+                val json = Json.encodeToString(orders)
+                File(context.getExternalFilesDir(null), "order_history.json").writeText(json)
+                Toast.makeText(context, "Report saved to local storage", Toast.LENGTH_SHORT).show()
+            }
+        )
+        {
             Icon(Icons.Rounded.Download, null)
             Text("Export as JSON")
         }
@@ -1503,10 +1627,14 @@ fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
     val locale = LocalConfiguration.current.locales[0]
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-        items(orders) { order ->
-            HIGCard(modifier = Modifier.fillMaxWidth()) {
-                Column {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+    {
+        items(orders)
+        { order ->
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                Column()
+                {
                     Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
                     Text(
                         text = "Status: ${order.status.name}",
@@ -1536,8 +1664,10 @@ fun VendorReportHub(vendorId: String, orderRepository: OrderRepository)
     HIGCard(
         modifier = Modifier.fillMaxWidth(),
         containerColor = MaterialTheme.colorScheme.primaryContainer
-    ) {
-        Column {
+    )
+    {
+        Column()
+        {
             Text("Total Revenue", style = MaterialTheme.typography.labelMedium)
             Text(
                 "R${String.format(locale, "%.2f", total)}",
@@ -1553,10 +1683,14 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
 {
     val orders by orderRepository.getAllOrders().collectAsState(emptyList())
     val locale = LocalConfiguration.current.locales[0]
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
-        items(orders) { order ->
-            HIGCard(modifier = Modifier.fillMaxWidth()) {
-                Column {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+    {
+        items(orders)
+        { order ->
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                Column()
+                {
                     Text("Order #${order.orderId} • ${order.status}", fontWeight = FontWeight.Bold)
                     Text(
                         "Customer: ${order.customerId} | Vendor: ${order.vendorId}",
@@ -1578,7 +1712,8 @@ fun AdminGlobalSummary(orderRepository: OrderRepository)
     val orders by orderRepository.getAllOrders().collectAsState(emptyList())
     val total = orders.filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
     val locale = LocalConfiguration.current.locales[0]
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+    {
         StatCardFull(label = "Platform Revenue", value = "R${String.format(locale, "%.2f", total)}")
         StatCardHalf(
             label = "Total Transactions",
@@ -1596,7 +1731,8 @@ fun AdminReportHub(
     var reportType by remember { mutableStateOf("Main") }
     if (reportType == "Main")
     {
-        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+        {
             HIGServiceRow(
                 "Daily Trends",
                 "View platform activity over time.",
@@ -1611,10 +1747,14 @@ fun AdminReportHub(
     }
     else
     {
-        Column {
+        Column()
+        {
             IconButton(onClick = {
                 reportType = "Main"
-            }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, null) }
+            })
+            {
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
+            }
             Text(
                 "Report: $reportType",
                 style = MaterialTheme.typography.titleLarge,
@@ -1623,7 +1763,10 @@ fun AdminReportHub(
             Box(
                 Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
-            ) { Text("Data aggregation in progress...") }
+            )
+            {
+                Text("Data aggregation in progress...")
+            }
         }
     }
 }
@@ -1633,14 +1776,16 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
 {
     if (order == null)
     {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+        {
             Text("Detailed receipt data is unavailable.", color = MaterialTheme.colorScheme.error)
         }
     }
     else
     {
         val locale = LocalConfiguration.current.locales[0]
-        val items = remember(order) {
+        val items = remember(order)
+        {
             try
             {
                 Json.decodeFromString<List<CartItemEntity>>(order.itemsJson)
@@ -1656,9 +1801,12 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
-            HIGCard(modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+        )
+        {
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+                {
                     Text(
                         "Order Audit",
                         style = MaterialTheme.typography.titleMedium,
@@ -1702,12 +1850,15 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
                 modifier = Modifier.padding(top = DesignSystem.Spacing.small)
             )
 
-            items.forEach { item ->
-                HIGCard(modifier = Modifier.fillMaxWidth()) {
+            items.forEach()
+            { item ->
+                HIGCard(modifier = Modifier.fillMaxWidth())
+                {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
-                    ) {
+                    )
+                    {
                         Text("${item.quantity}x ${item.name}", modifier = Modifier.weight(1f))
                         Text(
                             "R${String.format(locale, "%.2f", item.price * item.quantity)}",
@@ -1722,8 +1873,10 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
             HIGCard(
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.extraSmall)) {
+            )
+            {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.extraSmall))
+                {
                     val subtotal = items.sumOf { it.price * it.quantity }
                     DetailRow("Cart Subtotal", subtotal, locale)
                     DetailRow("Platform Fees & Tax", order.totalAmount - subtotal, locale)
@@ -1741,7 +1894,8 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
-                    ) {
+                    )
+                    {
                         Text(
                             "Total Settlement",
                             style = MaterialTheme.typography.titleMedium,
@@ -1758,8 +1912,10 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
 
             if (!order.specialRequests.isNullOrBlank())
             {
-                HIGCard(modifier = Modifier.fillMaxWidth()) {
-                    Column {
+                HIGCard(modifier = Modifier.fillMaxWidth())
+                {
+                    Column()
+                    {
                         Text("Customer Instructions", fontWeight = FontWeight.Bold)
                         Text(order.specialRequests, style = MaterialTheme.typography.bodyMedium)
                     }
@@ -1800,13 +1956,15 @@ fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
     var successMsg by remember { mutableStateOf("") }
     val locale = LocalConfiguration.current.locales[0]
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize())
+    {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+        )
+        {
             Text(
                 "Manually add credits to a user's campus wallet for support or refunds.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -1835,11 +1993,14 @@ fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
                 singleLine = true
             )
 
-            if (successMsg.isNotEmpty()) Text(
-                successMsg,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
+            if (successMsg.isNotEmpty())
+            {
+                Text(
+                    successMsg,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         // Principle: Direct Manipulation - Fixed action button for clarity.
@@ -1849,7 +2010,10 @@ fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
                 val a = amount.toDoubleOrNull() ?: 0.0
                 if (isFormValid)
                 {
-                    coroutineScope.launch { adminRepository.issueCredits(targetId, a) }
+                    coroutineScope.launch()
+                    {
+                        adminRepository.issueCredits(targetId, a)
+                    }
                     successMsg = "Success: R${String.format(locale, "%.2f", a)} issued to $targetId"
                     targetId = ""; amount = ""
                 }
@@ -1870,13 +2034,15 @@ fun AdminGenerateCouponsWindow(couponRepository: CouponRepository)
     val coroutineScope = rememberCoroutineScope()
     var successMsg by remember { mutableStateOf("") }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize())
+    {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+        )
+        {
             Text(
                 "Create unique promotional codes for student discounts.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -1905,11 +2071,14 @@ fun AdminGenerateCouponsWindow(couponRepository: CouponRepository)
                 singleLine = true
             )
 
-            if (successMsg.isNotEmpty()) Text(
-                successMsg,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
+            if (successMsg.isNotEmpty())
+            {
+                Text(
+                    successMsg,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         val isFormValid = code.isNotBlank() && (discount.toDoubleOrNull() ?: 0.0) > 0
@@ -1918,7 +2087,10 @@ fun AdminGenerateCouponsWindow(couponRepository: CouponRepository)
                 val d = discount.toDoubleOrNull() ?: 0.0
                 if (isFormValid)
                 {
-                    coroutineScope.launch { couponRepository.createCoupon(code, d) }
+                    coroutineScope.launch()
+                    {
+                        couponRepository.createCoupon(code, d)
+                    }
                     successMsg = "Success: Coupon $code (${d}%) generated."
                     code = ""; discount = ""
                 }
@@ -1940,29 +2112,38 @@ fun AdminFeedbackWindow(feedbackRepository: FeedbackRepository, type: FeedbackTy
 
     if (feedbacks.isEmpty())
     {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+        {
             Text("No feedback items in this category.", color = MaterialTheme.colorScheme.outline)
         }
     }
     else
     {
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
-            items(feedbacks) { fb ->
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+        {
+            items(feedbacks)
+            { fb ->
                 var response by remember { mutableStateOf("") }
                 var resolved by remember { mutableStateOf(false) }
 
-                HIGCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+                HIGCard(modifier = Modifier.fillMaxWidth())
+                {
+                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+                    {
                         Row(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.fillMaxWidth()
-                        ) {
+                        )
+                        {
                             Text(fb.subject, fontWeight = FontWeight.Black)
-                            if (resolved) Icon(
-                                Icons.Rounded.CheckCircle,
-                                null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                            if (resolved)
+                            {
+                                Icon(
+                                    Icons.Rounded.CheckCircle,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                         Text(fb.message, style = MaterialTheme.typography.bodySmall)
                         Text(
@@ -1984,22 +2165,27 @@ fun AdminFeedbackWindow(feedbackRepository: FeedbackRepository, type: FeedbackTy
                         Row(
                             horizontalArrangement = Arrangement.End,
                             modifier = Modifier.fillMaxWidth()
-                        ) {
-                            TextButton(onClick = { resolved = !resolved }) {
+                        )
+                        {
+                            TextButton(onClick = { resolved = !resolved })
+                            {
                                 Text(if (resolved) "Reopen" else "Mark Resolved")
                             }
-                            TextButton(onClick = {
-                                if (response.isNotBlank())
-                                {
-                                    Toast.makeText(
-                                        context,
-                                        "Response sent to user.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    response = ""
-                                    resolved = true
+                            TextButton(
+                                onClick = {
+                                    if (response.isNotBlank())
+                                    {
+                                        Toast.makeText(
+                                            context,
+                                            "Response sent to user.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        response = ""
+                                        resolved = true
+                                    }
                                 }
-                            }) {
+                            )
+                            {
                                 Text("Send Response")
                             }
                         }
@@ -2017,13 +2203,15 @@ fun StudentRedeemCouponWindow(couponRepository: CouponRepository)
     var status by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize())
+    {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+        )
+        {
             Text(
                 "Enter a promotional code to apply a discount to your next order.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -2041,17 +2229,21 @@ fun StudentRedeemCouponWindow(couponRepository: CouponRepository)
                 singleLine = true
             )
 
-            if (status.isNotEmpty()) Text(
-                status,
-                color = if (status.startsWith("Valid")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                fontWeight = FontWeight.Bold
-            )
+            if (status.isNotEmpty())
+            {
+                Text(
+                    status,
+                    color = if (status.startsWith("Valid")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         val isFormValid = code.isNotBlank()
         HIGButton(
             onClick = {
-                coroutineScope.launch {
+                coroutineScope.launch()
+                {
                     val c = couponRepository.validateCoupon(code)
                     status =
                         if (c != null) "Valid: ${c.discountPercent}% discount activated." else "Error: Code not found or inactive."
@@ -2074,13 +2266,15 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
     val coroutineScope = rememberCoroutineScope()
     var successMsg by remember { mutableStateOf("") }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize())
+    {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+        )
+        {
             Text(
                 "Link a debit card for secure campus wallet top-ups.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -2097,7 +2291,8 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
                 shape = MaterialTheme.shapes.medium,
                 singleLine = true
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+            {
                 OutlinedTextField(
                     value = expiryDate,
                     onValueChange = {
@@ -2122,11 +2317,14 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
                 )
             }
 
-            if (successMsg.isNotEmpty()) Text(
-                successMsg,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
+            if (successMsg.isNotEmpty())
+            {
+                Text(
+                    successMsg,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         val isFormValid = cardNumber.length == 16 && expiryDate.isNotBlank() && cvv.isNotBlank()
@@ -2134,7 +2332,8 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
             onClick = {
                 if (isFormValid)
                 {
-                    coroutineScope.launch {
+                    coroutineScope.launch()
+                    {
                         debitCardRepository.addCard(
                             userId,
                             cardNumber,
@@ -2167,13 +2366,15 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
     var successMsg by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf("") }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize())
+    {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+        )
+        {
             Text(
                 "Provide your banking information to receive periodic revenue payouts.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -2237,16 +2438,22 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
                 singleLine = true
             )
 
-            if (successMsg.isNotEmpty()) Text(
-                successMsg,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
-            if (errorMsg.isNotEmpty()) Text(
-                errorMsg,
-                color = MaterialTheme.colorScheme.error,
-                fontWeight = FontWeight.Bold
-            )
+            if (successMsg.isNotEmpty())
+            {
+                Text(
+                    successMsg,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            if (errorMsg.isNotEmpty())
+            {
+                Text(
+                    errorMsg,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         val isFormValid =
@@ -2261,7 +2468,10 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
                 else
                 {
                     val info = "$bankName | $accNum | $holder | $branch"
-                    coroutineScope.launch { authRepository.linkBankAccount(userId, info) }
+                    coroutineScope.launch()
+                    {
+                        authRepository.linkBankAccount(userId, info)
+                    }
                     successMsg = "Success: Banking details updated."
                 }
             },
@@ -2282,20 +2492,23 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
     val coroutineScope = rememberCoroutineScope()
     var successMsg by remember { mutableStateOf("") }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize())
+    {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+        )
+        {
             Text(
                 "Your feedback helps us improve the campus dining experience.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+            {
                 FilterChip(
                     selected = type == FeedbackType.COMPLIMENT,
                     onClick = {
@@ -2339,11 +2552,14 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
                 shape = MaterialTheme.shapes.medium
             )
 
-            if (successMsg.isNotEmpty()) Text(
-                successMsg,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
+            if (successMsg.isNotEmpty())
+            {
+                Text(
+                    successMsg,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         val isFormValid = subj.isNotBlank() && msg.isNotBlank()
@@ -2351,7 +2567,8 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
             onClick = {
                 if (isFormValid)
                 {
-                    coroutineScope.launch {
+                    coroutineScope.launch()
+                    {
                         feedbackRepository.submitFeedback(
                             userId,
                             subj,

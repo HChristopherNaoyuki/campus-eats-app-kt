@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.campus_eats_app_kt.ui.components.HIGButton
+import com.example.campus_eats_app_kt.ui.theme.ActionBlue
 import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
@@ -47,46 +48,50 @@ fun LandingScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(CampusOrange)
+            .background(Color.White)
             .padding(DesignSystem.Spacing.screenPadding)
-    ) {
+    )
+    {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        )
+        {
             Spacer(modifier = Modifier.weight(1f))
 
-            // App Icon in white rounded square
+            // App Icon in orange rounded square for brand highlight
             Surface(
                 modifier = Modifier.size(100.dp),
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.large),
-                color = Color.White
-            ) {
-                Box(contentAlignment = Alignment.Center) {
+                color = CampusOrange
+            )
+            {
+                Box(contentAlignment = Alignment.Center)
+                {
                     Icon(
                         imageVector = Icons.Rounded.Fastfood,
                         contentDescription = null,
                         modifier = Modifier.size(60.dp),
-                        tint = CampusOrange
+                        tint = Color.White
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
-            
+
             Text(
                 text = "Campus Eats",
                 style = MaterialTheme.typography.displayMedium.copy(
                     fontWeight = FontWeight.Black,
-                    color = Color.White,
+                    color = Color.Black,
                     letterSpacing = (-1.5).sp
                 )
             )
-            
+
             Text(
                 text = "Order. Track. Pickup.",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = Color.Black.copy(alpha = 0.6f),
                     fontWeight = FontWeight.Bold
                 ),
                 textAlign = TextAlign.Center
@@ -94,13 +99,13 @@ fun LandingScreen(
 
             Spacer(modifier = Modifier.weight(1.5f))
 
-            // Stacked Buttons
+            // Stacked Buttons following professional minimalist style
             HIGButton(
                 onClick = onRegisterClick,
                 text = "Register",
                 modifier = Modifier.fillMaxWidth(),
-                containerColor = Color.White,
-                contentColor = CampusOrange
+                containerColor = CampusOrange,
+                contentColor = Color.White
             )
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
@@ -113,23 +118,25 @@ fun LandingScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                 border = androidx.compose.foundation.BorderStroke(
                     width = 2.dp,
-                    color = Color.White
+                    color = Color.Black
                 )
-            ) {
+            )
+            {
                 Text(
                     text = "Login",
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = Color.White
+                    color = Color.Black
                 )
             }
 
             TextButton(
                 onClick = onForgotPasswordClick,
                 modifier = Modifier.fillMaxWidth()
-            ) {
+            )
+            {
                 Text(
                     text = "Forgot Password?",
-                    color = Color.White,
+                    color = ActionBlue,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }

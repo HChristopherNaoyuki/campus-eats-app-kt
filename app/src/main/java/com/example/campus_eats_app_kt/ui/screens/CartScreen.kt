@@ -137,7 +137,8 @@ fun CartScreen(
             HIGTopAppBar(
                 title = "My cart",
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick)
+                    {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -150,8 +151,10 @@ fun CartScreen(
                     modifier = Modifier.fillMaxWidth(),
                     tonalElevation = 8.dp,
                     color = MaterialTheme.colorScheme.surface
-                ) {
-                    Column(modifier = Modifier.padding(DesignSystem.Spacing.screenPadding)) {
+                )
+                {
+                    Column(modifier = Modifier.padding(DesignSystem.Spacing.screenPadding))
+                    {
                         CalculationRow("Subtotal", summary.subtotal, locale)
                         CalculationRow("Tax (20%)", summary.tax, locale)
                         CalculationRow("Service fee (10%)", summary.serviceFee, locale)
@@ -179,7 +182,8 @@ fun CartScreen(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
+                        )
+                        {
                             Text(
                                 text = "Total",
                                 style = MaterialTheme.typography.titleLarge,
@@ -198,7 +202,8 @@ fun CartScreen(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-                        ) {
+                        )
+                        {
                             OutlinedButton(
                                 onClick = { viewModel.clearCart() },
                                 modifier = Modifier
@@ -209,7 +214,8 @@ fun CartScreen(
                                     1.dp,
                                     CampusOrange
                                 )
-                            ) {
+                            )
+                            {
                                 Text("Clear cart", color = CampusOrange)
                             }
                             HIGButton(
@@ -226,7 +232,8 @@ fun CartScreen(
                 }
             }
         }
-    ) { innerPadding ->
+    )
+    { innerPadding ->
         if (cartItems.isEmpty())
         {
             Box(
@@ -234,8 +241,10 @@ fun CartScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            )
+            {
+                Column(horizontalAlignment = Alignment.CenterHorizontally)
+                {
                     Icon(
                         imageVector = Icons.Rounded.RemoveShoppingCart,
                         contentDescription = null,
@@ -266,8 +275,10 @@ fun CartScreen(
                     .padding(innerPadding),
                 contentPadding = PaddingValues(DesignSystem.Spacing.medium),
                 verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.itemSpacing)
-            ) {
-                item {
+            )
+            {
+                item()
+                {
                     Text(
                         text = cartItems.firstOrNull()?.vendorId
                             ?: "Vendor", // Placeholder for vendor name mapping if needed
@@ -277,7 +288,8 @@ fun CartScreen(
                     )
                     Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 }
-                items(cartItems) { item ->
+                items(cartItems)
+                { item ->
                     CartItemCard(item = item, viewModel = viewModel, locale = locale)
                 }
             }

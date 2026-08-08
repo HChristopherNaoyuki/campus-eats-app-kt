@@ -59,7 +59,8 @@ fun ForgotPasswordScreen(
     val resetState by viewModel.resetState.collectAsState()
 
     // Principle: Feedback - Immediate navigation upon successful database update
-    LaunchedEffect(resetState) {
+    LaunchedEffect(resetState)
+    {
         if (resetState is ResetState.Success)
         {
             onResetSuccess()
@@ -71,7 +72,8 @@ fun ForgotPasswordScreen(
             HIGTopAppBar(
                 title = "Reset password",
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick)
+                    {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -79,7 +81,8 @@ fun ForgotPasswordScreen(
         },
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
+    )
+    { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -87,7 +90,8 @@ fun ForgotPasswordScreen(
                 .padding(DesignSystem.Spacing.screenPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+        )
+        {
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
 
             Text(
