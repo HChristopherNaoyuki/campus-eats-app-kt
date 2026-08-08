@@ -31,7 +31,8 @@ class AuthRepository(
         shopName: String? = null,
     ): Result<UserEntity>
     {
-        return kotlin.runCatching {
+        return kotlin.runCatching()
+        {
             val existingUser = userDao.getUserByEmail(email)
             if (existingUser != null)
             {
@@ -78,7 +79,8 @@ class AuthRepository(
      */
     suspend fun login(email: String, password: String): Result<UserEntity>
     {
-        return kotlin.runCatching {
+        return kotlin.runCatching()
+        {
             val user = userDao.getUserByEmail(email)
             if ((user != null) && (user.passwordHash == password))
             {
@@ -118,7 +120,8 @@ class AuthRepository(
      */
     suspend fun resetPassword(userId: String, newPassword: String): Result<Unit>
     {
-        return kotlin.runCatching {
+        return kotlin.runCatching()
+        {
             val user = userDao.getUserById(userId)
             if (user != null)
             {
@@ -149,7 +152,8 @@ class AuthRepository(
      */
     suspend fun updateProfile(userId: String, email: String, password: String): Result<Unit>
     {
-        return kotlin.runCatching {
+        return kotlin.runCatching()
+        {
             val user = userDao.getUserById(userId) ?: throw Exception("User not found")
 
             if (user.email != email)
@@ -201,7 +205,8 @@ class AuthRepository(
      */
     suspend fun linkBankAccount(userId: String, bankInfo: String): Result<Unit>
     {
-        return kotlin.runCatching {
+        return kotlin.runCatching()
+        {
             val user = userDao.getUserById(userId)
             if (user != null)
             {
@@ -220,7 +225,8 @@ class AuthRepository(
     @Suppress("unused")
     suspend fun deleteAccount(userId: String): Result<Unit>
     {
-        return kotlin.runCatching {
+        return kotlin.runCatching()
+        {
             val user = userDao.getUserById(userId)
             if (user != null)
             {

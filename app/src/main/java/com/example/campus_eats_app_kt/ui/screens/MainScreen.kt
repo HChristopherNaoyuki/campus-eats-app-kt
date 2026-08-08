@@ -129,6 +129,8 @@ fun MainScreen(
                     role = userRole,
                     authRepository = authRepository,
                     statsRepository = statsRepository,
+                    menuRepository = menuRepository,
+                    onNavigateToMenuBrowse = onNavigateToMenuBrowse,
                     onExploreVendors = { selectedTab = 1 }
                 )
                 1 -> ServicesScreenTab(

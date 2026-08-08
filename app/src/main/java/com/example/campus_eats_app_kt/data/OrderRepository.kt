@@ -49,7 +49,10 @@ class OrderRepository(
         {
             try
             {
-                val networkItems = cartItems.map { OrderItemRequest(it.name, it.quantity) }
+                val networkItems = cartItems.map()
+                {
+                    OrderItemRequest(it.name, it.quantity)
+                }
                 apiService.createOrder(
                     numericVendorId,
                     apikey,
@@ -93,7 +96,8 @@ class OrderRepository(
      * Retrieves orders from the remote API for the given user.
      */
     @Suppress("unused")
-    fun getRemoteOrders(userId: String): Flow<List<MasterOrder>> = flow {
+    fun getRemoteOrders(userId: String): Flow<List<MasterOrder>> = flow()
+    {
         val user = userDao.getUserById(userId)
         val apikey = user?.usercode
         if (apikey != null)

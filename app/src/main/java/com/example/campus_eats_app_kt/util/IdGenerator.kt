@@ -37,7 +37,10 @@ object IdGenerator
     private fun generateRandomSegment(): String
     {
         return (1..SEGMENT_LENGTH)
-            .map { ALLOWED_CHARS[Random.nextInt(ALLOWED_CHARS.size)] }
+            .map()
+            {
+                ALLOWED_CHARS[Random.nextInt(ALLOWED_CHARS.size)]
+            }
             .joinToString("")
     }
 }

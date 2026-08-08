@@ -114,12 +114,15 @@ fun HomeScreenTab(
     role: UserRole,
     authRepository: AuthRepository,
     statsRepository: StatsRepository,
+    menuRepository: MenuRepository,
+    onNavigateToMenuBrowse: (String, String) -> Unit,
     onExploreVendors: () -> Unit
 )
 {
     val user by authRepository.getUserFlow(userId).collectAsState(null)
     val vendorStats by statsRepository.getVendorStats(userId).collectAsState(null)
     val adminStats by statsRepository.getAdminStats().collectAsState(null)
+    val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
     val coroutineScope = rememberCoroutineScope()
     val locale = LocalConfiguration.current.locales[0]
 
@@ -268,34 +271,55 @@ fun HomeScreenTab(
 
             item()
             {
-                Text(
-                    text = "Vendors on campus",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = (-0.5).sp
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 )
+                {
+                    Text(
+                        text = "Vendors on campus",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.5).sp
+                    )
+                    TextButton(onClick = onExploreVendors)
+                    {
+                        Text("View all", color = CampusOrange, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
 
-            item()
+            if (vendors.isEmpty())
             {
-                HIGServiceRow(
-                    title = "Pizza Palace",
-                    description = "Authentic Italian wood-fired pizzas.",
-                    icon = Icons.Rounded.Store,
-                    onClick = onExploreVendors
-                )
-                HIGServiceRow(
-                    title = "Green Bowl",
-                    description = "Fresh salads and healthy power bowls.",
-                    icon = Icons.Rounded.Store,
-                    onClick = onExploreVendors
-                )
-                HIGServiceRow(
-                    title = "Brew & Co",
-                    description = "Premium coffee and artisan pastries.",
-                    icon = Icons.Rounded.Store,
-                    onClick = onExploreVendors
-                )
+                item()
+                {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(DesignSystem.Spacing.large),
+                        contentAlignment = Alignment.Center
+                    )
+                    {
+                        Text(
+                            "Discovering campus dining...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+            }
+            else
+            {
+                items(vendors.take(3))
+                { vendor ->
+                    HIGServiceRow(
+                        title = vendor.shopName ?: vendor.fullName,
+                        description = "Tap to browse full menu and items.",
+                        icon = Icons.Rounded.Store,
+                        onClick = { onNavigateToMenuBrowse(userId, vendor.userId) }
+                    )
+                }
             }
         }
 
@@ -603,7 +627,10 @@ fun ServicesScreenTab(
 
                     "OrderDetail" -> OrderDetailWindow(
                         order = selectedOrder,
-                        onReturnHome = onReturnHome
+                        role = role,
+                        userId = userId,
+                        orderRepository = orderRepository,
+                        onReturnHome = { activeView = "Main" }
                     )
                 }
             }
@@ -631,6 +658,7 @@ fun ActivityScreenTab(
 
     if (currentHubView == "Main")
     {
+        // ... (rest of Main remains same)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -759,14 +787,25 @@ fun ActivityScreenTab(
                     )
 
                     "ReportsHub" -> StudentActivityReports(userId, orderRepository)
-                    "VendorOrders" -> VendorOrderHub(userId, orderRepository)
+                    "VendorOrders" -> VendorOrderHub(
+                        vendorId = userId,
+                        orderRepository = orderRepository,
+                        onOrderClick = {
+                            selectedOrder = it
+                            currentHubView = "OrderDetail"
+                        }
+                    )
+
                     "VendorReports" -> VendorReportHub(userId, orderRepository)
                     "AdminReceipts" -> AdminReceiptsHub(orderRepository)
                     "AdminSummary" -> AdminGlobalSummary(orderRepository)
                     "AdminReports" -> AdminReportHub(statsRepository)
                     "OrderDetail" -> OrderDetailWindow(
                         order = selectedOrder,
-                        onReturnHome = onReturnHome
+                        role = userRole,
+                        userId = userId,
+                        orderRepository = orderRepository,
+                        onReturnHome = { currentHubView = "Main" }
                     )
                 }
             }
@@ -1623,31 +1662,70 @@ fun StudentActivityReports(userId: String, orderRepository: OrderRepository)
 }
 
 @Composable
-fun VendorOrderHub(vendorId: String, orderRepository: OrderRepository)
+fun VendorOrderHub(
+    vendorId: String,
+    orderRepository: OrderRepository,
+    onOrderClick: (OrderEntity) -> Unit
+)
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
     val locale = LocalConfiguration.current.locales[0]
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
+    )
     {
+        if (orders.isEmpty())
+        {
+            item()
+            {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(DesignSystem.Spacing.extraLarge),
+                    contentAlignment = Alignment.Center
+                )
+                {
+                    Text("No orders assigned yet.", color = MaterialTheme.colorScheme.outline)
+                }
+            }
+        }
+
         items(orders)
         { order ->
-            HIGCard(modifier = Modifier.fillMaxWidth())
+            HIGCard(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { onOrderClick(order) }
+            )
             {
                 Column()
                 {
-                    Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    {
+                        Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "R${String.format(locale, "%.2f", order.totalAmount)}",
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraSmall))
                     Text(
                         text = "Status: ${order.status.name}",
-                        color = MaterialTheme.colorScheme.primary
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (order.status == OrderStatus.PENDING) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.outline
                     )
                     Text(
-                        text = "Time: ${
+                        text = "Received: ${
                             SimpleDateFormat("HH:mm", locale).format(
-                                Date(
-                                    order.timestamp
-                                )
+                                Date(order.timestamp)
                             )
-                        }"
+                        }",
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -1772,7 +1850,13 @@ fun AdminReportHub(
 }
 
 @Composable
-fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
+fun OrderDetailWindow(
+    order: OrderEntity?,
+    role: UserRole,
+    userId: String,
+    orderRepository: OrderRepository,
+    onReturnHome: () -> Unit
+)
 {
     if (order == null)
     {
@@ -1784,6 +1868,12 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
     else
     {
         val locale = LocalConfiguration.current.locales[0]
+        val coroutineScope = rememberCoroutineScope()
+        var statusExpanded by remember { mutableStateOf(false) }
+
+        val canUpdateStatus =
+            role == UserRole.ADMIN || (role == UserRole.VENDOR && order.vendorId == userId)
+
         val items = remember(order)
         {
             try
@@ -1807,11 +1897,49 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
             {
                 Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
                 {
-                    Text(
-                        "Order Audit",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     )
+                    {
+                        Text(
+                            "Order Audit",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        // Role-based Status Update Controls
+                        if (canUpdateStatus)
+                        {
+                            Box()
+                            {
+                                TextButton(onClick = { statusExpanded = true })
+                                {
+                                    Text("Update Status", fontWeight = FontWeight.Bold)
+                                }
+                                DropdownMenu(
+                                    expanded = statusExpanded,
+                                    onDismissRequest = { statusExpanded = false }
+                                )
+                                {
+                                    OrderStatus.entries.forEach { status ->
+                                        DropdownMenuItem(
+                                            text = { Text(status.name) },
+                                            onClick = {
+                                                coroutineScope.launch()
+                                                {
+                                                    orderRepository.updateOrderStatus(order, status)
+                                                    statusExpanded = false
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     Text(
                         "Serial: #${order.orderId}",
                         style = MaterialTheme.typography.bodySmall,
@@ -1837,7 +1965,9 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
                     )
                     Text(
                         "Status: ${order.status.name}",
-                        color = MaterialTheme.colorScheme.primary,
+                        color = if (order.status == OrderStatus.CANCELLED) Color.Red
+                        else if (order.status == OrderStatus.COMPLETED) Color.Green
+                        else MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Black
                     )
                 }
@@ -1926,7 +2056,7 @@ fun OrderDetailWindow(order: OrderEntity?, onReturnHome: () -> Unit)
 
             HIGButton(
                 onClick = onReturnHome,
-                text = "Back to Campus Hub",
+                text = "Back",
                 modifier = Modifier.fillMaxWidth()
             )
 

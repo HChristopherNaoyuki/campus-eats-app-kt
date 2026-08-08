@@ -27,9 +27,13 @@ class MenuRepository(
     fun getMenuItemsByVendor(
         vendorId: String,
         sortOrder: String? = null
-    ): Flow<List<MenuItemEntity>> = flow {
+    ): Flow<List<MenuItemEntity>> = flow()
+    {
         // First emit local items (local sorting not implemented for simplicity here)
-        menuItemDao.getMenuItemsByVendor(vendorId).collect { emit(it) }
+        menuItemDao.getMenuItemsByVendor(vendorId).collect()
+        {
+            emit(it)
+        }
 
         // Then attempt to fetch from network if it's a numeric ID (indicates Fake Restaurant API)
         val numericId = vendorId.toIntOrNull()
@@ -48,7 +52,8 @@ class MenuRepository(
 
                 if (response.isSuccessful)
                 {
-                    val networkItems = response.body()?.map { networkItem ->
+                    val networkItems = response.body()?.map()
+                    { networkItem ->
                         MenuItemEntity(
                             itemId = networkItem.itemID.toLong(),
                             vendorId = networkItem.restaurantID.toString(),
@@ -74,9 +79,13 @@ class MenuRepository(
      * Searches for menu items by name across both local and remote sources.
      */
     @Suppress("unused")
-    fun searchMenuItems(query: String): Flow<List<MenuItemEntity>> = flow {
+    fun searchMenuItems(query: String): Flow<List<MenuItemEntity>> = flow()
+    {
         // Search local items
-        menuItemDao.searchMenuItems(query).collect { emit(it) }
+        menuItemDao.searchMenuItems(query).collect()
+        {
+            emit(it)
+        }
 
         // Search remote items
         try
@@ -84,7 +93,8 @@ class MenuRepository(
             val response = apiService.searchItemsByName(query)
             if (response.isSuccessful)
             {
-                val networkItems = response.body()?.map { networkItem ->
+                val networkItems = response.body()?.map()
+                { networkItem ->
                     MenuItemEntity(
                         itemId = networkItem.itemID.toLong(),
                         vendorId = networkItem.restaurantID.toString(),
@@ -109,11 +119,19 @@ class MenuRepository(
      * Retrieves a list of all active vendors in the system.
      * Combines local registered vendors with restaurants from the Fake Restaurant API.
      */
-    fun getAllVendors(): Flow<List<UserEntity>> = flow {
+    fun getAllVendors(): Flow<List<UserEntity>> = flow()
+    {
         // Emit local vendors first
-        userDao.getAllUsers().map { users ->
-            users.filter { it.role == UserRole.VENDOR }
-        }.collect { emit(it) }
+        userDao.getAllUsers().map()
+        { users ->
+            users.filter()
+            {
+                it.role == UserRole.VENDOR
+            }
+        }.collect()
+        {
+            emit(it)
+        }
 
         // Fetch and emit network restaurants
         try
@@ -121,7 +139,8 @@ class MenuRepository(
             val response = apiService.getAllRestaurants()
             if (response.isSuccessful)
             {
-                val networkVendors = response.body()?.map { restaurant ->
+                val networkVendors = response.body()?.map()
+                { restaurant ->
                     UserEntity(
                         userId = restaurant.restaurantID.toString(),
                         fullName = restaurant.restaurantName,

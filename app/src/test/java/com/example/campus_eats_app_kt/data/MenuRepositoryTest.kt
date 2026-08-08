@@ -58,10 +58,25 @@ class MenuRepositoryTest
     /**
      * Requirement: Test adding menu item
      */
+    /**
+     * Requirement: Test adding menu item
+     */
     @Test
-    fun addMenuItem_callsDao() = runTest {
-        val item = mockk<com.example.campus_eats_app_kt.data.entity.MenuItemEntity>()
-        repository.addMenuItem(item)
-        coVerify { menuItemDao.insertMenuItem(item) }
+    fun addMenuItem_callsDao()
+    {
+        runTest()
+        {
+            val item = com.example.campus_eats_app_kt.data.entity.MenuItemEntity(
+                itemId = 1L,
+                vendorId = "123",
+                name = "Test Item",
+                description = "Test Desc",
+                price = 10.0,
+                stock = 10,
+                category = "Test"
+            )
+            repository.addMenuItem(item)
+            coVerify { menuItemDao.insertMenuItem(item) }
+        }
     }
 }
