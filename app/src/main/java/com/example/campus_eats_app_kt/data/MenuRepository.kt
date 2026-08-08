@@ -5,7 +5,8 @@ import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.MenuItemEntity
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
-import com.example.campus_eats_app_kt.data.network.RetrofitClient
+import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
+import com.example.campus_eats_app_kt.data.network.MenuItemRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.map
 class MenuRepository(
     private val menuItemDao: MenuItemDao,
     private val userDao: UserDao,
+    private val apiService: FakeRestaurantApiService
 )
 {
     /**
@@ -37,11 +39,11 @@ class MenuRepository(
             {
                 val response = if (sortOrder == null)
                 {
-                    RetrofitClient.instance.getRestaurantMenu(numericId)
+                    apiService.getRestaurantMenu(numericId)
                 }
                 else
                 {
-                    RetrofitClient.instance.getSortedMenu(numericId, sortOrder)
+                    apiService.getSortedMenu(numericId, sortOrder)
                 }
 
                 if (response.isSuccessful)
@@ -79,7 +81,7 @@ class MenuRepository(
         // Search remote items
         try
         {
-            val response = RetrofitClient.instance.searchItemsByName(query)
+            val response = apiService.searchItemsByName(query)
             if (response.isSuccessful)
             {
                 val networkItems = response.body()?.map { networkItem ->
@@ -116,7 +118,7 @@ class MenuRepository(
         // Fetch and emit network restaurants
         try
         {
-            val response = RetrofitClient.instance.getAllRestaurants()
+            val response = apiService.getAllRestaurants()
             if (response.isSuccessful)
             {
                 val networkVendors = response.body()?.map { restaurant ->
@@ -143,9 +145,30 @@ class MenuRepository(
 
     /**
      * Persists a new menu item.
+     * Synchronizes with remote API for prototyping if it's a remote vendor.
      */
     suspend fun addMenuItem(item: MenuItemEntity)
     {
+        val numericVendorId = item.vendorId.toIntOrNull()
+        if (numericVendorId != null)
+        {
+            try
+            {
+                apiService.addMenuItem(
+                    numericVendorId,
+                    MenuItemRequest(
+                        itemName = item.name,
+                        itemPrice = item.price,
+                        itemDescription = item.description,
+                        imageUrl = item.imageUrl
+                    )
+                )
+            }
+            catch (_: Exception)
+            {
+                // Network failure
+            }
+        }
         menuItemDao.insertMenuItem(item)
     }
 

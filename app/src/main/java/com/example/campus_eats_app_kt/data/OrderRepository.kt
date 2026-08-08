@@ -7,10 +7,10 @@ import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.PaymentMethod
+import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
 import com.example.campus_eats_app_kt.data.network.MasterOrder
 import com.example.campus_eats_app_kt.data.network.OrderItemRequest
 import com.example.campus_eats_app_kt.data.network.OrderRequest
-import com.example.campus_eats_app_kt.data.network.RetrofitClient
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
@@ -23,6 +23,7 @@ class OrderRepository(
     private val orderDao: OrderDao,
     private val cartDao: CartDao,
     private val userDao: UserDao,
+    private val apiService: FakeRestaurantApiService
 )
 {
     /**
@@ -49,7 +50,7 @@ class OrderRepository(
             try
             {
                 val networkItems = cartItems.map { OrderItemRequest(it.name, it.quantity) }
-                RetrofitClient.instance.createOrder(
+                apiService.createOrder(
                     numericVendorId,
                     apikey,
                     OrderRequest(networkItems)
@@ -99,7 +100,7 @@ class OrderRepository(
         {
             try
             {
-                val response = RetrofitClient.instance.getUserOrders(apikey)
+                val response = apiService.getUserOrders(apikey)
                 if (response.isSuccessful)
                 {
                     emit(response.body() ?: emptyList())
@@ -136,7 +137,7 @@ class OrderRepository(
         val apikey = user?.usercode ?: return false
         return try
         {
-            val response = RetrofitClient.instance.deleteMasterOrder(masterId, apikey)
+            val response = apiService.deleteMasterOrder(masterId, apikey)
             response.isSuccessful
         }
         catch (e: Exception)

@@ -5,6 +5,7 @@ import com.example.campus_eats_app_kt.data.dao.MenuItemDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
+import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -21,6 +22,7 @@ class MenuRepositoryTest
 {
     private lateinit var menuItemDao: MenuItemDao
     private lateinit var userDao: UserDao
+    private lateinit var apiService: FakeRestaurantApiService
     private lateinit var repository: MenuRepository
 
     @Before
@@ -28,7 +30,8 @@ class MenuRepositoryTest
     {
         menuItemDao = mockk(relaxed = true)
         userDao = mockk(relaxed = true)
-        repository = MenuRepository(menuItemDao, userDao)
+        apiService = mockk(relaxed = true)
+        repository = MenuRepository(menuItemDao, userDao, apiService)
     }
 
     /**

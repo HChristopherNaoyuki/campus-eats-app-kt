@@ -24,6 +24,7 @@ import com.example.campus_eats_app_kt.data.FeedbackRepository
 import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
+import com.example.campus_eats_app_kt.data.network.RetrofitClient
 import com.example.campus_eats_app_kt.ui.navigation.Route
 import com.example.campus_eats_app_kt.ui.screens.AddEditMenuItemScreen
 import com.example.campus_eats_app_kt.ui.screens.AddEditMenuViewModel
@@ -61,11 +62,12 @@ class MainActivity : ComponentActivity()
 
         // Dependency Initialization (Simplified DI pattern)
         val database = CampusEatsDatabase.getDatabase(this)
-        val authRepository = AuthRepository(database.userDao())
-        val menuRepository = MenuRepository(database.menuItemDao(), database.userDao())
+        val apiService = RetrofitClient.instance
+        val authRepository = AuthRepository(database.userDao(), apiService)
+        val menuRepository = MenuRepository(database.menuItemDao(), database.userDao(), apiService)
         val cartRepository = CartRepository(database.cartDao())
         val orderRepository =
-            OrderRepository(database.orderDao(), database.cartDao(), database.userDao())
+            OrderRepository(database.orderDao(), database.cartDao(), database.userDao(), apiService)
         val adminRepository = AdminRepository(database.userDao())
         val statsRepository =
             StatsRepository(database.userDao(), database.menuItemDao(), database.orderDao())

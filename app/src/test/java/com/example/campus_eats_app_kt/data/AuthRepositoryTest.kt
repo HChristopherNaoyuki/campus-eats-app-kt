@@ -4,6 +4,7 @@ import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.entity.UserStatus
+import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -19,6 +20,7 @@ import org.junit.Test
 class AuthRepositoryTest
 {
     private lateinit var userDao: UserDao
+    private lateinit var apiService: FakeRestaurantApiService
     private lateinit var repository: AuthRepository
 
     private val testUser = UserEntity(
@@ -35,7 +37,8 @@ class AuthRepositoryTest
     fun setUp()
     {
         userDao = mockk(relaxed = true)
-        repository = AuthRepository(userDao)
+        apiService = mockk(relaxed = true)
+        repository = AuthRepository(userDao, apiService)
     }
 
     /**

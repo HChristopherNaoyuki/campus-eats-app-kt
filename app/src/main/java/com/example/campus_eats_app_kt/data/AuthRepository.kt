@@ -4,8 +4,8 @@ import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.ShopStatus
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
+import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
 import com.example.campus_eats_app_kt.data.network.RegistrationRequest
-import com.example.campus_eats_app_kt.data.network.RetrofitClient
 import com.example.campus_eats_app_kt.util.IdGenerator
 import kotlinx.coroutines.flow.Flow
 
@@ -13,7 +13,10 @@ import kotlinx.coroutines.flow.Flow
  * AuthRepository handles user-related authentication and profile management operations.
  * It interacts with the local Room database and the remote Fake Restaurant API.
  */
-class AuthRepository(private val userDao: UserDao)
+class AuthRepository(
+    private val userDao: UserDao,
+    private val apiService: FakeRestaurantApiService
+)
 {
     /**
      * Registers a new user in the system.
@@ -40,7 +43,7 @@ class AuthRepository(private val userDao: UserDao)
             try
             {
                 val response =
-                    RetrofitClient.instance.registerUser(RegistrationRequest(email, password))
+                    apiService.registerUser(RegistrationRequest(email, password))
                 if (response.isSuccessful)
                 {
                     remoteUsercode = response.body()?.usercode
@@ -84,7 +87,7 @@ class AuthRepository(private val userDao: UserDao)
                 {
                     try
                     {
-                        val response = RetrofitClient.instance.getUserCode(email, password)
+                        val response = apiService.getUserCode(email, password)
                         if (response.isSuccessful)
                         {
                             val code = response.body()?.usercode
@@ -124,7 +127,7 @@ class AuthRepository(private val userDao: UserDao)
                 {
                     try
                     {
-                        RetrofitClient.instance.updatePassword(user.usercode, newPassword)
+                        apiService.updatePassword(user.usercode, newPassword)
                     }
                     catch (_: Exception)
                     {
@@ -163,7 +166,7 @@ class AuthRepository(private val userDao: UserDao)
                 {
                     try
                     {
-                        RetrofitClient.instance.updatePassword(user.usercode, password)
+                        apiService.updatePassword(user.usercode, password)
                     }
                     catch (_: Exception)
                     {
@@ -226,7 +229,7 @@ class AuthRepository(private val userDao: UserDao)
                 {
                     try
                     {
-                        RetrofitClient.instance.deleteUser(user.usercode)
+                        apiService.deleteUser(user.usercode)
                     }
                     catch (_: Exception)
                     {

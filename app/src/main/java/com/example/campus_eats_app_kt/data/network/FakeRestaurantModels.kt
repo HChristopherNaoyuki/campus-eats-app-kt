@@ -101,7 +101,7 @@ data class MenuItemRequest(
     @param:Json(name = "itemName") val itemName: String,
     @param:Json(name = "itemPrice") val itemPrice: Double,
     @param:Json(name = "itemDescription") val itemDescription: String,
-    @param:Json(name = "imageUrl") val imageUrl: String,
+    @param:Json(name = "imageUrl") val imageUrl: String?,
 )
 
 @JsonClass(generateAdapter = true)
