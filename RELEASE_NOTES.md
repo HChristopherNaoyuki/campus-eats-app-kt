@@ -1,5 +1,89 @@
 # Campus Eats - Release Notes
 
+## Version 2.0.0
+
+**Release Date:** 2026-08-13
+
+---
+
+### Overview
+
+Version 2.0.0 is a major milestone for Campus Eats, introducing a complete technical overhaul and a
+refined visual identity. This release shifts the application from a purely local prototype to a
+hybrid offline-first model, fully integrated with the Fake Restaurant API. The user interface has
+been redesigned for professional clarity, and core vendor fulfillment workflows have been
+established.
+
+---
+
+### New Features
+
+**Fake Restaurant API Integration**
+Implemented full-stack integration for all 15 Documented API endpoints. The application now
+synchronizes restaurants, user accounts, and master orders with the remote server while maintaining
+local transaction integrity.
+
+**Vendor Fulfillment System**
+Introduced a comprehensive order management interface for vendors. Shop owners can now view live
+orders, access itemized customer receipts, and update order statuses (Accepted, Preparing, Ready,
+Completed) in real-time.
+
+**UI/UX Redesign (Minimalist HIG)**
+Complete visual refinement following professional design standards.
+
+- Standardized color palette: Black, Orange, White, and Action Blue.
+- Redesigned Landing, Registration, and Login screens.
+- Implemented a 5-tab navigation structure (Home, Browse, Orders, Reports, Settings).
+- Introduced HIG-compliant components: Segmented Controls, custom cards, and refined headers.
+
+**Dynamic Marketplace**
+The home dashboard now features a live vendor marketplace. Shops are retrieved dynamically from the
+API and local database, featuring real-time status indicators (Open/Closed).
+
+---
+
+### Enhancements
+
+**Dependency Injection & Testability**
+Refactored the data layer to use repository-based dependency injection. Network services are now
+injected into repositories, allowing for 100% mockable unit tests and improved codebase
+maintainability.
+
+**CI/CD Pipeline Optimization**
+Streamlined the GitHub Actions workflow.
+
+- Enabled Gradle dependency caching for faster execution.
+- Enforced strict linting and compilation checks.
+- Synchronized unit tests with the new DI architecture.
+
+**Technical Documentation Suite**
+Produced a complete technical manual including System Architecture, Data Layer schema, Presentation
+Layer standards, and CI/CD configuration guides.
+
+---
+
+### Bug Fixes
+
+- Fixed a critical test regression in `MenuRepositoryTest` caused by improper mock handling of
+  `MenuItemEntity`.
+- Resolved a compilation error in `MainActivity` related to missing `UserDao` dependencies.
+- Corrected various UI state glitches during role-based navigation transitions.
+- Standardized brace placement to Allman style across all modified files.
+
+---
+
+### Technical Details
+
+**Version Code:** 2
+
+**Version Name:** 2.0.0
+
+**Minimum SDK:** API 24 (Android 7.0 Nougat)
+
+**Target SDK:** API 37 (Android 15)
+
+---
+
 ## Version 1.0.0
 
 **Release Date:** 2026-01-15
@@ -133,21 +217,21 @@ This is the initial release; no upgrade path is applicable.
 
 **Debug APK:**
 
-- Filename: campus-eats-debug-1.0.0.apk
+- Filename: campus-eats-debug-2.0.0.apk
 - File Size: [size in MB]
 - Purpose: Testing and development
 - Signing: Debug keystore
 
 **Release APK:**
 
-- Filename: campus-eats-release-1.0.0.apk
+- Filename: campus-eats-release-2.0.0.apk
 - File Size: [size in MB]
 - Purpose: Production distribution
 - Signing: Release keystore
 
 **App Bundle (AAB):**
 
-- Filename: campus-eats-1.0.0.aab
+- Filename: campus-eats-2.0.0.aab
 - File Size: [size in MB]
 - Purpose: Google Play Store submission
 
@@ -277,9 +361,9 @@ software is strictly prohibited without prior written permission.
 
 **Examples:**
 
-- campus-eats-debug-1.0.0.apk
-- campus-eats-release-1.0.0.apk
-- campus-eats-1.0.0.aab
+- campus-eats-debug-2.0.0.apk
+- campus-eats-release-2.0.0.apk
+- campus-eats-2.0.0.aab
 
 ### APK Contents
 
@@ -327,19 +411,19 @@ To verify the APK integrity before installation:
 
 1. **Verify File Checksum:**
    ```bash
-   md5sum campus-eats-release-1.0.0.apk
-   sha1sum campus-eats-release-1.0.0.apk
-   sha256sum campus-eats-release-1.0.0.apk
+   md5sum campus-eats-release-2.0.0.apk
+   sha1sum campus-eats-release-2.0.0.apk
+   sha256sum campus-eats-release-2.0.0.apk
    ```
 
 2. **Verify APK Signature:**
    ```bash
-   keytool -printcert -jarfile campus-eats-release-1.0.0.apk
+   keytool -printcert -jarfile campus-eats-release-2.0.0.apk
    ```
 
 3. **Verify APK Contents:**
    ```bash
-   unzip -l campus-eats-release-1.0.0.apk
+   unzip -l campus-eats-release-2.0.0.apk
    ```
 
 ### APK Installation Commands
@@ -347,19 +431,19 @@ To verify the APK integrity before installation:
 **Using ADB:**
 
 ```bash
-adb install campus-eats-release-1.0.0.apk
+adb install campus-eats-release-2.0.0.apk
 ```
 
 **Using ADB with Reinstall:**
 
 ```bash
-adb install -r campus-eats-release-1.0.0.apk
+adb install -r campus-eats-release-2.0.0.apk
 ```
 
 **Using ADB with Downgrade:**
 
 ```bash
-adb install -d campus-eats-release-1.0.0.apk
+adb install -d campus-eats-release-2.0.0.apk
 ```
 
 **Installation on Device:**

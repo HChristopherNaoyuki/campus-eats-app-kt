@@ -1407,7 +1407,7 @@ fun SettingsScreenTab(
             }
 
             Text(
-                "Campus Eats v1.0.0 Stable",
+                "Campus Eats v2.0.0 Stable",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.labelSmall,
