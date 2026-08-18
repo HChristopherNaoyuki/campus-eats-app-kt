@@ -1,5 +1,6 @@
 package com.example.campus_eats_app_kt.data
 
+import android.util.Log
 import com.example.campus_eats_app_kt.data.dao.MenuItemDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.MenuItemEntity
@@ -21,6 +22,8 @@ class MenuRepository(
     private val apiService: FakeRestaurantApiService
 )
 {
+    private val TAG = "MenuRepository"
+
     /**
      * Retrieves all menu items associated with a specific vendor, optionally sorted by price.
      */
@@ -29,9 +32,11 @@ class MenuRepository(
         sortOrder: String? = null
     ): Flow<List<MenuItemEntity>> = flow()
     {
+        Log.d(TAG, "Fetching menu items for vendor: $vendorId (Sort: $sortOrder)")
         // First emit local items (local sorting not implemented for simplicity here)
         menuItemDao.getMenuItemsByVendor(vendorId).collect()
         {
+            Log.v(TAG, "Emitting ${it.size} local menu items")
             emit(it)
         }
 
@@ -41,6 +46,7 @@ class MenuRepository(
         {
             try
             {
+                Log.i(TAG, "Vendor ID is numeric. Attempting REST API sync...")
                 val response = if (sortOrder == null)
                 {
                     apiService.getRestaurantMenu(numericId)
@@ -65,12 +71,13 @@ class MenuRepository(
                             imageUrl = networkItem.imageUrl
                         )
                     } ?: emptyList()
+                    Log.i(TAG, "API sync successful: Received ${networkItems.size} items")
                     emit(networkItems)
                 }
             }
-            catch (_: Exception)
+            catch (e: Exception)
             {
-                // Network failure
+                Log.e(TAG, "REST API menu fetch failed: ${e.message}")
             }
         }
     }

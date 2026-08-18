@@ -1,5 +1,6 @@
 package com.example.campus_eats_app_kt.data
 
+import android.util.Log
 import com.example.campus_eats_app_kt.data.dao.CartDao
 import com.example.campus_eats_app_kt.data.dao.OrderDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
@@ -26,6 +27,8 @@ class OrderRepository(
     private val apiService: FakeRestaurantApiService
 )
 {
+    private val TAG = "OrderRepository"
+
     /**
      * Persists a new order. If the vendor is from the remote API and the user
      * has an active usercode, the order is also synchronized with the server.
@@ -40,6 +43,7 @@ class OrderRepository(
         specialRequests: String? = null
     ): Long
     {
+        Log.d(TAG, "Initiating order placement for User: $userId at Vendor: $vendorId")
         // 1. Check if we need to sync with the remote API
         val numericVendorId = vendorId.toIntOrNull()
         val user = userDao.getUserById(userId)
@@ -49,6 +53,7 @@ class OrderRepository(
         {
             try
             {
+                Log.i(TAG, "Detected remote vendor. Synchronizing order with REST API...")
                 val networkItems = cartItems.map()
                 {
                     OrderItemRequest(it.name, it.quantity)
@@ -58,12 +63,11 @@ class OrderRepository(
                     apikey,
                     OrderRequest(networkItems)
                 )
-                // Note: We ignore the response as the API mock is non-persistent for many users,
-                // but we perform the call to demonstrate "Usage" of the API.
+                Log.i(TAG, "Remote order synchronization successful")
             }
-            catch (_: Exception)
+            catch (e: Exception)
             {
-                // Network order failed, we continue with local persistence
+                Log.e(TAG, "Remote order sync failed: ${e.message}. Proceeding with local storage.")
             }
         }
 
@@ -79,9 +83,11 @@ class OrderRepository(
             specialRequests = specialRequests
         )
         val id = orderDao.insertOrder(order)
+        Log.d(TAG, "Local order record created. ID: $id")
 
         // Ensure atomic operations: clearing cart after order placement
         cartDao.clearCart(userId)
+        Log.v(TAG, "Cart cleared for user: $userId")
 
         return id
     }

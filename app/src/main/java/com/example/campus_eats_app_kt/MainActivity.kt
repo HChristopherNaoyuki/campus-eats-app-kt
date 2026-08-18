@@ -4,7 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -48,6 +52,7 @@ import com.example.campus_eats_app_kt.ui.screens.VendorBrowseViewModel
 import com.example.campus_eats_app_kt.ui.screens.VendorMenuManagementScreen
 import com.example.campus_eats_app_kt.ui.screens.VendorMenuViewModel
 import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
+import com.google.firebase.auth.FirebaseAuth
 
 /**
  * MainActivity serves as the entry point for the Campus Eats application.
@@ -63,7 +68,8 @@ class MainActivity : ComponentActivity()
         // Dependency Initialization (Simplified DI pattern)
         val database = CampusEatsDatabase.getDatabase(this)
         val apiService = RetrofitClient.instance
-        val authRepository = AuthRepository(database.userDao(), apiService)
+        val firebaseAuth = FirebaseAuth.getInstance()
+        val authRepository = AuthRepository(database.userDao(), apiService, firebaseAuth)
         val menuRepository = MenuRepository(database.menuItemDao(), database.userDao(), apiService)
         val cartRepository = CartRepository(database.cartDao())
         val orderRepository =
@@ -77,7 +83,7 @@ class MainActivity : ComponentActivity()
 
         setContent {
             CampusEatsAppTheme {
-                val backStack = rememberNavBackStack(Route.Landing)
+                val backStack = rememberNavBackStack(Route.Splash)
 
                 NavDisplay(
                     backStack = backStack,
@@ -88,6 +94,35 @@ class MainActivity : ComponentActivity()
                     ),
                     modifier = Modifier.fillMaxSize(),
                     entryProvider = entryProvider {
+                        // Splash Screen / Auth Initializer
+                        entry<Route.Splash> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+
+                            LaunchedEffect(Unit) {
+                                if (authRepository.isUserAuthenticated())
+                                {
+                                    val email = authRepository.getCurrentUserEmail()
+                                    if (email != null)
+                                    {
+                                        val user = authRepository.getUserByEmail(email)
+                                        if (user != null)
+                                        {
+                                            backStack.add(Route.Main(user.userId, user.role.name))
+                                            backStack.removeAt(0) // Remove Splash
+                                            return@LaunchedEffect
+                                        }
+                                    }
+                                }
+                                backStack.add(Route.Landing)
+                                backStack.removeAt(0) // Remove Splash
+                            }
+                        }
+
                         // Landing Screen Entry
                         entry<Route.Landing> {
                             LandingScreen(
@@ -166,6 +201,7 @@ class MainActivity : ComponentActivity()
                                 couponRepository = couponRepository,
                                 debitCardRepository = debitCardRepository,
                                 onLogout = {
+                                    authRepository.logout()
                                     backStack.clear()
                                     backStack.add(Route.Landing)
                                 },

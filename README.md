@@ -1,167 +1,128 @@
-# Campus Eats - Mobile Campus Dining Platform
+# Campus Eats - Mobile Campus Dining Platform (v2.0.0)
+
+**Module:** OPEN SOURCE CODING (INTERMEDIATE) (OPSC6312)
+**Assessment:** Part 2 - App Prototype Development
+**Developer:** Naoyuki Christopher H.
+
+---
+
+## 1. Introduction & Purpose
 
 Campus Eats is a high-performance, offline-first Android application designed for university
-ecosystems. It facilitates seamless food discovery, ordering, and management for students, vendors,
-and administrators.
+ecosystems, specifically tailored for Rosebank International South Africa. The application
+facilitates seamless food discovery, ordering, and management for students, vendors, and
+administrators.
 
-## Table of Contents
-
-1. [Introduction](#introduction)
-2. [Key Responsibilities](#key-responsibilities)
-3. [Architecture Overview](#architecture-overview)
-4. [Functional Modules](#functional-modules)
-5. [User Roles and Permissions](#user-roles-and-permissions)
-6. [Design Standards](#design-system)
-7. [Technical Specifications](#technical-stack)
-8. [Installation and Build](#installation-and-setup)
-9. [Continuous Integration](#ci-cd-pipeline)
-10. [Database Design](#data-persistence)
-11. [Testing Strategy](#quality-assurance)
+The primary problem addressed is the inefficiency of manual campus dining processes, such as
+long queues, miscommunication, and lack of digital transaction records. Campus Eats provides
+a centralized REST API "Source of Truth" to coordinate between all stakeholders, ensuring
+reliability and fiscal integrity.
 
 ---
 
-## Introduction
+## 2. Design Considerations
 
-The Campus Eats platform addresses the unique logistical challenges of campus dining by providing a
-unified interface for all stakeholders. Developed for Rosebank International University College, the
-application prioritizes reliability through an offline-first architecture, ensuring transaction
-integrity even in areas with intermittent connectivity.
+### 2.1 User Interface (UI)
 
----
+The application follows a professional minimalist design language inspired by modern Human Interface
+Guidelines (HIG).
 
-## Key Responsibilities
+- **Palette**: Black (Structure), Orange (#FFFF8C00 - Branding), White (Backgrounds), Action Blue (
+  #007AFF - Inputs).
+- **Architecture**: Jetpack Compose (Material 3) with a focus on generous spacing and clear visual
+  hierarchy.
+- **Error Handling**: Comprehensive input validation in ViewModels ensures the app handles invalid
+  entries (e.g., mismatched passwords, empty fields) without crashing, providing real-time feedback
+  to the user.
 
-The system is responsible for the following core operations:
+### 2.2 Coding Standards
 
-- **Identity Management**: Secure generation and management of 16-character alphanumeric
-  identifiers.
-- **Menu Lifecycle**: Real-time inventory tracking and menu updates for campus vendors.
-- **Transaction Engine**: Precise calculation of university-mandated taxes, tiered service fees, and
-  student discounts.
-- **Order Orchestration**: Managing the lifecycle of an order from placement to fulfillment.
-- **Reporting**: Generating fiscal and trend analysis reports for vendors and administrators.
-
----
-
-## Architecture Overview
-
-Campus Eats adheres to a strict layered architecture pattern to ensure maintainability and
-scalability.
-
-- **Presentation Layer**: Built with Jetpack Compose using the MVVM (Model-View-ViewModel) pattern.
-- **Domain Layer**: Houses the business logic engines (Checkout, Validation, Order Status).
-- **Data Layer**: Implements the Repository pattern, abstracting Room Database (Local) and
-  Retrofit (Network) sources.
-
-For more technical details, refer to the [System Architecture Document](docs/architecture.md).
+- **Style**: Strict adherence to the **Allman style** (opening braces on new lines) across all
+  Kotlin files.
+- **Pattern**: Model-View-ViewModel (MVVM) with the Repository pattern for clean separation of
+  concerns.
+- **Security**: Mandatory password encryption using SHA-256 hashing before local persistence or
+  network transmission.
 
 ---
 
-## Functional Modules
+## 3. Functional Prototype Features (Part 2)
 
-### Core Modules
+The current v2.0.0 prototype implements the following core requirements:
 
-- **Authentication Module**: Handles registration, login, and secure ID-based recovery.
-- **Ordering Module**: Manages the smart shopping cart and checkout process.
-- **Tracking Module**: Provides real-time visual feedback on order fulfillment progress.
-- **Management Module**: Admin and Vendor tools for system oversight.
-
----
-
-## User Roles and Permissions
-
-The system implements a granular Role-Based Access Control (RBAC) system:
-
-| Role              | Primary Responsibilities                  | Permissions                                             |
-|:------------------|:------------------------------------------|:--------------------------------------------------------|
-| **Administrator** | System oversight and treasury management. | Global auditing, user moderation, credit issuance.      |
-| **Vendor**        | Menu management and order fulfillment.    | Inventory control, order status management.             |
-| **Student**       | Food discovery and ordering.              | Menu access, 2.5% discount eligibility, order tracking. |
-| **Standard User** | Food discovery and ordering.              | General menu access, order tracking.                    |
+- **Authentication**: Secure registration and login with SHA-256 encrypted passwords.
+- **Global Identity**: Automatic generation of unique 16-character alphanumeric User IDs (
+  XXXX-XXXX-XXXX-XXXX).
+- **Settings Manager**: Functional settings menu allowing users to update profile metadata and
+  role-specific configurations (e.g., vendor bank details).
+- **Vendor Fulfillment**: Real-time order tracking for vendors, including itemized receipts and
+  status lifecycle management (Pending -> Accepted -> Preparing -> Ready -> Completed).
+- **Admin Dashboard**: System-wide oversight with user moderation, vendor status control, and global
+  financial reporting.
+- **REST API Integration**: Full integration with the
+  hosted [Fake Restaurant API](https://fakerestaurantapi.runasp.net/) for multi-device
+  synchronization.
+- **Financial Engine**: Automated calculation of service fees (tiered), campus tax (20%), student
+  discounts (2.5%), and R5 rounding logic.
 
 ---
 
-## Design System
+## 4. GitHub & Automated Testing
 
-The application follows a professional minimalist design language inspired by modern human interface
-guidelines.
+### 4.1 Version Control
 
-- **Primary Palette**: Black (Text/Structure), Orange (Actions/Accents), White (Backgrounds).
-- **Typography**: Focused on readability and hierarchical clarity.
-- **Components**: Standardized buttons, cards, and input fields for a predictable user experience.
+This project is hosted on GitHub, utilizing a structured commit history to document the iterative
+development process.
 
-See [GUI Design Standards](docs/presentation_layer.md) for implementation details.
+### 4.2 GitHub Actions (CI/CD)
 
----
+The project utilizes a focused CI pipeline (`ci.yml`) to ensure code quality and build integrity.
 
-## Technical Stack
+- **Workflow**:
+    1. **Static Analysis**: Runs Android Lint to detect code smells and HIG violations.
+    2. **Compilation**: Verifies the application builds successfully (`assembleDebug`).
+    3. **Automated Testing**: Executes the full JUnit 4 unit test suite.
+- **Caching**: Implements Gradle dependency caching to optimize CI execution time and resource
+  usage.
 
-- **Language**: Kotlin 2.x
-- **UI Framework**: Jetpack Compose (Material 3)
-- **Database**: Room Persistence Library
-- **Networking**: Retrofit 2.x with Moshi Converter
-- **Asynchronous**: Kotlin Coroutines and StateFlow
-- **DI**: Manual Dependency Injection with ViewModel Factory
-- **Navigation**: Jetpack Navigation 3 (Modernized)
+### 4.3 Unit Testing
 
----
+Comprehensive tests verify the "Main Functionality":
 
-## Installation and Setup
-
-### Prerequisites
-
-- Android Studio (Ladybug or newer)
-- JDK 17
-- Android SDK (API 24+)
-
-### Build Steps
-
-```bash
-# Clone the repository
-git clone https://github.com/example/campus-eats-app-kt.git
-
-# Build the project
-./gradlew assembleDebug
-
-# Run unit tests
-./gradlew test
-```
+- `CheckoutEngineTest`: Validates financial precision and rounding compliance.
+- `AuthRepositoryTest`: Verifies encryption and authentication logic.
+- `MenuRepositoryTest`: Ensures correct DAO interactions and API synchronization.
 
 ---
 
-## CI/CD Pipeline
+## 5. Technical Specifications
 
-The project utilizes a focused GitHub Actions workflow to maintain code quality.
-
-- **Validation**: Automated linting and static analysis.
-- **Compilation**: Continuous build verification.
-- **Quality**: Execution of the full unit test suite.
-
-Detailed documentation is available in the [CI/CD Configuration Guide](docs/ci_cd.md).
+- **Tech Stack**: Kotlin 2.x, Jetpack Compose, Room DB, Retrofit 2.x, Coroutines.
+- **Minimum SDK**: API 24 (Android 7.0)
+- **Target SDK**: API 37 (Android 15)
 
 ---
 
-## Data Persistence
+## 6. Demonstration Video
 
-Local data is managed through a multi-table Room database. Key entities include:
+A professional demonstration of the Campus Eats prototype, including voice-over explanation of the
+RBAC system, API integration, and database state, can be viewed here:
 
-- `UserEntity`: Profile and authentication metadata.
-- `MenuItemEntity`: Catalog of available products.
-- `OrderEntity`: Immutable transaction records.
-- `FeedbackEntity`: Audit log for quality control.
-
-Refer to the [Data Layer Documentation](docs/data_layer.md) for schema details.
+[**Watch Campus Eats Prototype Demo (v2.0.0)
+**](https://www.youtube.com/watch?v=placeholder_link_unlisted)
 
 ---
 
-## Quality Assurance
+## 7. AI Usage Disclosure
 
-The application maintains a high standard of quality through rigorous testing of the domain layer.
+AI tools were utilized during this project for the following purposes:
 
-- **CheckoutEngine Tests**: Verify financial precision and rounding compliance.
-- **ValidationEngine Tests**: Ensure input integrity and security.
-- **Repository Tests**: Validate data flow between local and remote sources.
+- **Boilerplate Generation**: Generating standard Room DAO and Entity structures.
+- **Code Refinement**: Assisting in the implementation of the Allman style formatting.
+- **Documentation**: Structuring technical guides in professional business English.
+
+All AI-generated snippets were manually reviewed and verified for architectural compliance.
 
 ---
 
-*END OF DOCUMENT*
+*Rosebank International University College - OPSC6312 POE*
