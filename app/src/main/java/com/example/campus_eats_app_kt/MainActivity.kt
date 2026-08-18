@@ -1,6 +1,7 @@
 package com.example.campus_eats_app_kt
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -65,10 +66,14 @@ class MainActivity : ComponentActivity()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Dependency Initialization (Simplified DI pattern)
         val database = CampusEatsDatabase.getDatabase(this)
         val apiService = RetrofitClient.instance
         val firebaseAuth = FirebaseAuth.getInstance()
+
+        // Diagnostic Log: Verify Firebase Configuration
+        Log.i("FirebaseInit", "Project ID: ${firebaseAuth.app.options.projectId}")
+        Log.i("FirebaseInit", "Application ID: ${firebaseAuth.app.options.applicationId}")
+
         val authRepository = AuthRepository(database.userDao(), apiService, firebaseAuth)
         val menuRepository = MenuRepository(database.menuItemDao(), database.userDao(), apiService)
         val cartRepository = CartRepository(database.cartDao())

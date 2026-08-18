@@ -74,9 +74,15 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
                     // On successful registration, update state with the new user record
                     _registrationState.value = RegistrationState.Success(user)
                 }.onFailure { exception ->
-                    // Handle logical failures (e.g., email already registered)
-                    _registrationState.value =
-                        RegistrationState.Error(exception.message ?: "Registration failed")
+                    // Handle logical failures and configuration errors
+                    val errorMsg = when
+                    {
+                        exception.message?.contains("CONFIGURATION_NOT_FOUND") == true ->
+                            "Authentication service is not enabled for this project. Please ensure the Email/Password provider is enabled in the Firebase Console."
+
+                        else -> exception.message ?: "Registration failed"
+                    }
+                    _registrationState.value = RegistrationState.Error(errorMsg)
                 }
             }
             catch (e: Exception)

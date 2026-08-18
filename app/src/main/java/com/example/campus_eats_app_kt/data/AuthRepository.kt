@@ -41,9 +41,21 @@ class AuthRepository(
         return kotlin.runCatching()
         {
             // 1. Create user in Firebase
-            val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-            val firebaseUid =
+            val firebaseUid = try
+            {
+                val authResult =
+                    firebaseAuth.createUserWithEmailAndPassword(email, password).await()
                 authResult.user?.uid ?: throw Exception("Firebase UID generation failed")
+            }
+            catch (e: Exception)
+            {
+                Log.e(TAG, "Firebase registration failed: ${e.message}")
+                if (e.message?.contains("CONFIGURATION_NOT_FOUND") == true)
+                {
+                    throw Exception("Authentication service is not enabled for this project (campus-eats-db). Please enable the Email/Password provider in the Firebase Console.")
+                }
+                throw e
+            }
 
             // 2. Local check for existing email (redundant but safe for Room)
             val existingUser = userDao.getUserByEmail(email)
@@ -98,7 +110,19 @@ class AuthRepository(
         return kotlin.runCatching()
         {
             // 1. Authenticate with Firebase
-            firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            try
+            {
+                firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            }
+            catch (e: Exception)
+            {
+                Log.e(TAG, "Firebase login failed: ${e.message}")
+                if (e.message?.contains("CONFIGURATION_NOT_FOUND") == true)
+                {
+                    throw Exception("Authentication service is not enabled for this project (campus-eats-db). Please enable the Email/Password provider in the Firebase Console.")
+                }
+                throw e
+            }
 
             // 2. Fetch local metadata
             val user = userDao.getUserByEmail(email)
