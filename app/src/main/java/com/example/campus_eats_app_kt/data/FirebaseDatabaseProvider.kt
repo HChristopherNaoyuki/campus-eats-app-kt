@@ -14,12 +14,12 @@ object FirebaseDatabaseProvider
      */
     val instance: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance(DATABASE_URL).apply {
-            // Enable persistence for offline capabilities (as per general Firebase best practices)
-            // But requirement says "Prevent online operations from failing silently when offline"
-            // and "require an active internet connection for features that depend on the online database"
-            // So we might NOT want disk persistence if we strictly want online-only behavior.
-            // However, RTDB handles sync well. We will focus on manual connectivity checks.
+            // Principle: Performance - Enable offline persistence to reduce network usage for repeated reads.
             setPersistenceEnabled(true)
+
+            // Principle: Performance - Configure cache size to ensure efficient memory and disk usage.
+            // Setting to 10MB is usually sufficient for a campus dining app's metadata.
+            setPersistenceCacheSizeBytes(10 * 1024 * 1024)
         }
     }
 }

@@ -11,6 +11,8 @@ import com.example.campus_eats_app_kt.util.IdGenerator
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
 
@@ -32,6 +34,7 @@ class AuthRepository(
     /**
      * Requirement: Implement authentication using Firebase Authentication.
      * Registers a new user via Firebase Auth and synchronizes metadata locally and with the REST API.
+     * Principle: Performance - Uses parallel coroutines for network-heavy registration tasks.
      */
     suspend fun register(
         fullName: String,
@@ -40,52 +43,56 @@ class AuthRepository(
         password: String,
         role: UserRole,
         shopName: String? = null,
-    ): Result<UserEntity>
+    ): Result<UserEntity> = coroutineScope()
     {
         Log.d(TAG, "Attempting Firebase registration for email: $email")
-        return kotlin.runCatching()
+        return@coroutineScope kotlin.runCatching()
         {
             // 0. Ensure internet connection
             connectivityManager.ensureInternet()
 
-            // 1. Create user in Firebase
-            val firebaseUid = try
-            {
-                val authResult =
-                    firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-                authResult.user?.uid ?: throw Exception("Firebase UID generation failed")
-            }
-            catch (e: Exception)
-            {
-                Log.e(TAG, "Firebase registration failed: ${e.message}")
-                if (e.message?.contains("CONFIGURATION_NOT_FOUND") == true)
+            // 1. Parallelize Identity Creation (Firebase Auth) and Remote API Sync
+            val authDeferred = async {
+                try
                 {
-                    throw Exception("Authentication service is not enabled for this project (campus-eats-db). Please enable the Email/Password provider in the Firebase Console.")
+                    val authResult =
+                        firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                    authResult.user?.uid ?: throw Exception("Firebase UID generation failed")
                 }
-                throw e
+                catch (e: Exception)
+                {
+                    Log.e(TAG, "Firebase registration failed: ${e.message}")
+                    if (e.message?.contains("CONFIGURATION_NOT_FOUND") == true)
+                    {
+                        throw Exception("Authentication service is not enabled for this project (campus-eats-db). Please enable the Email/Password provider in the Firebase Console.")
+                    }
+                    throw e
+                }
             }
+
+            val apiDeferred = async {
+                try
+                {
+                    Log.i(TAG, "Syncing registration with remote REST API...")
+                    val response = apiService.registerUser(RegistrationRequest(email, password))
+                    if (response.isSuccessful) response.body()?.usercode else null
+                }
+                catch (e: Exception)
+                {
+                    Log.e(TAG, "Remote registration sync failed: ${e.message}")
+                    null
+                }
+            }
+
+            // Wait for both identity layers to respond
+            val firebaseUid = authDeferred.await()
+            val remoteUsercode = apiDeferred.await()
 
             // 2. Local check for existing email (redundant but safe for Room)
             val existingUser = userDao.getUserByEmail(email)
             if (existingUser != null)
             {
                 throw Exception("Email already registered in local database")
-            }
-
-            // 3. Attempt to register on the remote Fake Restaurant API
-            var remoteUsercode: String? = null
-            try
-            {
-                Log.i(TAG, "Syncing registration with remote REST API...")
-                val response = apiService.registerUser(RegistrationRequest(email, password))
-                if (response.isSuccessful)
-                {
-                    remoteUsercode = response.body()?.usercode
-                }
-            }
-            catch (e: Exception)
-            {
-                Log.e(TAG, "Remote registration sync failed: ${e.message}")
             }
 
             // 4. Generate local Campus Eats ID and persist User Metadata
@@ -102,10 +109,14 @@ class AuthRepository(
                 usercode = remoteUsercode
             )
 
-            // 5. Synchronize with Firebase Realtime Database
+            // 5. Synchronize with Firebase Realtime Database (Wait for acknowledgment)
             try
             {
                 firebaseDatabase.getReference("users").child(campusUserId).setValue(user).await()
+
+                // Principle: Performance - Enable keepSynced for the user's node to ensure low-latency access.
+                firebaseDatabase.getReference("users").child(campusUserId).keepSynced(true)
+                
                 Log.i(TAG, "User profile successfully synchronized with Realtime Database")
             }
             catch (e: Exception)
