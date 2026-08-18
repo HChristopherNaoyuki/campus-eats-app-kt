@@ -12,6 +12,7 @@ import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
 import com.example.campus_eats_app_kt.data.network.MasterOrder
 import com.example.campus_eats_app_kt.data.network.OrderItemRequest
 import com.example.campus_eats_app_kt.data.network.OrderRequest
+import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
@@ -24,7 +25,8 @@ class OrderRepository(
     private val orderDao: OrderDao,
     private val cartDao: CartDao,
     private val userDao: UserDao,
-    private val apiService: FakeRestaurantApiService
+    private val apiService: FakeRestaurantApiService,
+    private val connectivityManager: NetworkConnectivityManager
 )
 {
     private val TAG = "OrderRepository"
@@ -54,6 +56,9 @@ class OrderRepository(
             try
             {
                 Log.i(TAG, "Detected remote vendor. Synchronizing order with REST API...")
+                // Check connectivity for remote sync
+                connectivityManager.ensureInternet()
+
                 val networkItems = cartItems.map()
                 {
                     OrderItemRequest(it.name, it.quantity)
@@ -110,6 +115,7 @@ class OrderRepository(
         {
             try
             {
+                connectivityManager.ensureInternet()
                 val response = apiService.getUserOrders(apikey)
                 if (response.isSuccessful)
                 {

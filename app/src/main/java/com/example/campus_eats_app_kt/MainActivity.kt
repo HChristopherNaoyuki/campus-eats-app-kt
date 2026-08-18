@@ -6,9 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,10 +29,12 @@ import com.example.campus_eats_app_kt.data.CartRepository
 import com.example.campus_eats_app_kt.data.CouponRepository
 import com.example.campus_eats_app_kt.data.DebitCardRepository
 import com.example.campus_eats_app_kt.data.FeedbackRepository
+import com.example.campus_eats_app_kt.data.FirebaseDatabaseProvider
 import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
 import com.example.campus_eats_app_kt.data.network.RetrofitClient
+import com.example.campus_eats_app_kt.ui.components.NetworkStatusBanner
 import com.example.campus_eats_app_kt.ui.navigation.Route
 import com.example.campus_eats_app_kt.ui.screens.AddEditMenuItemScreen
 import com.example.campus_eats_app_kt.ui.screens.AddEditMenuViewModel
@@ -53,6 +58,8 @@ import com.example.campus_eats_app_kt.ui.screens.VendorBrowseViewModel
 import com.example.campus_eats_app_kt.ui.screens.VendorMenuManagementScreen
 import com.example.campus_eats_app_kt.ui.screens.VendorMenuViewModel
 import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
+import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
+import com.example.campus_eats_app_kt.util.NetworkConnectivityObserver
 import com.google.firebase.auth.FirebaseAuth
 
 /**
@@ -66,6 +73,11 @@ class MainActivity : ComponentActivity()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Connectivity Infrastructure
+        val connectivityManager = NetworkConnectivityManager(this)
+        val connectivityObserver = NetworkConnectivityObserver(this)
+
+        // Dependency Initialization (Simplified DI pattern)
         val database = CampusEatsDatabase.getDatabase(this)
         val apiService = RetrofitClient.instance
         val firebaseAuth = FirebaseAuth.getInstance()
@@ -73,32 +85,63 @@ class MainActivity : ComponentActivity()
         // Diagnostic Log: Verify Firebase Configuration
         Log.i("FirebaseInit", "Project ID: ${firebaseAuth.app.options.projectId}")
         Log.i("FirebaseInit", "Application ID: ${firebaseAuth.app.options.applicationId}")
+        Log.i(
+            "FirebaseInit",
+            "Database URL: ${FirebaseDatabaseProvider.instance.reference}"
+        )
 
-        val authRepository = AuthRepository(database.userDao(), apiService, firebaseAuth)
-        val menuRepository = MenuRepository(database.menuItemDao(), database.userDao(), apiService)
+        val authRepository = AuthRepository(
+            userDao = database.userDao(),
+            apiService = apiService,
+            connectivityManager = connectivityManager,
+            firebaseAuth = firebaseAuth
+        )
+        val menuRepository = MenuRepository(
+            menuItemDao = database.menuItemDao(),
+            userDao = database.userDao(),
+            apiService = apiService,
+            connectivityManager = connectivityManager
+        )
         val cartRepository = CartRepository(database.cartDao())
-        val orderRepository =
-            OrderRepository(database.orderDao(), database.cartDao(), database.userDao(), apiService)
-        val adminRepository = AdminRepository(database.userDao())
+        val orderRepository = OrderRepository(
+            orderDao = database.orderDao(),
+            cartDao = database.cartDao(),
+            userDao = database.userDao(),
+            apiService = apiService,
+            connectivityManager = connectivityManager
+        )
+        val adminRepository = AdminRepository(
+            userDao = database.userDao(),
+            connectivityManager = connectivityManager
+        )
         val statsRepository =
             StatsRepository(database.userDao(), database.menuItemDao(), database.orderDao())
-        val feedbackRepository = FeedbackRepository(database.feedbackDao())
+        val feedbackRepository = FeedbackRepository(
+            feedbackDao = database.feedbackDao(),
+            connectivityManager = connectivityManager
+        )
         val couponRepository = CouponRepository(database.couponDao())
         val debitCardRepository = DebitCardRepository(database.debitCardDao())
 
         setContent {
+            val networkStatus by connectivityObserver.observe()
+                .collectAsState(initial = NetworkConnectivityObserver.Status.Available)
+
             CampusEatsAppTheme {
                 val backStack = rememberNavBackStack(Route.Splash)
 
-                NavDisplay(
-                    backStack = backStack,
-                    onBack = { backStack.removeLastOrNull() },
-                    entryDecorators = listOf(
-                        rememberSaveableStateHolderNavEntryDecorator(),
-                        rememberViewModelStoreNavEntryDecorator()
-                    ),
-                    modifier = Modifier.fillMaxSize(),
-                    entryProvider = entryProvider {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    NetworkStatusBanner(status = networkStatus)
+
+                    NavDisplay(
+                        backStack = backStack,
+                        onBack = { backStack.removeLastOrNull() },
+                        entryDecorators = listOf(
+                            rememberSaveableStateHolderNavEntryDecorator(),
+                            rememberViewModelStoreNavEntryDecorator()
+                        ),
+                        modifier = Modifier.weight(1f),
+                        entryProvider = entryProvider {
                         // Splash Screen / Auth Initializer
                         entry<Route.Splash> {
                             Box(
@@ -355,5 +398,6 @@ class MainActivity : ComponentActivity()
                 )
             }
         }
+    }
     }
 }

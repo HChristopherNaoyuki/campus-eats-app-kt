@@ -8,6 +8,7 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
 import com.example.campus_eats_app_kt.data.network.MenuItemRequest
+import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -19,7 +20,8 @@ import kotlinx.coroutines.flow.map
 class MenuRepository(
     private val menuItemDao: MenuItemDao,
     private val userDao: UserDao,
-    private val apiService: FakeRestaurantApiService
+    private val apiService: FakeRestaurantApiService,
+    private val connectivityManager: NetworkConnectivityManager
 )
 {
     private val TAG = "MenuRepository"
@@ -47,6 +49,9 @@ class MenuRepository(
             try
             {
                 Log.i(TAG, "Vendor ID is numeric. Attempting REST API sync...")
+                // Check connectivity
+                connectivityManager.ensureInternet()
+
                 val response = if (sortOrder == null)
                 {
                     apiService.getRestaurantMenu(numericId)
@@ -97,6 +102,7 @@ class MenuRepository(
         // Search remote items
         try
         {
+            connectivityManager.ensureInternet()
             val response = apiService.searchItemsByName(query)
             if (response.isSuccessful)
             {
@@ -143,6 +149,7 @@ class MenuRepository(
         // Fetch and emit network restaurants
         try
         {
+            connectivityManager.ensureInternet()
             val response = apiService.getAllRestaurants()
             if (response.isSuccessful)
             {

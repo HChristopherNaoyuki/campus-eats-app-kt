@@ -3,13 +3,21 @@ package com.example.campus_eats_app_kt.data
 import com.example.campus_eats_app_kt.data.dao.FeedbackDao
 import com.example.campus_eats_app_kt.data.entity.FeedbackEntity
 import com.example.campus_eats_app_kt.data.entity.FeedbackType
+import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
 
 /**
  * FeedbackRepository handles the collection and categorization of user feedback.
+ * Integrates Realtime Database for online collection.
  */
-class FeedbackRepository(private val feedbackDao: FeedbackDao)
+class FeedbackRepository(
+    private val feedbackDao: FeedbackDao,
+    private val connectivityManager: NetworkConnectivityManager,
+    private val firebaseDatabase: FirebaseDatabase = FirebaseDatabaseProvider.instance
+)
 {
     /**
      * Retrieves all feedback entries from the database.
@@ -35,13 +43,25 @@ class FeedbackRepository(private val feedbackDao: FeedbackDao)
      */
     suspend fun submitFeedback(userId: String, subject: String, message: String, type: FeedbackType)
     {
-        feedbackDao.insertFeedback(
-            FeedbackEntity(
-                userId = userId,
-                subject = subject,
-                message = message,
-                type = type
-            )
+        val feedback = FeedbackEntity(
+            userId = userId,
+            subject = subject,
+            message = message,
+            type = type
         )
+
+        // 1. Persist locally
+        feedbackDao.insertFeedback(feedback)
+
+        // 2. Sync to RTDB
+        try
+        {
+            connectivityManager.ensureInternet()
+            firebaseDatabase.getReference("feedback").push().setValue(feedback).await()
+        }
+        catch (_: Exception)
+        {
+            // Fail silently locally if offline, but inform UI if required via exception
+        }
     }
 }

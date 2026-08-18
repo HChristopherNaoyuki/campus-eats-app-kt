@@ -5,6 +5,7 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.entity.UserStatus
 import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
+import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
@@ -27,6 +28,8 @@ class AuthRepositoryTest
     private lateinit var userDao: UserDao
     private lateinit var apiService: FakeRestaurantApiService
     private lateinit var firebaseAuth: FirebaseAuth
+    private lateinit var firebaseDatabase: com.google.firebase.database.FirebaseDatabase
+    private lateinit var connectivityManager: NetworkConnectivityManager
     private lateinit var repository: AuthRepository
 
     private val testUser = UserEntity(
@@ -46,7 +49,10 @@ class AuthRepositoryTest
         userDao = mockk(relaxed = true)
         apiService = mockk(relaxed = true)
         firebaseAuth = mockk(relaxed = true)
-        repository = AuthRepository(userDao, apiService, firebaseAuth)
+        firebaseDatabase = mockk(relaxed = true)
+        connectivityManager = mockk(relaxed = true)
+        repository =
+            AuthRepository(userDao, apiService, connectivityManager, firebaseAuth, firebaseDatabase)
     }
 
     /**
