@@ -110,7 +110,17 @@ class AuthRepositoryTest
             val task = mockk<Task<AuthResult>>()
             every { task.isComplete } returns true
             every { task.isSuccessful } returns false
+            every { task.isCanceled } returns false
             every { task.exception } returns Exception("Firebase Auth Error")
+
+            // Mocking the listeners that .await() might use
+            every { task.addOnCompleteListener(any()) } answers {
+                val listener =
+                    it.invocation.args[0] as com.google.android.gms.tasks.OnCompleteListener<AuthResult>
+                listener.onComplete(task)
+                task
+            }
+
             every { firebaseAuth.signInWithEmailAndPassword(any(), any()) } returns task
 
             // When

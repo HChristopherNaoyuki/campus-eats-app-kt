@@ -15,6 +15,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -60,6 +61,12 @@ fun MainScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     val userRole = remember(role) {
         UserRole.entries.find { it.name == role } ?: UserRole.STANDARD
+    }
+
+    // Requirement: Synchronize permitted data with the database every 10 seconds.
+    LaunchedEffect(userId)
+    {
+        authRepository.startBackgroundSync(userId, this)
     }
 
     Scaffold(
