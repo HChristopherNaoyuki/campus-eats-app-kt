@@ -15,7 +15,7 @@ import kotlinx.coroutines.tasks.await
 class AdminRepository(
     private val userDao: UserDao,
     private val connectivityManager: NetworkConnectivityManager,
-    private val firebaseDatabase: FirebaseDatabase = FirebaseDatabaseProvider.instance
+    private val firebaseDatabase: FirebaseDatabase
 )
 {
     /**

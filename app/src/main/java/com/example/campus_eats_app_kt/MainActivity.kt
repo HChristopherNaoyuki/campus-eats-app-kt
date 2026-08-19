@@ -81,20 +81,22 @@ class MainActivity : ComponentActivity()
         val database = CampusEatsDatabase.getDatabase(this)
         val apiService = RetrofitClient.instance
         val firebaseAuth = FirebaseAuth.getInstance()
+        val firebaseDatabase = FirebaseDatabaseProvider.instance
 
         // Diagnostic Log: Verify Firebase Configuration
         Log.i("FirebaseInit", "Project ID: ${firebaseAuth.app.options.projectId}")
         Log.i("FirebaseInit", "Application ID: ${firebaseAuth.app.options.applicationId}")
         Log.i(
             "FirebaseInit",
-            "Database URL: ${FirebaseDatabaseProvider.instance.reference}"
+            "Database URL: ${firebaseDatabase.reference}"
         )
 
         val authRepository = AuthRepository(
             userDao = database.userDao(),
             apiService = apiService,
             connectivityManager = connectivityManager,
-            firebaseAuth = firebaseAuth
+            firebaseAuth = firebaseAuth,
+            firebaseDatabase = firebaseDatabase
         )
         val menuRepository = MenuRepository(
             menuItemDao = database.menuItemDao(),
@@ -112,13 +114,15 @@ class MainActivity : ComponentActivity()
         )
         val adminRepository = AdminRepository(
             userDao = database.userDao(),
-            connectivityManager = connectivityManager
+            connectivityManager = connectivityManager,
+            firebaseDatabase = firebaseDatabase
         )
         val statsRepository =
             StatsRepository(database.userDao(), database.menuItemDao(), database.orderDao())
         val feedbackRepository = FeedbackRepository(
             feedbackDao = database.feedbackDao(),
-            connectivityManager = connectivityManager
+            connectivityManager = connectivityManager,
+            firebaseDatabase = firebaseDatabase
         )
         val couponRepository = CouponRepository(database.couponDao())
         val debitCardRepository = DebitCardRepository(database.debitCardDao())

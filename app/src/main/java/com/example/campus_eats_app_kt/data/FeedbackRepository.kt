@@ -16,7 +16,7 @@ import kotlinx.coroutines.tasks.await
 class FeedbackRepository(
     private val feedbackDao: FeedbackDao,
     private val connectivityManager: NetworkConnectivityManager,
-    private val firebaseDatabase: FirebaseDatabase = FirebaseDatabaseProvider.instance
+    private val firebaseDatabase: FirebaseDatabase
 )
 {
     /**

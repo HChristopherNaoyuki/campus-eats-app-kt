@@ -25,8 +25,8 @@ class AuthRepository(
     private val userDao: UserDao,
     private val apiService: FakeRestaurantApiService,
     private val connectivityManager: NetworkConnectivityManager,
-    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val firebaseDatabase: FirebaseDatabase = FirebaseDatabaseProvider.instance
+    private val firebaseAuth: FirebaseAuth,
+    private val firebaseDatabase: FirebaseDatabase
 )
 {
     private val TAG = "AuthRepository"
@@ -290,6 +290,18 @@ class AuthRepository(
                 }
             }
             userDao.updateUser(updatedUser)
+
+            // Synchronize updated profile with Realtime Database
+            try
+            {
+                firebaseDatabase.getReference("users").child(userId).setValue(updatedUser).await()
+                Log.i(TAG, "Realtime Database profile synchronization successful")
+            }
+            catch (e: Exception)
+            {
+                Log.e(TAG, "Realtime Database profile synchronization failed: ${e.message}")
+            }
+            
             Log.d(TAG, "Local profile data successfully updated")
         }
     }
@@ -312,7 +324,18 @@ class AuthRepository(
         val user = userDao.getUserById(userId)
         if (user != null && user.role == UserRole.VENDOR)
         {
-            userDao.updateUser(user.copy(shopStatus = status))
+            val updatedUser = user.copy(shopStatus = status)
+            userDao.updateUser(updatedUser)
+
+            // Sync to RTDB
+            try
+            {
+                firebaseDatabase.getReference("users").child(userId).child("shopStatus")
+                    .setValue(status).await()
+            }
+            catch (_: Exception)
+            {
+            }
         }
     }
 
@@ -326,7 +349,18 @@ class AuthRepository(
             val user = userDao.getUserById(userId)
             if (user != null)
             {
-                userDao.updateUser(user.copy(bankAccountInfo = bankInfo))
+                val updatedUser = user.copy(bankAccountInfo = bankInfo)
+                userDao.updateUser(updatedUser)
+
+                // Sync to RTDB
+                try
+                {
+                    firebaseDatabase.getReference("users").child(userId).child("bankAccountInfo")
+                        .setValue(bankInfo).await()
+                }
+                catch (_: Exception)
+                {
+                }
             }
             else
             {

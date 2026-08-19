@@ -6,6 +6,7 @@ import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.PaymentMethod
 import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
+import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -22,6 +23,7 @@ class OrderRepositoryTest
     private lateinit var cartDao: CartDao
     private lateinit var userDao: UserDao
     private lateinit var apiService: FakeRestaurantApiService
+    private lateinit var connectivityManager: NetworkConnectivityManager
     private lateinit var repository: OrderRepository
 
     @Before
@@ -31,7 +33,8 @@ class OrderRepositoryTest
         cartDao = mockk(relaxed = true)
         userDao = mockk(relaxed = true)
         apiService = mockk(relaxed = true)
-        repository = OrderRepository(orderDao, cartDao, userDao, apiService)
+        connectivityManager = mockk(relaxed = true)
+        repository = OrderRepository(orderDao, cartDao, userDao, apiService, connectivityManager)
     }
 
     /**
