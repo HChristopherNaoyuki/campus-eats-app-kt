@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * AuthRepository manages the authentication lifecycle and profile synchronization.
@@ -31,10 +32,10 @@ class AuthRepository(
     private val apiService: FakeRestaurantApiService,
     private val connectivityManager: NetworkConnectivityManager,
     private val firebaseAuth: FirebaseAuth,
-    private val firebaseDatabase: FirebaseDatabase
+    private val firebaseDatabase: FirebaseDatabase,
 )
 {
-    private val TAG = "AuthRepository"
+    private val tag = "AuthRepository"
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /**
@@ -50,7 +51,7 @@ class AuthRepository(
         shopName: String? = null,
     ): Result<UserEntity> = coroutineScope()
     {
-        Log.d(TAG, "Initiating optimized registration for: $email")
+        Log.d(tag, "Initiating optimized registration for: $email")
         return@coroutineScope kotlin.runCatching()
         {
             connectivityManager.ensureInternet()
@@ -107,7 +108,7 @@ class AuthRepository(
                 role = role,
                 shopName = if (role == UserRole.VENDOR) shopName else null,
                 shopStatus = if (role == UserRole.VENDOR) ShopStatus.OPEN else null,
-                usercode = remoteUsercode
+                usercode = remoteUsercode,
             )
 
             // 4. Background Sync to RTDB (True Fire and Forget)
@@ -121,12 +122,12 @@ class AuthRepository(
                 }
                 catch (e: Exception)
                 {
-                    Log.e(TAG, "RTDB Sync failed for $campusUserId: ${e.message}")
+                    Log.e(tag, "RTDB Sync failed for $campusUserId: ${e.message}")
                 }
             }
 
             userDao.insertUser(user)
-            Log.d(TAG, "User $campusUserId (Firebase: $firebaseUid) successfully persisted")
+            Log.d(tag, "User $campusUserId (Firebase: $firebaseUid) successfully persisted")
             user
         }
     }
@@ -137,7 +138,7 @@ class AuthRepository(
      */
     suspend fun login(email: String, password: String): Result<UserEntity>
     {
-        Log.d(TAG, "Initiating optimized login for: $email")
+        Log.d(tag, "Initiating optimized login for: $email")
         return kotlin.runCatching()
         {
             connectivityManager.ensureInternet()
@@ -149,7 +150,7 @@ class AuthRepository(
             }
             catch (e: Exception)
             {
-                Log.e(TAG, "Firebase login failed: ${e.message}")
+                Log.e(tag, "Firebase login failed: ${e.message}")
                 if (e.message?.contains("CONFIGURATION_NOT_FOUND") == true)
                 {
                     throw Exception("Auth service disabled in console (campus-eats-db).")
@@ -163,7 +164,7 @@ class AuthRepository(
             // 3. Reliability: Restore profile if local DB was cleared
             if (user == null)
             {
-                Log.i(TAG, "Local profile missing. Querying RTDB...")
+                Log.i(tag, "Local profile missing. Querying RTDB...")
                 val snapshot = firebaseDatabase.getReference("users")
                     .orderByChild("email")
                     .equalTo(email)
@@ -189,14 +190,12 @@ class AuthRepository(
         {
             while (isActive)
             {
-                delay(10000)
+                delay(10.seconds)
                 try
                 {
                     if (connectivityManager.hasInternetConnection())
                     {
-                        val user = userDao.getUserById(userId)
-                        if (user != null)
-                        {
+                        userDao.getUserById(userId)?.let { user ->
                             firebaseDatabase.getReference("users").child(userId).setValue(user)
                         }
                     }
@@ -214,7 +213,7 @@ class AuthRepository(
 
     suspend fun resetPassword(userId: String, newPassword: String): Result<Unit>
     {
-        Log.d(TAG, "Password reset initiated for User ID: $userId")
+        Log.d(tag, "Password reset initiated for User ID: $userId")
         return kotlin.runCatching()
         {
             connectivityManager.ensureInternet()
@@ -227,7 +226,7 @@ class AuthRepository(
                 }
                 catch (e: Exception)
                 {
-                    Log.e(TAG, "Remote password sync failed: ${e.message}")
+                    Log.e(tag, "Remote password sync failed: ${e.message}")
                 }
             }
         }
@@ -235,7 +234,7 @@ class AuthRepository(
 
     suspend fun updateProfile(userId: String, email: String, password: String): Result<Unit>
     {
-        Log.d(TAG, "Profile update requested for User ID: $userId")
+        Log.d(tag, "Profile update requested for User ID: $userId")
         return kotlin.runCatching()
         {
             connectivityManager.ensureInternet()
@@ -253,13 +252,13 @@ class AuthRepository(
                     }
                     catch (e: Exception)
                     {
-                        Log.e(TAG, "Remote security sync failed: ${e.message}")
+                        Log.e(tag, "Remote security sync failed: ${e.message}")
                     }
                 }
             }
             userDao.updateUser(updatedUser)
             firebaseDatabase.getReference("users").child(userId).setValue(updatedUser).await()
-            Log.d(TAG, "Local and Cloud profile data successfully updated")
+            Log.d(tag, "Local and Cloud profile data successfully updated")
         }
     }
 
@@ -271,7 +270,7 @@ class AuthRepository(
         return kotlin.runCatching()
         {
             val user = userDao.getUserById(userId)
-            if (user != null && user.role == UserRole.VENDOR)
+            if ((user != null) && (user.role == UserRole.VENDOR))
             {
                 val updatedUser = user.copy(shopStatus = status)
                 userDao.updateUser(updatedUser)
@@ -282,7 +281,7 @@ class AuthRepository(
                 }
                 catch (e: Exception)
                 {
-                    Log.e(TAG, "Failed to sync shop status to RTDB: ${e.message}")
+                    Log.e(tag, "Failed to sync shop status to RTDB: ${e.message}")
                 }
             }
             else
@@ -306,7 +305,7 @@ class AuthRepository(
             }
             catch (e: Exception)
             {
-                Log.e(TAG, "Failed to sync bank info to RTDB: ${e.message}")
+                Log.e(tag, "Failed to sync bank info to RTDB: ${e.message}")
             }
         }
     }

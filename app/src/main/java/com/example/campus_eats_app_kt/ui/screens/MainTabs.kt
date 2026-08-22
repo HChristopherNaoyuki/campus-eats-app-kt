@@ -78,7 +78,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.campus_eats_app_kt.data.AdminRepository
 import com.example.campus_eats_app_kt.data.AdminStats
 import com.example.campus_eats_app_kt.data.AuthRepository
 import com.example.campus_eats_app_kt.data.CartRepository
@@ -100,7 +99,6 @@ import com.example.campus_eats_app_kt.ui.components.HIGCard
 import com.example.campus_eats_app_kt.ui.components.HIGServiceRow
 import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
-import com.example.campus_eats_app_kt.ui.screens.AdminViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -161,7 +159,7 @@ fun HomeScreenTab(
                             Column()
                             {
                                 val greeting =
-                                    when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY))
+                                    when (Calendar.getInstance()[Calendar.HOUR_OF_DAY])
                                     {
                                         in 0..11 -> "Good morning"
                                         in 12..16 -> "Good afternoon"
@@ -249,7 +247,7 @@ fun HomeScreenTab(
         }
 
         // Student Search and Vendor List
-        if (role == UserRole.STUDENT || role == UserRole.STANDARD)
+        if ((role == UserRole.STUDENT) || (role == UserRole.STANDARD))
         {
             item()
             {
@@ -458,12 +456,12 @@ fun AdminGridStats(stats: AdminStats)
         ) {
             StatCardHalf(
                 label = "Users",
-                value = "${stats.totalUsers}",
+                value = stats.totalUsers.toString(),
                 modifier = Modifier.fillMaxWidth()
             )
             StatCardHalf(
                 label = "Vendors",
-                value = "${stats.activeVendors}",
+                value = stats.activeVendors.toString(),
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -473,12 +471,12 @@ fun AdminGridStats(stats: AdminStats)
         ) {
             StatCardHalf(
                 label = "Menu Items",
-                value = "${stats.menuItemCount}",
+                value = stats.menuItemCount.toString(),
                 modifier = Modifier.fillMaxWidth()
             )
             StatCardHalf(
                 label = "Total Orders",
-                value = "${stats.orderCount}",
+                value = stats.orderCount.toString(),
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -519,7 +517,8 @@ fun ServicesScreenTab(
                         title = "Vendors",
                         description = "Browse available campus dining options.",
                         icon = Icons.Rounded.Store,
-                        onClick = { activeView = "VendorsList" })
+                        onClick = { activeView = "VendorsList" }
+                    )
                     HIGServiceRow(
                         title = "Order Receipts",
                         description = "Audit your past transaction history.",
@@ -577,8 +576,8 @@ fun ServicesScreenTab(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = {
-                    if (activeView == "OrderDetail") activeView = "Receipts"
-                    else activeView = "Main"
+                    activeView = if (activeView == "OrderDetail") "Receipts"
+                    else "Main"
                 }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
@@ -614,12 +613,11 @@ fun ServicesScreenTab(
                     "Orders" -> AdminOrderManagement(viewModel = adminViewModel)
                     "Receipts" -> StudentReceipts(
                         userId = userId,
-                        orderRepository = orderRepository,
-                        onOrderClick = {
-                            selectedOrder = it
-                            activeView = "OrderDetail"
-                        }
-                    )
+                        orderRepository = orderRepository
+                    ) {
+                        selectedOrder = it
+                        activeView = "OrderDetail"
+                    }
 
                     "Spending" -> StudentTotalSpending(
                         userId = userId,
@@ -975,7 +973,7 @@ fun AdminOrderManagement(viewModel: AdminViewModel)
     {
         items(orders)
         { order ->
-            var expanded by remember { mutableStateOf(false) }
+            var expanded by remember { mutableStateOf(value = false) }
             HIGCard(modifier = Modifier.fillMaxWidth())
             {
                 Column()
@@ -1723,7 +1721,7 @@ fun VendorOrderHub(
 fun VendorReportHub(vendorId: String, orderRepository: OrderRepository)
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
-    val total = orders.filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
+    val total = orders.asSequence().filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
     val locale = LocalConfiguration.current.locales[0]
     HIGCard(
         modifier = Modifier.fillMaxWidth(),
@@ -1789,7 +1787,7 @@ fun AdminGlobalSummary(orderRepository: OrderRepository)
 
 @Composable
 fun AdminReportHub(
-    statsRepository: StatsRepository
+    @Suppress("unused") statsRepository: StatsRepository,
 )
 {
     var reportType by remember { mutableStateOf("Main") }
@@ -2199,7 +2197,7 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
                 if (isFormValid)
                 {
                     viewModel.generateCoupon(code, d)
-                    successMsg.value = "Success: Coupon $code (${d}%) generated."
+                    successMsg.value = "Success: Coupon $code ($d%) generated."
                     code = ""; discount = ""
                 }
             },

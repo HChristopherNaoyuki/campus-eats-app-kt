@@ -89,7 +89,7 @@ class MainActivity : ComponentActivity()
         Log.i("FirebaseInit", "Application ID: ${firebaseAuth.app.options.applicationId}")
         Log.i(
             "FirebaseInit",
-            "Database URL: ${firebaseDatabase.reference}"
+            "Database URL: ${firebaseDatabase.reference}",
         )
 
         val authRepository = AuthRepository(
@@ -272,16 +272,15 @@ class MainActivity : ComponentActivity()
                                 },
                                 onNavigateToCheckout = { backStack.add(Route.Checkout(route.userId)) },
                                 onNavigateToVendorMenu = { vendorId -> backStack.add(Route.VendorMenuManagement(vendorId)) },
-                                onNavigateToAddMenuItem = { vendorId, itemId -> backStack.add(Route.AddEditMenuItem(vendorId, itemId)) },
-                                onNavigateToMenuBrowse = { userId, vendorId ->
-                                    backStack.add(
-                                        Route.CustomerMenuBrowse(
-                                            userId,
-                                            vendorId
-                                        )
+                                onNavigateToAddMenuItem = { vendorId, itemId -> backStack.add(Route.AddEditMenuItem(vendorId, itemId)) }
+                            ) { userId, vendorId ->
+                                backStack.add(
+                                    Route.CustomerMenuBrowse(
+                                        userId,
+                                        vendorId
                                     )
-                                }
-                            )
+                                )
+                            }
                         }
 
                         // Vendor Menu Management Entry

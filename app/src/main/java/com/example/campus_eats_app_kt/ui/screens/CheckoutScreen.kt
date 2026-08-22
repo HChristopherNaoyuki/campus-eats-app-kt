@@ -109,7 +109,7 @@ class CheckoutViewModel(
                     totalAmount = sum.total.toDouble(),
                     paymentMethod = paymentMethod,
                     pickupTime = pickupTime,
-                    specialRequests = specialRequests
+                    specialRequests = specialRequests,
                 )
                 onSuccess(orderId)
             }
@@ -259,8 +259,7 @@ fun CheckoutScreen(
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 PaymentMethodSelector(
                     selectedMethod = selectedPaymentMethod,
-                    onMethodSelected = { selectedPaymentMethod = it }
-                )
+                ) { selectedPaymentMethod = it }
             }
 
             // User-provided fulfillment instructions
@@ -290,7 +289,7 @@ fun CheckoutScreen(
                         SummaryRow("Tax (20%)", sum.tax, locale = locale)
                         SummaryRow("Service Fee", sum.serviceFee, locale = locale)
 
-                        if (sum.studentDiscount.compareTo(BigDecimal.ZERO) > 0)
+                        if (sum.studentDiscount > BigDecimal.ZERO)
                         {
                             SummaryRow(
                                 label = "Student Discount (2.5%)",

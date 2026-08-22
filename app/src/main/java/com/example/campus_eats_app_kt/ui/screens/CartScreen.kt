@@ -58,6 +58,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 import java.util.Locale
 
 /**
@@ -66,8 +67,8 @@ import java.util.Locale
  */
 class CartViewModel(
     private val repository: CartRepository,
-    private val authRepository: AuthRepository,
-    val userId: String
+    authRepository: AuthRepository,
+    val userId: String,
 ) : ViewModel()
 {
     val cartItems: StateFlow<List<CartItemEntity>> = repository.getCart(userId)
@@ -159,11 +160,11 @@ fun CartScreen(
                         CalculationRow("Tax (20%)", summary.tax, locale)
                         CalculationRow("Service fee (10%)", summary.serviceFee, locale)
 
-                        if (summary.studentDiscount > 0)
+                        if (summary.studentDiscount.compareTo(BigDecimal.ZERO) > 0)
                         {
                             CalculationRow(
                                 label = "Student discount",
-                                amount = -summary.studentDiscount,
+                                amount = summary.studentDiscount.negate(),
                                 locale = locale,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -171,8 +172,8 @@ fun CartScreen(
 
                         // Rounding logic for cash transactions compliance
                         val rounding =
-                            summary.total - (summary.subtotal + summary.tax + summary.serviceFee - summary.studentDiscount)
-                        if (kotlin.math.abs(rounding) > 0.001)
+                            summary.total.subtract(summary.subtotal.add(summary.tax).add(summary.serviceFee).subtract(summary.studentDiscount))
+                        if (rounding.abs().compareTo(BigDecimal("0.001")) > 0)
                         {
                             CalculationRow("Rounding adjustment", rounding, locale)
                         }
@@ -190,7 +191,7 @@ fun CartScreen(
                                 fontWeight = FontWeight.ExtraBold
                             )
                             Text(
-                                text = "R${String.format(locale, "%.2f", summary.total)}",
+                                text = "R${String.format(locale, "%.2f", summary.total.toDouble())}",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = CampusOrange
@@ -342,7 +343,7 @@ fun CartItemCard(item: CartItemEntity, viewModel: CartViewModel, locale: Locale)
                             Icon(Icons.Rounded.Remove, "Decrease")
                         }
                         Text(
-                            text = "${item.quantity}",
+                            text = item.quantity.toString(),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = DesignSystem.Spacing.small)
@@ -369,9 +370,9 @@ fun CartItemCard(item: CartItemEntity, viewModel: CartViewModel, locale: Locale)
 @Composable
 fun CalculationRow(
     label: String,
-    amount: Double,
+    amount: BigDecimal,
     locale: Locale,
-    color: Color = MaterialTheme.colorScheme.onSurface
+    color: Color = MaterialTheme.colorScheme.onSurface,
 )
 {
     Row(
@@ -386,8 +387,8 @@ fun CalculationRow(
             color = MaterialTheme.colorScheme.outline
         )
         Text(
-            text = if (amount >= 0) "R${String.format(locale, "%.2f", amount)}"
-            else "-R${String.format(locale, "%.2f", -amount)}",
+            text = if (amount.compareTo(BigDecimal.ZERO) >= 0) "R${String.format(locale, "%.2f", amount.toDouble())}"
+            else "-R${String.format(locale, "%.2f", amount.negate().toDouble())}",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = color

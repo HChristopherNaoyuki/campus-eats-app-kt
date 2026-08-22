@@ -16,10 +16,10 @@ import kotlinx.coroutines.tasks.await
 class AdminRepository(
     private val userDao: UserDao,
     private val connectivityManager: NetworkConnectivityManager,
-    private val firebaseDatabase: FirebaseDatabase
+    private val firebaseDatabase: FirebaseDatabase,
 )
 {
-    private val TAG = "AdminRepository"
+    private val tag = "AdminRepository"
 
     /**
      * Retrieves all registered users in the system.
@@ -69,9 +69,7 @@ class AdminRepository(
             userDao.addCredits(userId, amount)
 
             // Fetch updated balance and sync to RTDB
-            val updatedUser = userDao.getUserById(userId)
-            if (updatedUser != null)
-            {
+            userDao.getUserById(userId)?.let { updatedUser ->
                 firebaseDatabase.getReference("users").child(userId).child("walletBalance")
                     .setValue(updatedUser.walletBalance).await()
             }
@@ -94,7 +92,7 @@ class AdminRepository(
             }
             catch (e: Exception)
             {
-                Log.e(TAG, "Failed to delete user from RTDB: ${e.message}")
+                Log.e(tag, "Failed to delete user from RTDB: ${e.message}")
                 throw e
             }
 

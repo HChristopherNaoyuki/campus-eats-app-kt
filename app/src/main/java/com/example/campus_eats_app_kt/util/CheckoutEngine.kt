@@ -12,7 +12,7 @@ data class CheckoutSummary(
     val tax: BigDecimal,
     val serviceFee: BigDecimal,
     val studentDiscount: BigDecimal,
-    val total: BigDecimal
+    val total: BigDecimal,
 )
 
 /**
@@ -55,8 +55,8 @@ object CheckoutEngine
         // 2. Compute tiered service fee based on order value
         val serviceFee = when
         {
-            subtotal.compareTo(TIER_LOW_THRESHOLD) < 0 -> subtotal.multiply(TIER_LOW_FEE_RATE)
-            subtotal.compareTo(TIER_MID_THRESHOLD) <= 0 -> subtotal.multiply(TIER_MID_FEE_RATE)
+            subtotal < TIER_LOW_THRESHOLD -> subtotal.multiply(TIER_LOW_FEE_RATE)
+            subtotal <= TIER_MID_THRESHOLD -> subtotal.multiply(TIER_MID_FEE_RATE)
             else -> subtotal.multiply(TIER_HIGH_FEE_RATE)
         }.setScale(2, RoundingMode.HALF_UP)
 

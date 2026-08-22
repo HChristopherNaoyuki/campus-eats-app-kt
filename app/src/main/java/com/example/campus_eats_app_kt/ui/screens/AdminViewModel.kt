@@ -6,7 +6,6 @@ import com.example.campus_eats_app_kt.data.AdminRepository
 import com.example.campus_eats_app_kt.data.CouponRepository
 import com.example.campus_eats_app_kt.data.FeedbackRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
-import com.example.campus_eats_app_kt.data.entity.FeedbackEntity
 import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
@@ -27,7 +26,7 @@ class AdminViewModel(
     private val adminRepository: AdminRepository,
     private val orderRepository: OrderRepository,
     private val couponRepository: CouponRepository,
-    private val feedbackRepository: FeedbackRepository
+    private val feedbackRepository: FeedbackRepository,
 ) : ViewModel()
 {
     // State exposed to UI
