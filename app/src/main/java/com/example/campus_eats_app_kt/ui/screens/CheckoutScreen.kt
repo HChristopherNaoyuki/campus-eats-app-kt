@@ -59,6 +59,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 import java.util.Locale
 
 /**
@@ -105,7 +106,7 @@ class CheckoutViewModel(
                     userId = userId,
                     vendorId = vendorId,
                     cartItems = items,
-                    totalAmount = sum.total,
+                    totalAmount = sum.total.toDouble(),
                     paymentMethod = paymentMethod,
                     pickupTime = pickupTime,
                     specialRequests = specialRequests
@@ -190,7 +191,7 @@ fun CheckoutScreen(
                                     String.format(
                                         locale,
                                         "%.2f",
-                                        sum.total
+                                        sum.total.toDouble()
                                     )
                                 }",
                                 style = MaterialTheme.typography.titleMedium,
@@ -289,19 +290,19 @@ fun CheckoutScreen(
                         SummaryRow("Tax (20%)", sum.tax, locale = locale)
                         SummaryRow("Service Fee", sum.serviceFee, locale = locale)
 
-                        if (sum.studentDiscount > 0)
+                        if (sum.studentDiscount.compareTo(BigDecimal.ZERO) > 0)
                         {
                             SummaryRow(
                                 label = "Student Discount (2.5%)",
-                                amount = -sum.studentDiscount,
+                                amount = sum.studentDiscount.negate(),
                                 color = MaterialTheme.colorScheme.primary,
                                 locale = locale
                             )
                         }
 
                         val rounding =
-                            sum.total - ((sum.subtotal + sum.tax + sum.serviceFee) - sum.studentDiscount)
-                        if (kotlin.math.abs(rounding) > 0.001)
+                            sum.total.subtract(sum.subtotal.add(sum.tax).add(sum.serviceFee).subtract(sum.studentDiscount))
+                        if (rounding.abs().compareTo(BigDecimal("0.001")) > 0)
                         {
                             SummaryRow("Rounding Adjustment", rounding, locale = locale)
                         }
@@ -319,7 +320,7 @@ fun CheckoutScreen(
                                 fontWeight = FontWeight.ExtraBold
                             )
                             Text(
-                                text = "R${String.format(locale, "%.2f", sum.total)}",
+                                text = "R${String.format(locale, "%.2f", sum.total.toDouble())}",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.primary
@@ -395,7 +396,7 @@ fun SectionHeader(title: String)
 @Composable
 fun SummaryRow(
     label: String,
-    amount: Double,
+    amount: BigDecimal,
     locale: Locale,
     color: Color = MaterialTheme.colorScheme.onSurface
 )
@@ -406,8 +407,8 @@ fun SummaryRow(
     ) {
         Text(text = label, color = color)
         Text(
-            text = if (amount >= 0) "R${String.format(locale, "%.2f", amount)}"
-            else "-R${String.format(locale, "%.2f", -amount)}",
+            text = if (amount.compareTo(BigDecimal.ZERO) >= 0) "R${String.format(locale, "%.2f", amount.toDouble())}"
+            else "-R${String.format(locale, "%.2f", amount.negate().toDouble())}",
             color = color,
             fontWeight = FontWeight.SemiBold
         )

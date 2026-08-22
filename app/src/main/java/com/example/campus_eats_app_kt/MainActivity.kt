@@ -49,6 +49,7 @@ import com.example.campus_eats_app_kt.ui.screens.ForgotPasswordViewModel
 import com.example.campus_eats_app_kt.ui.screens.LandingScreen
 import com.example.campus_eats_app_kt.ui.screens.LoginScreen
 import com.example.campus_eats_app_kt.ui.screens.LoginViewModel
+import com.example.campus_eats_app_kt.ui.screens.AdminViewModel
 import com.example.campus_eats_app_kt.ui.screens.MainScreen
 import com.example.campus_eats_app_kt.ui.screens.MenuBrowseViewModel
 import com.example.campus_eats_app_kt.ui.screens.OrderConfirmationScreen
@@ -74,8 +75,8 @@ class MainActivity : ComponentActivity()
         enableEdgeToEdge()
 
         // Connectivity Infrastructure
-        val connectivityManager = NetworkConnectivityManager(this)
-        val connectivityObserver = NetworkConnectivityObserver(this)
+        val connectivityManager = NetworkConnectivityManager(applicationContext)
+        val connectivityObserver = NetworkConnectivityObserver(applicationContext)
 
         // Dependency Initialization (Simplified DI pattern)
         val database = CampusEatsDatabase.getDatabase(this)
@@ -240,6 +241,18 @@ class MainActivity : ComponentActivity()
 
                         // Main Role-Based Dashboard Entry
                         entry<Route.Main> { route ->
+                            val adminViewModel: AdminViewModel = viewModel(
+                                factory = viewModelFactory {
+                                    initializer {
+                                        AdminViewModel(
+                                            adminRepository,
+                                            orderRepository,
+                                            couponRepository,
+                                            feedbackRepository
+                                        )
+                                    }
+                                }
+                            )
                             MainScreen(
                                 userId = route.userId,
                                 role = route.role,
@@ -247,7 +260,7 @@ class MainActivity : ComponentActivity()
                                 menuRepository = menuRepository,
                                 cartRepository = cartRepository,
                                 orderRepository = orderRepository,
-                                adminRepository = adminRepository,
+                                adminViewModel = adminViewModel,
                                 statsRepository = statsRepository,
                                 feedbackRepository = feedbackRepository,
                                 couponRepository = couponRepository,

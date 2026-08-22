@@ -6,8 +6,10 @@ import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.UserRole
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import java.text.SimpleDateFormat
@@ -87,7 +89,7 @@ class StatsRepository(
                 todayRevenue = orders.filter { it.status == OrderStatus.COMPLETED && it.timestamp >= startOfDay }
                     .sumOf { it.totalAmount }
             )
-        }
+        }.flowOn(Dispatchers.Default)
     }
 
     /**
@@ -118,7 +120,7 @@ class StatsRepository(
                 monthRevenue = completedOrders.filter { it.timestamp >= startOfMonth }
                     .sumOf { it.totalAmount }
             )
-        }
+        }.flowOn(Dispatchers.Default)
     }
 
     /**
@@ -137,7 +139,7 @@ class StatsRepository(
                     DailyTrend(date, dayOrders.size, dayOrders.sumOf { it.totalAmount })
                 }
                 .sortedByDescending { it.date }
-        }
+        }.flowOn(Dispatchers.Default)
     }
 
     /**
@@ -163,7 +165,7 @@ class StatsRepository(
                     percentage
                 )
             }.sortedByDescending { it.revenue }.take(10)
-        }
+        }.flowOn(Dispatchers.Default)
     }
 
     /**
@@ -197,6 +199,6 @@ class StatsRepository(
             itemUnitsMap.map {
                 PopularItem(it.key, it.value, itemRevenueMap[it.key] ?: 0.0)
             }.sortedByDescending { it.unitsSold }.take(3)
-        }
+        }.flowOn(Dispatchers.Default)
     }
 }

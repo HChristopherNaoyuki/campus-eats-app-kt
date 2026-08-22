@@ -100,6 +100,7 @@ import com.example.campus_eats_app_kt.ui.components.HIGCard
 import com.example.campus_eats_app_kt.ui.components.HIGServiceRow
 import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
+import com.example.campus_eats_app_kt.ui.screens.AdminViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -489,7 +490,7 @@ fun ServicesScreenTab(
     userId: String,
     role: UserRole,
     menuRepository: MenuRepository,
-    adminRepository: AdminRepository,
+    adminViewModel: AdminViewModel,
     orderRepository: OrderRepository,
     onNavigateToVendorMenu: (String) -> Unit,
     onNavigateToMenuBrowse: (String, String) -> Unit,
@@ -608,9 +609,9 @@ fun ServicesScreenTab(
                         onNavigateToMenuBrowse
                     )
 
-                    "Users" -> AdminUserManagement(adminRepository = adminRepository)
-                    "Vendors" -> AdminVendorManagement(adminRepository = adminRepository)
-                    "Orders" -> AdminOrderManagement(orderRepository = orderRepository)
+                    "Users" -> AdminUserManagement(viewModel = adminViewModel)
+                    "Vendors" -> AdminVendorManagement(viewModel = adminViewModel)
+                    "Orders" -> AdminOrderManagement(viewModel = adminViewModel)
                     "Receipts" -> StudentReceipts(
                         userId = userId,
                         orderRepository = orderRepository,
@@ -871,10 +872,9 @@ fun StudentVendorList(
 }
 
 @Composable
-fun AdminUserManagement(adminRepository: AdminRepository)
+fun AdminUserManagement(viewModel: AdminViewModel)
 {
-    val users by adminRepository.getAllUsers().collectAsState(emptyList())
-    val coroutineScope = rememberCoroutineScope()
+    val users by viewModel.users.collectAsState()
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
@@ -908,13 +908,7 @@ fun AdminUserManagement(adminRepository: AdminRepository)
                     {
                         TextButton(
                             onClick = {
-                                coroutineScope.launch()
-                                {
-                                    if (user.status == UserStatus.ACTIVE) adminRepository.suspendUser(
-                                        user.userId
-                                    )
-                                    else adminRepository.activateUser(user.userId)
-                                }
+                                viewModel.toggleUserStatus(user)
                             }
                         )
                         {
@@ -923,10 +917,7 @@ fun AdminUserManagement(adminRepository: AdminRepository)
 
                         TextButton(
                             onClick = {
-                                coroutineScope.launch()
-                                {
-                                    adminRepository.deleteUser(user)
-                                }
+                                viewModel.deleteUser(user)
                             },
                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         )
@@ -941,10 +932,9 @@ fun AdminUserManagement(adminRepository: AdminRepository)
 }
 
 @Composable
-fun AdminVendorManagement(adminRepository: AdminRepository)
+fun AdminVendorManagement(viewModel: AdminViewModel)
 {
-    val users by adminRepository.getAllUsers().collectAsState(emptyList())
-    val vendors = users.filter { it.role == UserRole.VENDOR }
+    val vendors by viewModel.vendors.collectAsState()
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
@@ -973,10 +963,9 @@ fun AdminVendorManagement(adminRepository: AdminRepository)
 }
 
 @Composable
-fun AdminOrderManagement(orderRepository: OrderRepository)
+fun AdminOrderManagement(viewModel: AdminViewModel)
 {
-    val orders by orderRepository.getAllOrders().collectAsState(emptyList())
-    val coroutineScope = rememberCoroutineScope()
+    val orders by viewModel.orders.collectAsState()
     val locale = LocalConfiguration.current.locales[0]
 
     LazyColumn(
@@ -1020,11 +1009,8 @@ fun AdminOrderManagement(orderRepository: OrderRepository)
                                 DropdownMenuItem(
                                     text = { Text(text = status.name) },
                                     onClick = {
-                                        coroutineScope.launch()
-                                        {
-                                            orderRepository.updateOrderStatus(order, status)
-                                            expanded = false
-                                        }
+                                        viewModel.updateOrderStatus(order, status)
+                                        expanded = false
                                     }
                                 )
                             }
@@ -1209,7 +1195,7 @@ fun SettingsScreenTab(
     authRepository: AuthRepository,
     feedbackRepository: FeedbackRepository,
     couponRepository: CouponRepository,
-    adminRepository: AdminRepository,
+    adminViewModel: AdminViewModel,
     debitCardRepository: DebitCardRepository,
     onLogout: () -> Unit
 )
@@ -1445,11 +1431,11 @@ fun SettingsScreenTab(
             {
                 when (activeSettingView)
                 {
-                    "Credits" -> AdminIssueCreditsWindow(adminRepository)
-                    "Coupons" -> AdminGenerateCouponsWindow(couponRepository)
-                    "Complaints" -> AdminFeedbackWindow(feedbackRepository, FeedbackType.COMPLAINT)
+                    "Credits" -> AdminIssueCreditsWindow(adminViewModel)
+                    "Coupons" -> AdminGenerateCouponsWindow(adminViewModel)
+                    "Complaints" -> AdminFeedbackWindow(adminViewModel, FeedbackType.COMPLAINT)
                     "Compliments" -> AdminFeedbackWindow(
-                        feedbackRepository,
+                        adminViewModel,
                         FeedbackType.COMPLIMENT
                     )
 
@@ -2078,12 +2064,11 @@ fun DetailRow(label: String, amount: Double, locale: java.util.Locale)
 }
 
 @Composable
-fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
+fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
 {
     var targetId by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
-    var successMsg by remember { mutableStateOf("") }
+    val successMsg = remember { mutableStateOf("") }
     val locale = LocalConfiguration.current.locales[0]
 
     Column(modifier = Modifier.fillMaxSize())
@@ -2104,7 +2089,7 @@ fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
                 value = targetId,
                 onValueChange = {
                     targetId = it
-                    successMsg = ""
+                    successMsg.value = ""
                 },
                 label = { Text("Target User ID") },
                 modifier = Modifier.fillMaxWidth(),
@@ -2115,7 +2100,7 @@ fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
                 value = amount,
                 onValueChange = {
                     amount = it
-                    successMsg = ""
+                    successMsg.value = ""
                 },
                 label = { Text("Amount (R)") },
                 modifier = Modifier.fillMaxWidth(),
@@ -2123,10 +2108,10 @@ fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
                 singleLine = true
             )
 
-            if (successMsg.isNotEmpty())
+            if (successMsg.value.isNotEmpty())
             {
                 Text(
-                    successMsg,
+                    successMsg.value,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
@@ -2140,11 +2125,8 @@ fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
                 val a = amount.toDoubleOrNull() ?: 0.0
                 if (isFormValid)
                 {
-                    coroutineScope.launch()
-                    {
-                        adminRepository.issueCredits(targetId, a)
-                    }
-                    successMsg = "Success: R${String.format(locale, "%.2f", a)} issued to $targetId"
+                    viewModel.issueCredits(targetId, a)
+                    successMsg.value = "Success: R${String.format(locale, "%.2f", a)} issued to $targetId"
                     targetId = ""; amount = ""
                 }
             },
@@ -2157,12 +2139,11 @@ fun AdminIssueCreditsWindow(adminRepository: AdminRepository)
 }
 
 @Composable
-fun AdminGenerateCouponsWindow(couponRepository: CouponRepository)
+fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
 {
     var code by remember { mutableStateOf("") }
     var discount by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
-    var successMsg by remember { mutableStateOf("") }
+    val successMsg = remember { mutableStateOf("") }
 
     Column(modifier = Modifier.fillMaxSize())
     {
@@ -2182,7 +2163,7 @@ fun AdminGenerateCouponsWindow(couponRepository: CouponRepository)
                 value = code,
                 onValueChange = {
                     code = it
-                    successMsg = ""
+                    successMsg.value = ""
                 },
                 label = { Text("Coupon Code") },
                 modifier = Modifier.fillMaxWidth(),
@@ -2193,7 +2174,7 @@ fun AdminGenerateCouponsWindow(couponRepository: CouponRepository)
                 value = discount,
                 onValueChange = {
                     discount = it
-                    successMsg = ""
+                    successMsg.value = ""
                 },
                 label = { Text("Discount Percentage") },
                 modifier = Modifier.fillMaxWidth(),
@@ -2201,10 +2182,10 @@ fun AdminGenerateCouponsWindow(couponRepository: CouponRepository)
                 singleLine = true
             )
 
-            if (successMsg.isNotEmpty())
+            if (successMsg.value.isNotEmpty())
             {
                 Text(
-                    successMsg,
+                    successMsg.value,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
@@ -2217,11 +2198,8 @@ fun AdminGenerateCouponsWindow(couponRepository: CouponRepository)
                 val d = discount.toDoubleOrNull() ?: 0.0
                 if (isFormValid)
                 {
-                    coroutineScope.launch()
-                    {
-                        couponRepository.createCoupon(code, d)
-                    }
-                    successMsg = "Success: Coupon $code (${d}%) generated."
+                    viewModel.generateCoupon(code, d)
+                    successMsg.value = "Success: Coupon $code (${d}%) generated."
                     code = ""; discount = ""
                 }
             },
@@ -2234,9 +2212,9 @@ fun AdminGenerateCouponsWindow(couponRepository: CouponRepository)
 }
 
 @Composable
-fun AdminFeedbackWindow(feedbackRepository: FeedbackRepository, type: FeedbackType)
+fun AdminFeedbackWindow(viewModel: AdminViewModel, type: FeedbackType)
 {
-    val feedbacks by (if (type == FeedbackType.COMPLAINT) feedbackRepository.getComplaints() else feedbackRepository.getCompliments()).collectAsState(
+    val feedbacks by viewModel.getFeedbackByType(type).collectAsState(
         emptyList()
     )
 

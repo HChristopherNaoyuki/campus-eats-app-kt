@@ -46,7 +46,7 @@ fun MainScreen(
     menuRepository: MenuRepository,
     cartRepository: CartRepository,
     orderRepository: OrderRepository,
-    adminRepository: AdminRepository,
+    adminViewModel: AdminViewModel,
     statsRepository: StatsRepository,
     feedbackRepository: FeedbackRepository,
     couponRepository: CouponRepository,
@@ -144,7 +144,7 @@ fun MainScreen(
                     userId = userId,
                     role = userRole,
                     menuRepository = menuRepository,
-                    adminRepository = adminRepository,
+                    adminViewModel = adminViewModel,
                     orderRepository = orderRepository,
                     onNavigateToVendorMenu = onNavigateToVendorMenu,
                     onNavigateToMenuBrowse = onNavigateToMenuBrowse,
@@ -176,7 +176,7 @@ fun MainScreen(
                     authRepository = authRepository,
                     feedbackRepository = feedbackRepository,
                     couponRepository = couponRepository,
-                    adminRepository = adminRepository,
+                    adminViewModel = adminViewModel,
                     debitCardRepository = debitCardRepository,
                     onLogout = onLogout
                 )

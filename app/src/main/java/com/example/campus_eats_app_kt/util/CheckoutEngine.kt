@@ -1,17 +1,18 @@
 package com.example.campus_eats_app_kt.util
 
 import com.example.campus_eats_app_kt.data.entity.UserRole
-import kotlin.math.ceil
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 /**
  * CheckoutSummary encapsulates the financial breakdown of an order.
  */
 data class CheckoutSummary(
-    val subtotal: Double,
-    val tax: Double,
-    val serviceFee: Double,
-    val studentDiscount: Double,
-    val total: Double
+    val subtotal: BigDecimal,
+    val tax: BigDecimal,
+    val serviceFee: BigDecimal,
+    val studentDiscount: BigDecimal,
+    val total: BigDecimal
 )
 
 /**
@@ -21,16 +22,16 @@ data class CheckoutSummary(
 object CheckoutEngine
 {
     // Business Logic Constants
-    private const val TAX_RATE = 0.20 // 20%
-    private const val STUDENT_DISCOUNT_RATE = 0.025 // 2.5%
-    private const val ROUNDING_INCREMENT = 5.0 // Round up to nearest R5
+    private val TAX_RATE = BigDecimal("0.20")
+    private val STUDENT_DISCOUNT_RATE = BigDecimal("0.025")
+    private val ROUNDING_INCREMENT = BigDecimal("5.0")
 
     // Service Fee Tiers
-    private const val TIER_LOW_THRESHOLD = 500.0
-    private const val TIER_MID_THRESHOLD = 1000.0
-    private const val TIER_LOW_FEE_RATE = 0.10 // 10%
-    private const val TIER_MID_FEE_RATE = 0.065 // 6.5%
-    private const val TIER_HIGH_FEE_RATE = 0.0 // 0%
+    private val TIER_LOW_THRESHOLD = BigDecimal("500.0")
+    private val TIER_MID_THRESHOLD = BigDecimal("1000.0")
+    private val TIER_LOW_FEE_RATE = BigDecimal("0.10")
+    private val TIER_MID_FEE_RATE = BigDecimal("0.065")
+    private val TIER_HIGH_FEE_RATE = BigDecimal("0.0")
 
     /**
      * Computes the final cost breakdown for an order subtotal.
@@ -40,38 +41,42 @@ object CheckoutEngine
      * - R500 to R1000: 6.5%
      * - Above R1000: Free
      *
-     * @param subtotal The sum of prices for all items in the cart.
+     * @param subtotalDouble The sum of prices for all items in the cart.
      * @param role The role of the user, used to determine discount eligibility.
      * @return A CheckoutSummary object containing the detailed financial breakdown.
      */
-    fun calculateSummary(subtotal: Double, role: UserRole): CheckoutSummary
+    fun calculateSummary(subtotalDouble: Double, role: UserRole): CheckoutSummary
     {
+        val subtotal = BigDecimal(subtotalDouble.toString()).setScale(2, RoundingMode.HALF_UP)
+
         // 1. Compute standard tax (20% of subtotal)
-        val tax = subtotal * TAX_RATE
+        val tax = subtotal.multiply(TAX_RATE).setScale(2, RoundingMode.HALF_UP)
 
         // 2. Compute tiered service fee based on order value
         val serviceFee = when
         {
-            subtotal < TIER_LOW_THRESHOLD -> subtotal * TIER_LOW_FEE_RATE
-            subtotal <= TIER_MID_THRESHOLD -> subtotal * TIER_MID_FEE_RATE
-            else -> subtotal * TIER_HIGH_FEE_RATE
-        }
+            subtotal.compareTo(TIER_LOW_THRESHOLD) < 0 -> subtotal.multiply(TIER_LOW_FEE_RATE)
+            subtotal.compareTo(TIER_MID_THRESHOLD) <= 0 -> subtotal.multiply(TIER_MID_FEE_RATE)
+            else -> subtotal.multiply(TIER_HIGH_FEE_RATE)
+        }.setScale(2, RoundingMode.HALF_UP)
 
         // 3. Apply student-exclusive discount (2.5% of subtotal)
         val studentDiscount = if (role == UserRole.STUDENT)
         {
-            subtotal * STUDENT_DISCOUNT_RATE
+            subtotal.multiply(STUDENT_DISCOUNT_RATE).setScale(2, RoundingMode.HALF_UP)
         }
         else
         {
-            0.0
+            BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)
         }
 
         // 4. Calculate initial total before rounding
-        var total = subtotal + tax + serviceFee - studentDiscount
+        var total = subtotal.add(tax).add(serviceFee).subtract(studentDiscount)
 
         // 5. Perform mandatory financial rounding for cash handling optimization (Round up to next R5)
-        total = ceil(total / ROUNDING_INCREMENT) * ROUNDING_INCREMENT
+        // Logic: ceil(total / 5) * 5
+        val divided = total.divide(ROUNDING_INCREMENT, 0, RoundingMode.CEILING)
+        total = divided.multiply(ROUNDING_INCREMENT).setScale(2, RoundingMode.HALF_UP)
 
         return CheckoutSummary(
             subtotal = subtotal,

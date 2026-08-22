@@ -12,6 +12,8 @@ import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -33,6 +35,7 @@ class AuthRepository(
 )
 {
     private val TAG = "AuthRepository"
+    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /**
      * Requirement: Registration process completes within 3 seconds.
@@ -107,8 +110,8 @@ class AuthRepository(
                 usercode = remoteUsercode
             )
 
-            // 4. Background Sync to RTDB (Fire and Forget to meet 3s target)
-            launch()
+            // 4. Background Sync to RTDB (True Fire and Forget)
+            repositoryScope.launch()
             {
                 try
                 {
@@ -118,7 +121,7 @@ class AuthRepository(
                 }
                 catch (e: Exception)
                 {
-                    Log.e(TAG, "RTDB Sync failed: ${e.message}")
+                    Log.e(TAG, "RTDB Sync failed for $campusUserId: ${e.message}")
                 }
             }
 
@@ -263,20 +266,28 @@ class AuthRepository(
     fun getUserFlow(userId: String): Flow<UserEntity?> = userDao.getUserByIdFlow(userId)
     suspend fun getUserByEmail(email: String): UserEntity? = userDao.getUserByEmail(email)
 
-    suspend fun updateShopStatus(userId: String, status: ShopStatus)
+    suspend fun updateShopStatus(userId: String, status: ShopStatus): Result<Unit>
     {
-        val user = userDao.getUserById(userId)
-        if (user != null && user.role == UserRole.VENDOR)
+        return kotlin.runCatching()
         {
-            val updatedUser = user.copy(shopStatus = status)
-            userDao.updateUser(updatedUser)
-            try
+            val user = userDao.getUserById(userId)
+            if (user != null && user.role == UserRole.VENDOR)
             {
-                firebaseDatabase.getReference("users").child(userId).child("shopStatus")
-                    .setValue(status).await()
+                val updatedUser = user.copy(shopStatus = status)
+                userDao.updateUser(updatedUser)
+                try
+                {
+                    firebaseDatabase.getReference("users").child(userId).child("shopStatus")
+                        .setValue(status).await()
+                }
+                catch (e: Exception)
+                {
+                    Log.e(TAG, "Failed to sync shop status to RTDB: ${e.message}")
+                }
             }
-            catch (_: Exception)
+            else
             {
+                throw Exception("User not found or not a vendor")
             }
         }
     }
@@ -293,8 +304,9 @@ class AuthRepository(
                 firebaseDatabase.getReference("users").child(userId).child("bankAccountInfo")
                     .setValue(bankInfo).await()
             }
-            catch (_: Exception)
+            catch (e: Exception)
             {
+                Log.e(TAG, "Failed to sync bank info to RTDB: ${e.message}")
             }
         }
     }

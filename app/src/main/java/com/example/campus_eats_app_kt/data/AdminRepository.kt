@@ -4,6 +4,7 @@ import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserStatus
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
+import android.util.Log
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
@@ -18,6 +19,8 @@ class AdminRepository(
     private val firebaseDatabase: FirebaseDatabase
 )
 {
+    private val TAG = "AdminRepository"
+
     /**
      * Retrieves all registered users in the system.
      */
@@ -26,55 +29,77 @@ class AdminRepository(
     /**
      * Temporarily disables a user's access to the application.
      */
-    suspend fun suspendUser(userId: String)
+    suspend fun suspendUser(userId: String): Result<Unit>
     {
-        connectivityManager.ensureInternet()
-        userDao.updateStatus(userId, UserStatus.SUSPENDED)
+        return kotlin.runCatching()
+        {
+            connectivityManager.ensureInternet()
+            userDao.updateStatus(userId, UserStatus.SUSPENDED)
 
-        // Sync to RTDB
-        firebaseDatabase.getReference("users").child(userId).child("status")
-            .setValue(UserStatus.SUSPENDED).await()
+            // Sync to RTDB
+            firebaseDatabase.getReference("users").child(userId).child("status")
+                .setValue(UserStatus.SUSPENDED).await()
+        }
     }
 
     /**
      * Restores a suspended user's access to the application.
      */
-    suspend fun activateUser(userId: String)
+    suspend fun activateUser(userId: String): Result<Unit>
     {
-        connectivityManager.ensureInternet()
-        userDao.updateStatus(userId, UserStatus.ACTIVE)
+        return kotlin.runCatching()
+        {
+            connectivityManager.ensureInternet()
+            userDao.updateStatus(userId, UserStatus.ACTIVE)
 
-        // Sync to RTDB
-        firebaseDatabase.getReference("users").child(userId).child("status")
-            .setValue(UserStatus.ACTIVE).await()
+            // Sync to RTDB
+            firebaseDatabase.getReference("users").child(userId).child("status")
+                .setValue(UserStatus.ACTIVE).await()
+        }
     }
 
     /**
      * Manually adds credit to a specific user's Campus Wallet.
      */
-    suspend fun issueCredits(userId: String, amount: Double)
+    suspend fun issueCredits(userId: String, amount: Double): Result<Unit>
     {
-        connectivityManager.ensureInternet()
-        userDao.addCredits(userId, amount)
-
-        // Fetch updated balance and sync to RTDB
-        val updatedUser = userDao.getUserById(userId)
-        if (updatedUser != null)
+        return kotlin.runCatching()
         {
-            firebaseDatabase.getReference("users").child(userId).child("walletBalance")
-                .setValue(updatedUser.walletBalance).await()
+            connectivityManager.ensureInternet()
+            userDao.addCredits(userId, amount)
+
+            // Fetch updated balance and sync to RTDB
+            val updatedUser = userDao.getUserById(userId)
+            if (updatedUser != null)
+            {
+                firebaseDatabase.getReference("users").child(userId).child("walletBalance")
+                    .setValue(updatedUser.walletBalance).await()
+            }
         }
     }
 
     /**
      * Permanently removes a user record from the database.
      */
-    suspend fun deleteUser(user: UserEntity)
+    suspend fun deleteUser(user: UserEntity): Result<Unit>
     {
-        connectivityManager.ensureInternet()
-        userDao.deleteUser(user)
+        return kotlin.runCatching()
+        {
+            connectivityManager.ensureInternet()
 
-        // Sync to RTDB
-        firebaseDatabase.getReference("users").child(user.userId).removeValue().await()
+            // Delete from RTDB first to ensure cloud state is updated
+            try
+            {
+                firebaseDatabase.getReference("users").child(user.userId).removeValue().await()
+            }
+            catch (e: Exception)
+            {
+                Log.e(TAG, "Failed to delete user from RTDB: ${e.message}")
+                throw e
+            }
+
+            // Then delete locally
+            userDao.deleteUser(user)
+        }
     }
 }
