@@ -52,15 +52,8 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel()
                     // On success, update the state with the authenticated user
                     _loginState.value = LoginState.Success(user)
                 }.onFailure { exception ->
-                    // Handle logical failures and configuration errors
-                    val errorMsg = when
-                    {
-                        exception.message?.contains("CONFIGURATION_NOT_FOUND") == true ->
-                            "Authentication service is not enabled for this project. Please ensure the Email/Password provider is enabled in the Firebase Console."
-
-                        else -> exception.message ?: "Login failed"
-                    }
-                    _loginState.value = LoginState.Error(errorMsg)
+                    // AuthRepository now provides localized, user-friendly messages
+                    _loginState.value = LoginState.Error(exception.message ?: "Login failed")
                 }
             }
             catch (e: Exception)

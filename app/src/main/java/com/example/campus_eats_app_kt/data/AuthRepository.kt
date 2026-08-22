@@ -9,6 +9,8 @@ import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
 import com.example.campus_eats_app_kt.data.network.RegistrationRequest
 import com.example.campus_eats_app_kt.util.IdGenerator
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
+import com.example.campus_eats_app_kt.util.ValidationEngine
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.CoroutineScope
@@ -56,10 +58,20 @@ class AuthRepository(
         {
             connectivityManager.ensureInternet()
 
+            // 0. Pre-validation: Catch malformed data before it reaches Firebase
+            if (!ValidationEngine.isValidEmail(email))
+            {
+                throw Exception("Invalid email format provided.")
+            }
+            if (!ValidationEngine.isStrongPassword(password))
+            {
+                throw Exception("Password must be at least 8 characters long.")
+            }
+
             // 1. Fast local check to avoid unnecessary network calls
             if (userDao.getUserByEmail(email) != null)
             {
-                throw Exception("Account already exists locally.")
+                throw Exception("An account with this email is already registered locally.")
             }
 
             // 2. Parallel Network Operations
@@ -73,11 +85,8 @@ class AuthRepository(
                 }
                 catch (e: Exception)
                 {
-                    if (e.message?.contains("CONFIGURATION_NOT_FOUND") == true)
-                    {
-                        throw Exception("Auth service disabled in console (campus-eats-db).")
-                    }
-                    throw e
+                    // Map technical error to user-friendly string
+                    throw Exception(FirebaseExceptionHandler.parse(e))
                 }
             }
 
@@ -94,7 +103,14 @@ class AuthRepository(
                 }
             }
 
-            val firebaseUid = authDeferred.await()
+            val firebaseUid = try
+            {
+                authDeferred.await()
+            }
+            catch (e: Exception)
+            {
+                throw e
+            }
             val remoteUsercode = apiSyncDeferred.await()
 
             // 3. Construct and Persist Data
@@ -143,6 +159,12 @@ class AuthRepository(
         {
             connectivityManager.ensureInternet()
 
+            // 0. Pre-validation
+            if (!ValidationEngine.isValidEmail(email))
+            {
+                throw Exception("Please enter a valid email address.")
+            }
+
             // 1. Authenticate with Firebase
             try
             {
@@ -151,11 +173,7 @@ class AuthRepository(
             catch (e: Exception)
             {
                 Log.e(tag, "Firebase login failed: ${e.message}")
-                if (e.message?.contains("CONFIGURATION_NOT_FOUND") == true)
-                {
-                    throw Exception("Auth service disabled in console (campus-eats-db).")
-                }
-                throw e
+                throw Exception(FirebaseExceptionHandler.parse(e))
             }
 
             // 2. Fetch local metadata
@@ -175,7 +193,10 @@ class AuthRepository(
                 user?.let { userDao.insertUser(it) }
             }
 
-            if (user == null) throw Exception("Profile metadata missing in cloud.")
+            if (user == null)
+            {
+                throw Exception("Profile metadata missing in cloud. Account may be partially initialized.")
+            }
 
             user
         }
@@ -211,6 +232,29 @@ class AuthRepository(
     fun getCurrentUserEmail(): String? = firebaseAuth.currentUser?.email
     fun logout() = firebaseAuth.signOut()
 
+    /**
+     * Re-authenticates the current user. Required for sensitive operations like 
+     * password changes or account deletion if the session has expired.
+     */
+    suspend fun reauthenticate(password: String): Result<Unit>
+    {
+        return kotlin.runCatching()
+        {
+            try
+            {
+                val email = getCurrentUserEmail() ?: throw Exception("No active user session found.")
+                val credential = EmailAuthProvider.getCredential(email, password)
+                firebaseAuth.currentUser?.reauthenticate(credential)?.await()
+                Log.d(tag, "User successfully re-authenticated.")
+            }
+            catch (e: Exception)
+            {
+                Log.e(tag, "Re-authentication failed: ${e.message}")
+                throw Exception(FirebaseExceptionHandler.parse(e))
+            }
+        }
+    }
+
     suspend fun resetPassword(userId: String, newPassword: String): Result<Unit>
     {
         Log.d(tag, "Password reset initiated for User ID: $userId")
@@ -218,6 +262,10 @@ class AuthRepository(
         {
             connectivityManager.ensureInternet()
             val user = userDao.getUserById(userId) ?: throw Exception("Invalid User ID")
+            
+            // Note: Firebase password reset usually via email, but we allow forced update here
+            firebaseAuth.currentUser?.updatePassword(newPassword)?.await()
+            
             if (user.usercode != null)
             {
                 try
@@ -229,6 +277,8 @@ class AuthRepository(
                     Log.e(tag, "Remote password sync failed: ${e.message}")
                 }
             }
+        }.onFailure { e ->
+            throw Exception(FirebaseExceptionHandler.parse(e))
         }
     }
 
@@ -242,7 +292,15 @@ class AuthRepository(
             val updatedUser = user.copy(email = email)
             if (password.isNotBlank())
             {
-                firebaseAuth.currentUser?.updatePassword(password)?.await()
+                try
+                {
+                    firebaseAuth.currentUser?.updatePassword(password)?.await()
+                }
+                catch (e: Exception)
+                {
+                    // If re-auth is needed, the exception is caught here and mapped
+                    throw Exception(FirebaseExceptionHandler.parse(e))
+                }
 
                 if (user.usercode != null)
                 {
@@ -322,7 +380,14 @@ class AuthRepository(
             if (user != null)
             {
                 // 1. Delete from Firebase
-                firebaseAuth.currentUser?.delete()?.await()
+                try
+                {
+                    firebaseAuth.currentUser?.delete()?.await()
+                }
+                catch (e: Exception)
+                {
+                    throw Exception(FirebaseExceptionHandler.parse(e))
+                }
 
                 // 2. Delete from Remote API
                 if (user.usercode != null)
@@ -341,7 +406,7 @@ class AuthRepository(
             }
             else
             {
-                throw Exception("User not found")
+                throw Exception("User not found locally. Account may already be deleted.")
             }
         }
     }

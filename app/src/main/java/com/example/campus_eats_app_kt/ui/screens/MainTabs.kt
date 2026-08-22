@@ -1248,15 +1248,22 @@ fun SettingsScreenTab(
                         visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                         shape = MaterialTheme.shapes.medium
                     )
+                    val context = LocalContext.current
                     Button(
                         onClick = {
                             coroutineScope.launch()
                             {
-                                authRepository.updateProfile(
+                                val result = authRepository.updateProfile(
                                     userId,
                                     newEmail,
                                     newPassword
-                                ); newPassword = ""
+                                )
+                                result.onSuccess {
+                                    Toast.makeText(context, "Credentials successfully updated.", Toast.LENGTH_SHORT).show()
+                                    newPassword = ""
+                                }.onFailure { e ->
+                                    Toast.makeText(context, e.message ?: "Update failed.", Toast.LENGTH_LONG).show()
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
