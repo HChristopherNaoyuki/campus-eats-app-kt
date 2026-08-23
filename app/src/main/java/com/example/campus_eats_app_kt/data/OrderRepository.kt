@@ -26,10 +26,10 @@ class OrderRepository(
     private val cartDao: CartDao,
     private val userDao: UserDao,
     private val apiService: FakeRestaurantApiService,
-    private val connectivityManager: NetworkConnectivityManager
+    private val connectivityManager: NetworkConnectivityManager,
 )
 {
-    private val TAG = "OrderRepository"
+    private val tag = "OrderRepository"
 
     /**
      * Persists a new order. If the vendor is from the remote API and the user
@@ -42,10 +42,10 @@ class OrderRepository(
         totalAmount: Double,
         paymentMethod: PaymentMethod,
         pickupTime: String,
-        specialRequests: String? = null
+        specialRequests: String? = null,
     ): Long
     {
-        Log.d(TAG, "Initiating order placement for User: $userId at Vendor: $vendorId")
+        Log.d(tag, "Initiating order placement for User: $userId at Vendor: $vendorId")
         // 1. Check if we need to sync with the remote API
         val numericVendorId = vendorId.toIntOrNull()
         val user = userDao.getUserById(userId)
@@ -55,7 +55,7 @@ class OrderRepository(
         {
             try
             {
-                Log.i(TAG, "Detected remote vendor. Synchronizing order with REST API...")
+                Log.i(tag, "Detected remote vendor. Synchronizing order with REST API...")
                 // Check connectivity for remote sync
                 connectivityManager.ensureInternet()
 
@@ -68,11 +68,11 @@ class OrderRepository(
                     apikey,
                     OrderRequest(networkItems)
                 )
-                Log.i(TAG, "Remote order synchronization successful")
+                Log.i(tag, "Remote order synchronization successful")
             }
             catch (e: Exception)
             {
-                Log.e(TAG, "Remote order sync failed: ${e.message}. Proceeding with local storage.")
+                Log.e(tag, "Remote order sync failed: ${e.message}. Proceeding with local storage.")
             }
         }
 
@@ -88,11 +88,11 @@ class OrderRepository(
             specialRequests = specialRequests
         )
         val id = orderDao.insertOrder(order)
-        Log.d(TAG, "Local order record created. ID: $id")
+        Log.d(tag, "Local order record created. ID: $id")
 
         // Ensure atomic operations: clearing cart after order placement
         cartDao.clearCart(userId)
-        Log.v(TAG, "Cart cleared for user: $userId")
+        Log.v(tag, "Cart cleared for user: $userId")
 
         return id
     }

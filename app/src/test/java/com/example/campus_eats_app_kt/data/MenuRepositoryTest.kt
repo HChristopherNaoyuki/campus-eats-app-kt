@@ -45,7 +45,7 @@ class MenuRepositoryTest
         // Given
         val users = listOf(
             UserEntity("U1", "Student", "s1", "s@t.com", "p", UserRole.STUDENT),
-            UserEntity("V1", "Vendor", "v1", "v@t.com", "p", UserRole.VENDOR)
+            UserEntity("V1", "Vendor", "v1", "v@t.com", "p", UserRole.VENDOR),
         )
         every { userDao.getAllUsers() } returns flowOf(users)
 

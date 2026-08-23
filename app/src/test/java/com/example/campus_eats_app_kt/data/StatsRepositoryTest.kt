@@ -50,7 +50,7 @@ class StatsRepositoryTest
                 totalAmount = 100.0,
                 status = OrderStatus.COMPLETED,
                 paymentMethod = PaymentMethod.DEBIT_CARD,
-                pickupTime = "12:00"
+                pickupTime = "12:00",
             ),
             OrderEntity(
                 orderId = 2,
@@ -60,8 +60,8 @@ class StatsRepositoryTest
                 totalAmount = 50.0,
                 status = OrderStatus.PENDING,
                 paymentMethod = PaymentMethod.DEBIT_CARD,
-                pickupTime = "12:15"
-            )
+                pickupTime = "12:15",
+            ),
         )
         every { orderDao.getOrdersByVendor(vendorId) } returns flowOf(orders)
         every { menuItemDao.getMenuItemsByVendor(vendorId) } returns flowOf(emptyList())
@@ -90,8 +90,8 @@ class StatsRepositoryTest
                 totalAmount = 500.0,
                 status = OrderStatus.COMPLETED,
                 paymentMethod = PaymentMethod.DEBIT_CARD,
-                pickupTime = "12:00"
-            )
+                pickupTime = "12:00",
+            ),
         )
         every { orderDao.getOrdersByStatus(OrderStatus.COMPLETED) } returns flowOf(completedOrders)
         every { userDao.getAllUsers() } returns flowOf(emptyList())

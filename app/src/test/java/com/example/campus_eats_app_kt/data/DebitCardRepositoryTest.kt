@@ -35,9 +35,11 @@ class DebitCardRepositoryTest
         repository.addCard(userId, number, expiry, cvv)
 
         coVerify {
-            debitCardDao.insertCard(match {
-                it.userId == userId && it.cardNumber == number && it.expiryDate == expiry && it.cvv == cvv
-            })
+            debitCardDao.insertCard(
+                match {
+                    (it.userId == userId) && (it.cardNumber == number) && (it.expiryDate == expiry) && (it.cvv == cvv)
+                },
+            )
         }
     }
 }

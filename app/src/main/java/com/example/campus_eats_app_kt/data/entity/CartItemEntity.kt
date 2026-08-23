@@ -17,5 +17,5 @@ data class CartItemEntity(
     val vendorId: String,
     val name: String,
     val price: Double,
-    val quantity: Int
+    val quantity: Int,
 )

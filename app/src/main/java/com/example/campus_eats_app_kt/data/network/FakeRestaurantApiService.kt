@@ -16,19 +16,22 @@ interface FakeRestaurantApiService
     suspend fun getAllRestaurants(): Response<List<NetworkRestaurant>>
 
     @GET("api/Restaurant")
+    @Suppress("unused")
     suspend fun getRestaurantsByCategory(
-        @Query("category") category: String
+        @Query("category") category: String,
     ): Response<List<NetworkRestaurant>>
 
     @GET("api/Restaurant")
+    @Suppress("unused")
     suspend fun filterRestaurants(
         @Query("address") address: String?,
-        @Query("name") name: String?
+        @Query("name") name: String?,
     ): Response<List<NetworkRestaurant>>
 
     @GET("api/Restaurant/{id}")
+    @Suppress("unused")
     suspend fun getRestaurantById(
-        @Path("id") id: Int
+        @Path("id") id: Int,
     ): Response<List<NetworkRestaurant>>
 
     @GET("api/Restaurant/{restaurantId}/menu")
@@ -43,21 +46,24 @@ interface FakeRestaurantApiService
     ): Response<List<NetworkMenuItem>>
 
     @GET("api/Restaurant/items")
+    @Suppress("unused")
     suspend fun getAllItems(): Response<List<NetworkMenuItem>>
 
     @GET("api/Restaurant/items")
     suspend fun searchItemsByName(
-        @Query("ItemName") itemName: String
+        @Query("ItemName") itemName: String,
     ): Response<List<NetworkMenuItem>>
 
     @GET("api/Restaurant/items")
+    @Suppress("unused")
     suspend fun getAllItemsSorted(
-        @Query("sortbyprice") sortOrder: String?
+        @Query("sortbyprice") sortOrder: String?,
     ): Response<List<NetworkMenuItem>>
 
     @POST("api/Restaurant")
+    @Suppress("unused")
     suspend fun addRestaurant(
-        @Body restaurant: RestaurantRequest
+        @Body restaurant: RestaurantRequest,
     ): Response<NetworkRestaurant>
 
     @POST("api/Restaurant/{restaurantId}/additem")
@@ -68,12 +74,14 @@ interface FakeRestaurantApiService
 
     // User endpoints
     @GET("api/User")
+    @Suppress("unused")
     suspend fun getAllUsers(): Response<List<NetworkUser>>
 
     @GET("api/User/getusercode")
+    @Suppress("unused")
     suspend fun getUserCode(
         @Query("UserEmail") email: String,
-        @Query("Password") password: String
+        @Query("Password") password: String,
     ): Response<UserCodeResponse>
 
     @POST("api/User/register")
@@ -99,9 +107,10 @@ interface FakeRestaurantApiService
     ): Response<List<MasterOrder>>
 
     @GET("api/Order/{masterId}")
+    @Suppress("unused")
     suspend fun getOrderByMasterId(
         @Path("masterId") masterId: Int,
-        @Query("apikey") apiKey: String
+        @Query("apikey") apiKey: String,
     ): Response<List<IndividualOrder>>
 
     @POST("api/Order/{restaurantId}/makeorder")
@@ -118,8 +127,9 @@ interface FakeRestaurantApiService
     ): Response<DeleteMasterOrderResponse>
 
     @DELETE("api/Order/{orderId}")
+    @Suppress("unused")
     suspend fun deleteSingleOrder(
         @Path("orderId") orderId: Int,
-        @Query("apikey") apiKey: String
+        @Query("apikey") apiKey: String,
     ): Response<DeleteSingleOrderResponse>
 }

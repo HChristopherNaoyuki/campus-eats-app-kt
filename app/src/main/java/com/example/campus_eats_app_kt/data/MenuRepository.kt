@@ -21,24 +21,24 @@ class MenuRepository(
     private val menuItemDao: MenuItemDao,
     private val userDao: UserDao,
     private val apiService: FakeRestaurantApiService,
-    private val connectivityManager: NetworkConnectivityManager
+    private val connectivityManager: NetworkConnectivityManager,
 )
 {
-    private val TAG = "MenuRepository"
+    private val tag = "MenuRepository"
 
     /**
      * Retrieves all menu items associated with a specific vendor, optionally sorted by price.
      */
     fun getMenuItemsByVendor(
         vendorId: String,
-        sortOrder: String? = null
+        sortOrder: String? = null,
     ): Flow<List<MenuItemEntity>> = flow()
     {
-        Log.d(TAG, "Fetching menu items for vendor: $vendorId (Sort: $sortOrder)")
+        Log.d(tag, "Fetching menu items for vendor: $vendorId (Sort: $sortOrder)")
         // First emit local items (local sorting not implemented for simplicity here)
         menuItemDao.getMenuItemsByVendor(vendorId).collect()
         {
-            Log.v(TAG, "Emitting ${it.size} local menu items")
+            Log.v(tag, "Emitting ${it.size} local menu items")
             emit(it)
         }
 
@@ -48,7 +48,7 @@ class MenuRepository(
         {
             try
             {
-                Log.i(TAG, "Vendor ID is numeric. Attempting REST API sync...")
+                Log.i(tag, "Vendor ID is numeric. Attempting REST API sync...")
                 // Check connectivity
                 connectivityManager.ensureInternet()
 
@@ -76,13 +76,13 @@ class MenuRepository(
                             imageUrl = networkItem.imageUrl
                         )
                     } ?: emptyList()
-                    Log.i(TAG, "API sync successful: Received ${networkItems.size} items")
+                    Log.i(tag, "API sync successful: Received ${networkItems.size} items")
                     emit(networkItems)
                 }
             }
             catch (e: Exception)
             {
-                Log.e(TAG, "REST API menu fetch failed: ${e.message}")
+                Log.e(tag, "REST API menu fetch failed: ${e.message}")
             }
         }
     }

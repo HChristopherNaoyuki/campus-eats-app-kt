@@ -36,7 +36,7 @@ class RegistrationViewModelTest
         email = "test@example.com",
         passwordHash = "pass",
         role = UserRole.STUDENT,
-        status = UserStatus.ACTIVE
+        status = UserStatus.ACTIVE,
     )
 
     @Before

@@ -54,7 +54,7 @@ class OrderRepositoryTest
             cartItems = emptyList(),
             totalAmount = 100.0,
             paymentMethod = PaymentMethod.DEBIT_CARD,
-            pickupTime = "12:00"
+            pickupTime = "12:00",
         )
 
         // Then
@@ -76,7 +76,7 @@ class OrderRepositoryTest
             totalAmount = 100.0,
             status = OrderStatus.PENDING,
             paymentMethod = PaymentMethod.DEBIT_CARD,
-            pickupTime = "12:00"
+            pickupTime = "12:00",
         )
         // Stub the update call even though it's relaxed, to be safe with match
         coEvery { orderDao.updateOrder(any()) } returns Unit
@@ -85,6 +85,12 @@ class OrderRepositoryTest
         repository.updateOrderStatus(order, OrderStatus.ACCEPTED)
 
         // Then
-        coVerify { orderDao.updateOrder(match { it.orderId == 123L && it.status == OrderStatus.ACCEPTED }) }
+        coVerify {
+            orderDao.updateOrder(
+                match {
+                    (it.orderId == 123L) && (it.status == OrderStatus.ACCEPTED)
+                },
+            )
+        }
     }
 }

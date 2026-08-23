@@ -3,7 +3,6 @@ package com.example.campus_eats_app_kt.data
 import com.example.campus_eats_app_kt.data.dao.MenuItemDao
 import com.example.campus_eats_app_kt.data.dao.OrderDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
-import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import kotlinx.coroutines.Dispatchers
@@ -40,16 +39,6 @@ data class AdminStats(
     val monthRevenue: Double,
 )
 
-data class DailyTrend(val date: String, val orderCount: Int, val revenue: Double)
-data class VendorRevenue(
-    val vendorName: String,
-    val orderCount: Int,
-    val revenue: Double,
-    val percentage: Double,
-)
-
-data class PopularItem(val itemName: String, val unitsSold: Int, val revenue: Double)
-
 /**
  * StatsRepository computes analytical data and financial reports by aggregating 
  * information from Users, Menu Items, and Orders.
@@ -74,7 +63,7 @@ class StatsRepository(
     {
         return combine(
             orderDao.getOrdersByVendor(vendorId),
-            menuItemDao.getMenuItemsByVendor(vendorId)
+            menuItemDao.getMenuItemsByVendor(vendorId),
         ) { orders, menuItems ->
             val now = System.currentTimeMillis()
             val startOfDay = now - (now % MILLIS_PER_DAY)
@@ -87,7 +76,7 @@ class StatsRepository(
                     (it.status != OrderStatus.COMPLETED) && (it.status != OrderStatus.CANCELLED)
                 },
                 todayRevenue = orders.asSequence().filter { (it.status == OrderStatus.COMPLETED) && (it.timestamp >= startOfDay) }
-                    .sumOf { it.totalAmount }
+                    .sumOf { it.totalAmount },
             )
         }.flowOn(Dispatchers.Default)
     }
@@ -118,91 +107,8 @@ class StatsRepository(
                 weekRevenue = completedOrders.asSequence().filter { it.timestamp >= startOfWeek }
                     .sumOf { it.totalAmount },
                 monthRevenue = completedOrders.asSequence().filter { it.timestamp >= startOfMonth }
-                    .sumOf { it.totalAmount }
+                    .sumOf { it.totalAmount },
             )
-        }.flowOn(Dispatchers.Default)
-    }
-
-    /**
-     * Generates a daily trend report for the past 7 days.
-     */
-    @Suppress("unused")
-    fun getDailyTrends(): Flow<List<DailyTrend>>
-    {
-        return orderDao.getOrdersByStatus(OrderStatus.COMPLETED).map { orders ->
-            val df = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            val now = System.currentTimeMillis()
-            val pastWeek = now - MILLIS_PER_WEEK
-
-            orders.asSequence().filter { it.timestamp >= pastWeek }
-                .groupBy { df.format(Date(it.timestamp)) }
-                .map { (date, dayOrders) ->
-                    DailyTrend(date, dayOrders.size, dayOrders.sumOf { it.totalAmount })
-                }
-                .sortedByDescending { it.date }
-                .toList()
-        }.flowOn(Dispatchers.Default)
-    }
-
-    /**
-     * Calculates revenue distribution and rankings for all vendors.
-     */
-    @Suppress("unused")
-    fun getVendorRevenueRankings(): Flow<List<VendorRevenue>>
-    {
-        return combine(
-            userDao.getAllUsers(),
-            orderDao.getOrdersByStatus(OrderStatus.COMPLETED)
-        ) { users, orders ->
-            val totalRevenue = orders.sumOf { it.totalAmount }
-            val vendors = users.filter { it.role == UserRole.VENDOR }
-
-            vendors.map { vendor ->
-                val vendorOrders = orders.filter { it.vendorId == vendor.userId }
-                val revenue = vendorOrders.sumOf { it.totalAmount }
-                val percentage = if (totalRevenue > 0) (revenue / totalRevenue) * 100 else 0.0
-                VendorRevenue(
-                    vendor.shopName ?: vendor.fullName,
-                    vendorOrders.size,
-                    revenue,
-                    percentage
-                )
-            }.sortedByDescending { it.revenue }.take(10)
-        }.flowOn(Dispatchers.Default)
-    }
-
-    /**
-     * Identifies the top-selling items system-wide.
-     */
-    @Suppress("unused")
-    fun getPopularItems(): Flow<List<PopularItem>>
-    {
-        return orderDao.getOrdersByStatus(OrderStatus.COMPLETED).map { orders ->
-            val itemUnitsMap = mutableMapOf<String, Int>()
-            val itemRevenueMap = mutableMapOf<String, Double>()
-            
-            orders.forEach { order ->
-                try
-                {
-                    val items = Json.decodeFromString<List<CartItemEntity>>(order.itemsJson)
-                    items.forEach { item ->
-                        itemUnitsMap[item.name] =
-                            itemUnitsMap.getOrDefault(item.name, 0) + item.quantity
-                        itemRevenueMap[item.name] = itemRevenueMap.getOrDefault(
-                            item.name,
-                            0.0
-                        ) + (item.price * item.quantity)
-                    }
-                }
-                catch (_: Exception)
-                {
-                    // Gracefully skip corrupted order items
-                }
-            }
-
-            itemUnitsMap.map {
-                PopularItem(it.key, it.value, itemRevenueMap[it.key] ?: 0.0)
-            }.sortedByDescending { it.unitsSold }.take(3)
         }.flowOn(Dispatchers.Default)
     }
 }

@@ -55,8 +55,8 @@ class VendorBrowseViewModelTest
                 "v1@t.com",
                 "p",
                 UserRole.VENDOR,
-                shopName = "Shop 1"
-            )
+                shopName = "Shop 1",
+            ),
         )
         every { repository.getAllVendors() } returns flowOf(vendors)
 

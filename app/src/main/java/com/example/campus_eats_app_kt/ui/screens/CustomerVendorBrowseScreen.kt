@@ -48,7 +48,7 @@ fun CustomerVendorBrowseScreen(
     onCartClick: () -> Unit,
     onReturnHome: () -> Unit,
     onLogout: () -> Unit,
-    viewModel: VendorBrowseViewModel
+    viewModel: VendorBrowseViewModel,
 )
 {
     val vendors by viewModel.vendors.collectAsState()
@@ -63,11 +63,12 @@ fun CustomerVendorBrowseScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onCartClick) {
+                    IconButton(onClick = onCartClick)
+                    {
                         Icon(
                             Icons.Rounded.ShoppingCart,
                             contentDescription = "Cart",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                     }
                     IconButton(onClick = onLogout) {
@@ -103,7 +104,7 @@ fun CustomerVendorBrowseScreen(
                 verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
             ) {
                 items(vendors) { vendor ->
-                    VendorSelectionCard(vendor = vendor, onClick = { onVendorClick(vendor.userId) })
+                    VendorSelectionCard(vendor = vendor) { onVendorClick(vendor.userId) }
                 }
             }
         }

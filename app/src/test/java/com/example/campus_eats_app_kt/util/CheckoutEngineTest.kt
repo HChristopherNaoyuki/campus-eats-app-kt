@@ -30,11 +30,11 @@ class CheckoutEngineTest
         // Discount (0%) = 0.0
         // Raw Total = 260.0
         // Rounding to R5 = 260.0
-        assertEquals(200.0, result.subtotal, 0.001)
-        assertEquals(40.0, result.tax, 0.001)
-        assertEquals(20.0, result.serviceFee, 0.001)
-        assertEquals(0.0, result.studentDiscount, 0.001)
-        assertEquals(260.0, result.total, 0.001)
+        assertEquals(200.0, result.subtotal.toDouble(), 0.001)
+        assertEquals(40.0, result.tax.toDouble(), 0.001)
+        assertEquals(20.0, result.serviceFee.toDouble(), 0.001)
+        assertEquals(0.0, result.studentDiscount.toDouble(), 0.001)
+        assertEquals(260.0, result.total.toDouble(), 0.001)
     }
 
     /**
@@ -57,10 +57,10 @@ class CheckoutEngineTest
         // Discount (0%) = 0.0
         // Raw Total = 759.0
         // Rounding to next R5 = 760.0
-        assertEquals(600.0, result.subtotal, 0.001)
-        assertEquals(120.0, result.tax, 0.001)
-        assertEquals(39.0, result.serviceFee, 0.001)
-        assertEquals(760.0, result.total, 0.001)
+        assertEquals(600.0, result.subtotal.toDouble(), 0.001)
+        assertEquals(120.0, result.tax.toDouble(), 0.001)
+        assertEquals(39.0, result.serviceFee.toDouble(), 0.001)
+        assertEquals(760.0, result.total.toDouble(), 0.001)
     }
 
     /**
@@ -82,8 +82,8 @@ class CheckoutEngineTest
         // Service Fee (0%) = 0.0
         // Raw Total = 1440.0
         // Rounding to R5 = 1440.0
-        assertEquals(0.0, result.serviceFee, 0.001)
-        assertEquals(1440.0, result.total, 0.001)
+        assertEquals(0.0, result.serviceFee.toDouble(), 0.001)
+        assertEquals(1440.0, result.total.toDouble(), 0.001)
     }
 
     /**
@@ -94,11 +94,11 @@ class CheckoutEngineTest
     {
         // Boundary R500 (inclusive of mid tier)
         val res500 = CheckoutEngine.calculateSummary(500.0, UserRole.STANDARD)
-        assertEquals(500.0 * 0.065, res500.serviceFee, 0.001)
+        assertEquals(500.0 * 0.065, res500.serviceFee.toDouble(), 0.001)
 
         // Boundary R1000 (inclusive of mid tier)
         val res1000 = CheckoutEngine.calculateSummary(1000.0, UserRole.STANDARD)
-        assertEquals(1000.0 * 0.065, res1000.serviceFee, 0.001)
+        assertEquals(1000.0 * 0.065, res1000.serviceFee.toDouble(), 0.001)
     }
 
     /**
@@ -121,8 +121,8 @@ class CheckoutEngineTest
         // Student Discount (2.5%) = 10.0
         // Raw Total = 400 + 80 + 40 - 10 = 510.0
         // Rounding to R5 = 510.0
-        assertEquals(10.0, result.studentDiscount, 0.001)
-        assertEquals(510.0, result.total, 0.001)
+        assertEquals(10.0, result.studentDiscount.toDouble(), 0.001)
+        assertEquals(510.0, result.total.toDouble(), 0.001)
     }
 
     /**
@@ -146,6 +146,6 @@ class CheckoutEngineTest
         val result = CheckoutEngine.calculateSummary(subtotal, role)
 
         // Then:
-        assertEquals(135.0, result.total, 0.001)
+        assertEquals(135.0, result.total.toDouble(), 0.001)
     }
 }

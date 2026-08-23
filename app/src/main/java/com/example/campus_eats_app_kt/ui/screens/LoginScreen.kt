@@ -59,12 +59,12 @@ fun LoginScreen(
     onForgotPasswordClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel
+    viewModel: LoginViewModel,
 )
 {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(value = false) }
 
     val loginState by viewModel.loginState.collectAsState()
 
@@ -87,14 +87,14 @@ fun LoginScreen(
                     {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
                         )
                     }
-                }
+                },
             )
         },
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     )
     { innerPadding ->
         Column(
@@ -103,7 +103,7 @@ fun LoginScreen(
                 .padding(innerPadding)
                 .padding(DesignSystem.Spacing.screenPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))

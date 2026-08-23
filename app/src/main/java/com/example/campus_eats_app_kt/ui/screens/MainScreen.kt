@@ -155,7 +155,6 @@ fun MainScreen(
                     role = role,
                     orderRepository = orderRepository,
                     cartRepository = cartRepository,
-                    statsRepository = statsRepository,
                     onNavigateToCheckout = onNavigateToCheckout,
                     onReturnHome = { selectedTab = 0 }
                 )
@@ -164,7 +163,6 @@ fun MainScreen(
                     role = role,
                     orderRepository = orderRepository,
                     cartRepository = cartRepository,
-                    statsRepository = statsRepository,
                     onNavigateToCheckout = onNavigateToCheckout,
                     onReturnHome = { selectedTab = 0 }
                 )

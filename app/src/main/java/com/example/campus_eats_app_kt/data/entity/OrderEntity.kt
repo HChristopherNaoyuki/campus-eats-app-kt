@@ -42,5 +42,5 @@ data class OrderEntity(
     val paymentMethod: PaymentMethod,
     val pickupTime: String,
     val specialRequests: String? = null,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
 )

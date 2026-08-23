@@ -78,9 +78,11 @@ class AddEditMenuViewModelTest
 
         // Then
         coVerify {
-            repository.addMenuItem(match {
-                it.name == "Soda" && it.price == 15.0 && it.stock == 100
-            })
+            repository.addMenuItem(
+                match {
+                    (it.name == "Soda") && (it.price == 15.0) && (it.stock == 100)
+                },
+            )
         }
     }
 
@@ -102,9 +104,11 @@ class AddEditMenuViewModelTest
 
         // Then
         coVerify {
-            repository.updateMenuItem(match {
-                it.itemId == 101L && it.name == "Burger"
-            })
+            repository.updateMenuItem(
+                match {
+                    (it.itemId == 101L) && (it.name == "Burger")
+                },
+            )
         }
     }
 }

@@ -97,13 +97,13 @@ class MainActivity : ComponentActivity()
             apiService = apiService,
             connectivityManager = connectivityManager,
             firebaseAuth = firebaseAuth,
-            firebaseDatabase = firebaseDatabase
+            firebaseDatabase = firebaseDatabase,
         )
         val menuRepository = MenuRepository(
             menuItemDao = database.menuItemDao(),
             userDao = database.userDao(),
             apiService = apiService,
-            connectivityManager = connectivityManager
+            connectivityManager = connectivityManager,
         )
         val cartRepository = CartRepository(database.cartDao())
         val orderRepository = OrderRepository(
@@ -111,19 +111,19 @@ class MainActivity : ComponentActivity()
             cartDao = database.cartDao(),
             userDao = database.userDao(),
             apiService = apiService,
-            connectivityManager = connectivityManager
+            connectivityManager = connectivityManager,
         )
         val adminRepository = AdminRepository(
             userDao = database.userDao(),
             connectivityManager = connectivityManager,
-            firebaseDatabase = firebaseDatabase
+            firebaseDatabase = firebaseDatabase,
         )
         val statsRepository =
             StatsRepository(database.userDao(), database.menuItemDao(), database.orderDao())
         val feedbackRepository = FeedbackRepository(
             feedbackDao = database.feedbackDao(),
             connectivityManager = connectivityManager,
-            firebaseDatabase = firebaseDatabase
+            firebaseDatabase = firebaseDatabase,
         )
         val couponRepository = CouponRepository(database.couponDao())
         val debitCardRepository = DebitCardRepository(database.debitCardDao())
@@ -143,7 +143,7 @@ class MainActivity : ComponentActivity()
                         onBack = { backStack.removeLastOrNull() },
                         entryDecorators = listOf(
                             rememberSaveableStateHolderNavEntryDecorator(),
-                            rememberViewModelStoreNavEntryDecorator()
+                            rememberViewModelStoreNavEntryDecorator(),
                         ),
                         modifier = Modifier.weight(1f),
                         entryProvider = entryProvider {
@@ -151,7 +151,7 @@ class MainActivity : ComponentActivity()
                         entry<Route.Splash> {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
+                                contentAlignment = Alignment.Center,
                             ) {
                                 CircularProgressIndicator()
                             }
@@ -181,7 +181,7 @@ class MainActivity : ComponentActivity()
                             LandingScreen(
                                 onLoginClick = { backStack.add(Route.Login) },
                                 onRegisterClick = { backStack.add(Route.Register()) },
-                                onForgotPasswordClick = { backStack.add(Route.ForgotPassword) }
+                                onForgotPasswordClick = { backStack.add(Route.ForgotPassword) },
                             )
                         }
 
@@ -190,7 +190,7 @@ class MainActivity : ComponentActivity()
                             val viewModel: LoginViewModel = viewModel(
                                 factory = viewModelFactory {
                                     initializer { LoginViewModel(authRepository) }
-                                }
+                                },
                             )
                             LoginScreen(
                                 onLoginSuccess = { userId, role ->
@@ -205,7 +205,7 @@ class MainActivity : ComponentActivity()
                                 onRegisterClick = { backStack.add(Route.Register()) },
                                 onForgotPasswordClick = { backStack.add(Route.ForgotPassword) },
                                 onBackClick = { backStack.removeLastOrNull() },
-                                viewModel = viewModel
+                                viewModel = viewModel,
                             )
                         }
 
@@ -214,14 +214,14 @@ class MainActivity : ComponentActivity()
                             val viewModel: RegistrationViewModel = viewModel(
                                 factory = viewModelFactory {
                                     initializer { RegistrationViewModel(authRepository) }
-                                }
+                                },
                             )
                             RegistrationScreen(
                                 onRegistrationSuccess = { _, _ ->
                                     backStack.removeLastOrNull()
                                 },
                                 onBackClick = { backStack.removeLastOrNull() },
-                                viewModel = viewModel
+                                viewModel = viewModel,
                             )
                         }
 
@@ -230,12 +230,12 @@ class MainActivity : ComponentActivity()
                             val viewModel: ForgotPasswordViewModel = viewModel(
                                 factory = viewModelFactory {
                                     initializer { ForgotPasswordViewModel(authRepository) }
-                                }
+                                },
                             )
                             ForgotPasswordScreen(
                                 onResetSuccess = { backStack.removeLastOrNull() },
                                 onBackClick = { backStack.removeLastOrNull() },
-                                viewModel = viewModel
+                                viewModel = viewModel,
                             )
                         }
 
@@ -248,10 +248,10 @@ class MainActivity : ComponentActivity()
                                             adminRepository,
                                             orderRepository,
                                             couponRepository,
-                                            feedbackRepository
+                                            feedbackRepository,
                                         )
                                     }
-                                }
+                                },
                             )
                             MainScreen(
                                 userId = route.userId,
@@ -272,13 +272,13 @@ class MainActivity : ComponentActivity()
                                 },
                                 onNavigateToCheckout = { backStack.add(Route.Checkout(route.userId)) },
                                 onNavigateToVendorMenu = { vendorId -> backStack.add(Route.VendorMenuManagement(vendorId)) },
-                                onNavigateToAddMenuItem = { vendorId, itemId -> backStack.add(Route.AddEditMenuItem(vendorId, itemId)) }
+                                onNavigateToAddMenuItem = { vendorId, itemId -> backStack.add(Route.AddEditMenuItem(vendorId, itemId)) },
                             ) { userId, vendorId ->
                                 backStack.add(
                                     Route.CustomerMenuBrowse(
                                         userId,
-                                        vendorId
-                                    )
+                                        vendorId,
+                                    ),
                                 )
                             }
                         }
@@ -288,13 +288,13 @@ class MainActivity : ComponentActivity()
                             val viewModel: VendorMenuViewModel = viewModel(
                                 factory = viewModelFactory {
                                     initializer { VendorMenuViewModel(menuRepository, route.vendorId) }
-                                }
+                                },
                             )
                             VendorMenuManagementScreen(
                                 onBackClick = { backStack.removeLastOrNull() },
                                 onAddItemClick = { backStack.add(Route.AddEditMenuItem(route.vendorId)) },
                                 onEditItemClick = { itemId -> backStack.add(Route.AddEditMenuItem(route.vendorId, itemId)) },
-                                viewModel = viewModel
+                                viewModel = viewModel,
                             )
                         }
 
@@ -303,7 +303,7 @@ class MainActivity : ComponentActivity()
                             val viewModel: VendorBrowseViewModel = viewModel(
                                 factory = viewModelFactory {
                                     initializer { VendorBrowseViewModel(menuRepository) }
-                                }
+                                },
                             )
                             CustomerVendorBrowseScreen(
                                 onVendorClick = { vendorId -> backStack.add(Route.CustomerMenuBrowse(route.userId, vendorId)) },
@@ -313,7 +313,7 @@ class MainActivity : ComponentActivity()
                                     backStack.clear()
                                     backStack.add(Route.Landing)
                                 },
-                                viewModel = viewModel
+                                viewModel = viewModel,
                             )
                         }
 
@@ -322,11 +322,11 @@ class MainActivity : ComponentActivity()
                             val viewModel: AddEditMenuViewModel = viewModel(
                                 factory = viewModelFactory {
                                     initializer { AddEditMenuViewModel(menuRepository, route.vendorId, route.itemId) }
-                                }
+                                },
                             )
                             AddEditMenuItemScreen(
                                 onBackClick = { backStack.removeLastOrNull() },
-                                viewModel = viewModel
+                                viewModel = viewModel,
                             )
                         }
 
@@ -335,12 +335,12 @@ class MainActivity : ComponentActivity()
                             val viewModel: MenuBrowseViewModel = viewModel(
                                 factory = viewModelFactory {
                                     initializer { MenuBrowseViewModel(menuRepository, cartRepository, route.userId, route.vendorId) }
-                                }
+                                },
                             )
                             CustomerMenuBrowseScreen(
                                 onBackClick = { backStack.removeLastOrNull() },
                                 onCartClick = { backStack.add(Route.Cart(route.userId)) },
-                                viewModel = viewModel
+                                viewModel = viewModel,
                             )
                         }
 
@@ -352,15 +352,15 @@ class MainActivity : ComponentActivity()
                                         CartViewModel(
                                             cartRepository,
                                             authRepository,
-                                            route.userId
+                                            route.userId,
                                         )
                                     }
-                                }
+                                },
                             )
                             CartScreen(
                                 onBackClick = { backStack.removeLastOrNull() },
                                 onCheckoutClick = { backStack.add(Route.Checkout(route.userId)) },
-                                viewModel = viewModel
+                                viewModel = viewModel,
                             )
                         }
 
@@ -373,10 +373,10 @@ class MainActivity : ComponentActivity()
                                             cartRepository,
                                             orderRepository,
                                             authRepository,
-                                            route.userId
+                                            route.userId,
                                         )
                                     }
-                                }
+                                },
                             )
                             CheckoutScreen(
                                 onBackClick = { backStack.removeLastOrNull() },
@@ -384,7 +384,7 @@ class MainActivity : ComponentActivity()
                                     val nextRoute = Route.OrderConfirmation(
                                         orderId,
                                         route.userId,
-                                        "STUDENT"
+                                        "STUDENT",
                                     )
                                     backStack.add(nextRoute)
                                     while (backStack.size > 1)
@@ -392,7 +392,7 @@ class MainActivity : ComponentActivity()
                                         backStack.removeAt(0)
                                     }
                                 },
-                                viewModel = viewModel
+                                viewModel = viewModel,
                             )
                         }
 
@@ -404,11 +404,10 @@ class MainActivity : ComponentActivity()
                                     backStack.clear()
                                     backStack.add(Route.Main(route.userId, route.role))
                                 },
-                                onReturnHome = {
-                                    backStack.clear()
-                                    backStack.add(Route.Main(route.userId, route.role))
-                                }
-                            )
+                            ) {
+                                backStack.clear()
+                                backStack.add(Route.Main(route.userId, route.role))
+                            }
                         }
                     }
                 )

@@ -35,14 +35,14 @@ fun NetworkStatusBanner(status: NetworkConnectivityObserver.Status)
     AnimatedVisibility(
         visible = isOffline,
         enter = expandVertically(),
-        exit = shrinkVertically()
+        exit = shrinkVertically(),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.errorContainer)
                 .padding(vertical = 4.dp, horizontal = 16.dp),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(

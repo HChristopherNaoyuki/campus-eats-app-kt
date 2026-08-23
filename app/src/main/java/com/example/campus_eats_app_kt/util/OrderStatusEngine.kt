@@ -28,7 +28,7 @@ object OrderStatusEngine
         if (target == OrderStatus.CANCELLED)
         {
             // Orders can be cancelled at any point before completion
-            return current != OrderStatus.COMPLETED && current != OrderStatus.CANCELLED
+            return (current != OrderStatus.COMPLETED)
         }
 
         return when (current)

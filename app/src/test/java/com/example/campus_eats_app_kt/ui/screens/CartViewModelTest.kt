@@ -41,7 +41,7 @@ class CartViewModelTest
         email = "t@t.com",
         passwordHash = "p",
         role = UserRole.STUDENT,
-        status = UserStatus.ACTIVE
+        status = UserStatus.ACTIVE,
     )
 
     @Before

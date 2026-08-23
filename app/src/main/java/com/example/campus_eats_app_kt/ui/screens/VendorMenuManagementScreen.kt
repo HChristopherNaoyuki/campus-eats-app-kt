@@ -27,6 +27,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import com.example.campus_eats_app_kt.data.entity.MenuItemEntity
 import com.example.campus_eats_app_kt.ui.components.HIGCard
@@ -43,7 +45,7 @@ fun VendorMenuManagementScreen(
     onBackClick: () -> Unit,
     onAddItemClick: () -> Unit,
     onEditItemClick: (Long) -> Unit,
-    viewModel: VendorMenuViewModel
+    viewModel: VendorMenuViewModel,
 )
 {
     val menuItems by viewModel.menuItems.collectAsState()
@@ -56,7 +58,7 @@ fun VendorMenuManagementScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
             )
         },
         floatingActionButton = {
@@ -98,9 +100,8 @@ fun VendorMenuManagementScreen(
                 items(menuItems) { item ->
                     InventoryManagementCard(
                         item = item,
-                        onEdit = { onEditItemClick(item.itemId) },
-                        onDelete = { viewModel.deleteItem(item) }
-                    )
+                        onEdit = { onEditItemClick(item.itemId) }
+                    ) { viewModel.deleteItem(item) }
                 }
             }
         }
@@ -113,6 +114,7 @@ fun InventoryManagementCard(item: MenuItemEntity, onEdit: () -> Unit, onDelete: 
     HIGCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
+                val locale = LocalConfiguration.current.locales[0]
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.titleLarge,
@@ -125,7 +127,7 @@ fun InventoryManagementCard(item: MenuItemEntity, onEdit: () -> Unit, onDelete: 
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = "R${String.format("%.2f", item.price)} • Stock: ${item.stock}",
+                    text = "R${String.format(locale, "%.2f", item.price)} • Stock: ${item.stock}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.outline
                 )

@@ -37,10 +37,10 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
         CartItemEntity::class,
         FeedbackEntity::class,
         CouponEntity::class,
-        DebitCardEntity::class
+        DebitCardEntity::class,
     ],
     version = 8, // Incremented to 8 for usercode column
-    exportSchema = false
+    exportSchema = false,
 )
 @TypeConverters(Converters::class)
 abstract class CampusEatsDatabase : RoomDatabase()
@@ -112,11 +112,9 @@ abstract class CampusEatsDatabase : RoomDatabase()
         )
         {
             // Execute PRAGMA to get the list of columns in the table
-            val cursor = db.query("PRAGMA table_info($tableName)")
-            var columnExists = false
-
-            try
-            {
+            db.query("PRAGMA table_info($tableName)").use()
+            { cursor ->
+                var columnExists = false
                 while (cursor.moveToNext())
                 {
                     // The 'name' column in PRAGMA table_info result is at index 1
@@ -127,16 +125,12 @@ abstract class CampusEatsDatabase : RoomDatabase()
                         break
                     }
                 }
-            }
-            finally
-            {
-                cursor.close()
-            }
 
-            // Perform the ALTER statement only if the introspection confirms the column is missing
-            if (!columnExists)
-            {
-                db.execSQL("ALTER TABLE $tableName ADD COLUMN $columnName $columnDefinition")
+                // Perform the ALTER statement only if the introspection confirms the column is missing
+                if (!columnExists)
+                {
+                    db.execSQL("ALTER TABLE $tableName ADD COLUMN $columnName $columnDefinition")
+                }
             }
         }
 
@@ -154,7 +148,7 @@ abstract class CampusEatsDatabase : RoomDatabase()
                     "campus_eats_database"
                 )
                     .addMigrations(MIGRATION_6_7, MIGRATION_7_8)
-                    .fallbackToDestructiveMigration() // Last resort if no valid migration path is found
+                    .fallbackToDestructiveMigration(dropAllTables = true) // Last resort if no valid migration path is found
                 .build()
                 INSTANCE = instance
                 instance

@@ -126,7 +126,7 @@ class CheckoutViewModel(
 fun CheckoutScreen(
     onBackClick: () -> Unit,
     onOrderPlaced: (Long) -> Unit,
-    viewModel: CheckoutViewModel
+    viewModel: CheckoutViewModel,
 )
 {
     val cartItems by viewModel.cartItems.collectAsState()
@@ -154,7 +154,7 @@ fun CheckoutScreen(
                     {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
             )
         },
         bottomBar = {
@@ -162,7 +162,7 @@ fun CheckoutScreen(
                 Surface(
                     tonalElevation = 8.dp,
                     shadowElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.surface
+                    color = MaterialTheme.colorScheme.surface,
                 )
                 {
                     Column(modifier = Modifier.padding(DesignSystem.Spacing.screenPadding))
@@ -173,7 +173,7 @@ fun CheckoutScreen(
                                     selectedPaymentMethod,
                                     selectedPickupTime,
                                     specialRequests.takeIf { it.isNotBlank() },
-                                    onOrderPlaced
+                                    onOrderPlaced,
                                 )
                             },
                             modifier = Modifier
@@ -182,8 +182,8 @@ fun CheckoutScreen(
                             shape = MaterialTheme.shapes.large,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = CampusOrange,
-                                contentColor = Color.White
-                            )
+                                contentColor = Color.White,
+                            ),
                         )
                         {
                             Text(
@@ -191,17 +191,17 @@ fun CheckoutScreen(
                                     String.format(
                                         locale,
                                         "%.2f",
-                                        sum.total.toDouble()
+                                        sum.total.toDouble(),
                                     )
                                 }",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                         }
                     }
                 }
             }
-        }
+        },
     )
     { innerPadding ->
         LazyColumn(
@@ -209,7 +209,7 @@ fun CheckoutScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
             contentPadding = PaddingValues(DesignSystem.Spacing.large),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large),
         )
         {
             // Items Section
@@ -228,7 +228,7 @@ fun CheckoutScreen(
                 SectionHeader(title = "Pickup time")
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
+                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
                 )
                 {
                     items(pickupTimes)
@@ -238,14 +238,14 @@ fun CheckoutScreen(
                             onClick = { selectedPickupTime = time },
                             shape = MaterialTheme.shapes.medium,
                             color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         {
                             Text(
                                 text = time,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                         }
                     }
@@ -259,7 +259,7 @@ fun CheckoutScreen(
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 PaymentMethodSelector(
                     selectedMethod = selectedPaymentMethod,
-                ) { selectedPaymentMethod = it }
+                ) { selectedMethod -> selectedPaymentMethod = selectedMethod }
             }
 
             // User-provided fulfillment instructions
@@ -273,7 +273,7 @@ fun CheckoutScreen(
                     placeholder = { Text("Allergies, extra sauce, etc.") },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
-                    shape = MaterialTheme.shapes.medium
+                    shape = MaterialTheme.shapes.medium,
                 )
             }
 
@@ -295,13 +295,13 @@ fun CheckoutScreen(
                                 label = "Student Discount (2.5%)",
                                 amount = sum.studentDiscount.negate(),
                                 color = MaterialTheme.colorScheme.primary,
-                                locale = locale
+                                locale = locale,
                             )
                         }
 
                         val rounding =
                             sum.total.subtract(sum.subtotal.add(sum.tax).add(sum.serviceFee).subtract(sum.studentDiscount))
-                        if (rounding.abs().compareTo(BigDecimal("0.001")) > 0)
+                        if (rounding.abs() > BigDecimal("0.001"))
                         {
                             SummaryRow("Rounding Adjustment", rounding, locale = locale)
                         }
@@ -310,19 +310,19 @@ fun CheckoutScreen(
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         )
                         {
                             Text(
                                 text = "Total",
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.ExtraBold
+                                fontWeight = FontWeight.ExtraBold,
                             )
                             Text(
                                 text = "R${String.format(locale, "%.2f", sum.total.toDouble())}",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
                             )
                         }
                     }
@@ -341,16 +341,16 @@ fun ItemSummaryRow(item: CartItemEntity, locale: Locale)
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
             text = "${item.quantity}x ${item.name}",
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
         )
         Text(
             text = "R${String.format(locale, "%.2f", item.price * item.quantity)}",
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
         )
     }
 }
@@ -359,25 +359,22 @@ fun ItemSummaryRow(item: CartItemEntity, locale: Locale)
 @Composable
 fun PaymentMethodSelector(
     selectedMethod: PaymentMethod,
-    onMethodSelected: (PaymentMethod) -> Unit
+    onMethodSelected: (PaymentMethod) -> Unit,
 )
 {
     Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
         PaymentOption(
             label = "Debit card",
             selected = selectedMethod == PaymentMethod.DEBIT_CARD,
-            onClick = { onMethodSelected(PaymentMethod.DEBIT_CARD) }
-        )
+        ) { onMethodSelected(PaymentMethod.DEBIT_CARD) }
         PaymentOption(
             label = "Campus Wallet",
             selected = selectedMethod == PaymentMethod.CAMPUS_WALLET,
-            onClick = { onMethodSelected(PaymentMethod.CAMPUS_WALLET) }
-        )
+        ) { onMethodSelected(PaymentMethod.CAMPUS_WALLET) }
         PaymentOption(
             label = "Coupons",
             selected = selectedMethod == PaymentMethod.COUPON,
-            onClick = { onMethodSelected(PaymentMethod.COUPON) }
-        )
+        ) { onMethodSelected(PaymentMethod.COUPON) }
     }
 }
 
@@ -388,7 +385,7 @@ fun SectionHeader(title: String)
         text = title,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.ExtraBold,
-        color = MaterialTheme.colorScheme.outline
+        color = MaterialTheme.colorScheme.outline,
     )
 }
 
@@ -397,19 +394,19 @@ fun SummaryRow(
     label: String,
     amount: BigDecimal,
     locale: Locale,
-    color: Color = MaterialTheme.colorScheme.onSurface
+    color: Color = MaterialTheme.colorScheme.onSurface,
 )
 {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(text = label, color = color)
         Text(
-            text = if (amount.compareTo(BigDecimal.ZERO) >= 0) "R${String.format(locale, "%.2f", amount.toDouble())}"
+            text = if (amount >= BigDecimal.ZERO) "R${String.format(locale, "%.2f", amount.toDouble())}"
             else "-R${String.format(locale, "%.2f", amount.negate().toDouble())}",
             color = color,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }
@@ -418,30 +415,30 @@ fun SummaryRow(
 fun PaymentOption(
     label: String,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 )
 {
     Surface(
         onClick = onClick,
         shape = MaterialTheme.shapes.medium,
-        color = Color.Transparent
+        color = Color.Transparent,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = DesignSystem.Spacing.small),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             RadioButton(
                 selected = selected,
                 onClick = onClick,
-                colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
+                colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary),
             )
             Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             )
         }
     }

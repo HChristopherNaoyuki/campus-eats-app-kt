@@ -57,7 +57,7 @@ class OrderStatusEngineTest
         assertTrue(
             OrderStatusEngine.isValidTransition(
                 OrderStatus.PREPARING,
-                OrderStatus.CANCELLED
+                OrderStatus.CANCELLED,
             )
         )
         assertTrue(OrderStatusEngine.isValidTransition(OrderStatus.READY, OrderStatus.CANCELLED))
@@ -84,7 +84,7 @@ class OrderStatusEngineTest
         assertFalse(
             OrderStatusEngine.isValidTransition(
                 OrderStatus.COMPLETED,
-                OrderStatus.CANCELLED
+                OrderStatus.CANCELLED,
             )
         )
     }

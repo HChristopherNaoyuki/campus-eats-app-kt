@@ -42,14 +42,14 @@ fun LandingScreen(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 )
 {
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(DesignSystem.Spacing.screenPadding)
+            .padding(DesignSystem.Spacing.screenPadding),
     )
     {
         Column(

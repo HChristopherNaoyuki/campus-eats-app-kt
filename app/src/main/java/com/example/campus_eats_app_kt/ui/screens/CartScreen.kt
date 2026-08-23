@@ -80,14 +80,16 @@ class CartViewModel(
 
     fun addItem(item: CartItemEntity)
     {
-        viewModelScope.launch {
+        viewModelScope.launch()
+        {
             repository.incrementCartItem(item)
         }
     }
 
     fun removeItem(item: CartItemEntity)
     {
-        viewModelScope.launch {
+        viewModelScope.launch()
+        {
             if (item.quantity > 1)
             {
                 repository.removeFromCart(item)
@@ -101,14 +103,16 @@ class CartViewModel(
 
     fun deleteItem(item: CartItemEntity)
     {
-        viewModelScope.launch {
+        viewModelScope.launch()
+        {
             repository.deleteCartItem(item)
         }
     }
 
     fun clearCart()
     {
-        viewModelScope.launch {
+        viewModelScope.launch()
+        {
             repository.clearCart(userId)
         }
     }
@@ -123,7 +127,7 @@ class CartViewModel(
 fun CartScreen(
     onBackClick: () -> Unit,
     onCheckoutClick: () -> Unit,
-    viewModel: CartViewModel
+    viewModel: CartViewModel,
 )
 {
     val cartItems by viewModel.cartItems.collectAsState()
@@ -142,7 +146,7 @@ fun CartScreen(
                     {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
             )
         },
         bottomBar = {
@@ -151,7 +155,7 @@ fun CartScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     tonalElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.surface
+                    color = MaterialTheme.colorScheme.surface,
                 )
                 {
                     Column(modifier = Modifier.padding(DesignSystem.Spacing.screenPadding))
@@ -160,20 +164,20 @@ fun CartScreen(
                         CalculationRow("Tax (20%)", summary.tax, locale)
                         CalculationRow("Service fee (10%)", summary.serviceFee, locale)
 
-                        if (summary.studentDiscount.compareTo(BigDecimal.ZERO) > 0)
+                        if (summary.studentDiscount > BigDecimal.ZERO)
                         {
                             CalculationRow(
                                 label = "Student discount",
                                 amount = summary.studentDiscount.negate(),
                                 locale = locale,
-                                color = MaterialTheme.colorScheme.error
+                                color = MaterialTheme.colorScheme.error,
                             )
                         }
 
                         // Rounding logic for cash transactions compliance
                         val rounding =
                             summary.total.subtract(summary.subtotal.add(summary.tax).add(summary.serviceFee).subtract(summary.studentDiscount))
-                        if (rounding.abs().compareTo(BigDecimal("0.001")) > 0)
+                        if (rounding.abs() > BigDecimal("0.001"))
                         {
                             CalculationRow("Rounding adjustment", rounding, locale)
                         }
@@ -182,19 +186,19 @@ fun CartScreen(
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         )
                         {
                             Text(
                                 text = "Total",
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.ExtraBold
+                                fontWeight = FontWeight.ExtraBold,
                             )
                             Text(
                                 text = "R${String.format(locale, "%.2f", summary.total.toDouble())}",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = CampusOrange
+                                color = CampusOrange,
                             )
                         }
 
@@ -202,7 +206,7 @@ fun CartScreen(
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
                         )
                         {
                             OutlinedButton(
@@ -213,8 +217,8 @@ fun CartScreen(
                                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                                 border = androidx.compose.foundation.BorderStroke(
                                     1.dp,
-                                    CampusOrange
-                                )
+                                    CampusOrange,
+                                ),
                             )
                             {
                                 Text("Clear cart", color = CampusOrange)
@@ -226,13 +230,13 @@ fun CartScreen(
                                     .weight(1f)
                                     .height(50.dp),
                                 containerColor = CampusOrange,
-                                contentColor = Color.White
+                                contentColor = Color.White,
                             )
                         }
                     }
                 }
             }
-        }
+        },
     )
     { innerPadding ->
         if (cartItems.isEmpty())
@@ -241,7 +245,7 @@ fun CartScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             )
             {
                 Column(horizontalAlignment = Alignment.CenterHorizontally)
@@ -250,20 +254,20 @@ fun CartScreen(
                         imageVector = Icons.Rounded.RemoveShoppingCart,
                         contentDescription = null,
                         modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.outline
+                        tint = MaterialTheme.colorScheme.outline,
                     )
                     Spacer(Modifier.height(DesignSystem.Spacing.medium))
                     Text("Your cart is empty", style = MaterialTheme.typography.titleMedium)
                     Text(
                         "Add items from a vendor to get started",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.outline,
                     )
                     Spacer(Modifier.height(DesignSystem.Spacing.large))
                     HIGButton(
                         onClick = onBackClick,
                         text = "Browse items",
-                        containerColor = CampusOrange
+                        containerColor = CampusOrange,
                     )
                 }
             }
@@ -275,7 +279,7 @@ fun CartScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
                 contentPadding = PaddingValues(DesignSystem.Spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.itemSpacing)
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.itemSpacing),
             )
             {
                 item()
@@ -285,7 +289,7 @@ fun CartScreen(
                             ?: "Vendor", // Placeholder for vendor name mapping if needed
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.outline,
                     )
                     Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
                 }
@@ -303,52 +307,62 @@ fun CartItemCard(item: CartItemEntity, viewModel: CartViewModel, locale: Locale)
 {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    )
+    {
         Row(
             modifier = Modifier.padding(DesignSystem.Spacing.medium),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
+            verticalAlignment = Alignment.CenterVertically,
+        )
+        {
+            Column(modifier = Modifier.weight(1f))
+            {
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = "R${String.format(locale, "%.2f", item.price)} each",
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
                 )
                 Text(
                     text = "Subtotal: R${
                         String.format(
                             locale,
                             "%.2f",
-                            item.price * item.quantity
+                            item.price * item.quantity,
                         )
                     }",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically)
+            {
                 Surface(
                     shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.secondaryContainer
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { viewModel.removeItem(item) }) {
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                )
+                {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    )
+                    {
+                        IconButton(onClick = { viewModel.removeItem(item) })
+                        {
                             Icon(Icons.Rounded.Remove, "Decrease")
                         }
                         Text(
                             text = item.quantity.toString(),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = DesignSystem.Spacing.small)
+                            modifier = Modifier.padding(horizontal = DesignSystem.Spacing.small),
                         )
-                        IconButton(onClick = { viewModel.addItem(item) }) {
+                        IconButton(onClick = { viewModel.addItem(item) })
+                        {
                             Icon(Icons.Rounded.Add, "Increase")
                         }
                     }
@@ -358,8 +372,9 @@ fun CartItemCard(item: CartItemEntity, viewModel: CartViewModel, locale: Locale)
 
                 IconButton(
                     onClick = { viewModel.deleteItem(item) },
-                    colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
+                    colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                )
+                {
                     Icon(Icons.Rounded.Delete, "Remove")
                 }
             }
@@ -379,19 +394,20 @@ fun CalculationRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+        horizontalArrangement = Arrangement.SpaceBetween,
+    )
+    {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
+            color = MaterialTheme.colorScheme.outline,
         )
         Text(
-            text = if (amount.compareTo(BigDecimal.ZERO) >= 0) "R${String.format(locale, "%.2f", amount.toDouble())}"
+            text = if (amount >= BigDecimal.ZERO) "R${String.format(locale, "%.2f", amount.toDouble())}"
             else "-R${String.format(locale, "%.2f", amount.negate().toDouble())}",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = color
+            color = color,
         )
     }
 }

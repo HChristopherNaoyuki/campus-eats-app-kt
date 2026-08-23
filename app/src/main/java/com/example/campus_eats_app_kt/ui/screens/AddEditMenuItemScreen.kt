@@ -36,7 +36,7 @@ import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 @Composable
 fun AddEditMenuItemScreen(
     onBackClick: () -> Unit,
-    viewModel: AddEditMenuViewModel
+    viewModel: AddEditMenuViewModel,
 )
 {
     Scaffold(
@@ -53,10 +53,10 @@ fun AddEditMenuItemScreen(
                         Icon(
                             Icons.Rounded.Save,
                             contentDescription = "Save",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                     }
-                }
+                },
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -132,7 +132,7 @@ fun AddEditMenuItemScreen(
                 label = { Text("Image URL Link") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                placeholder = { Text("https://...") }
+                placeholder = { Text("https://example.com/image.jpg") }
             )
 
             Spacer(modifier = Modifier.weight(1f))

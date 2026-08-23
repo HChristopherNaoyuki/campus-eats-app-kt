@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -27,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -50,7 +48,7 @@ import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 fun HIGTopAppBar(
     title: String,
     navigationIcon: @Composable () -> Unit = {},
-    actions: @Composable RowScope.() -> Unit = {}
+    actions: @Composable RowScope.() -> Unit = {},
 )
 {
     CenterAlignedTopAppBar(
@@ -60,7 +58,7 @@ fun HIGTopAppBar(
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = DesignSystem.Typography.titleSize,
-                    letterSpacing = (-0.5).sp
+                    letterSpacing = (-0.5).sp,
                 )
             )
         },
@@ -68,8 +66,8 @@ fun HIGTopAppBar(
         actions = actions,
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
-            titleContentColor = MaterialTheme.colorScheme.onBackground
-        )
+            titleContentColor = MaterialTheme.colorScheme.onBackground,
+        ),
     )
 }
 
@@ -264,7 +262,7 @@ fun HIGServiceRow(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = (-0.5).sp
+                    letterSpacing = (-0.5).sp,
                 )
                 Text(
                     text = description,
@@ -276,58 +274,3 @@ fun HIGServiceRow(
     }
 }
 
-/**
- * HIGAlert ensures destructive or critical actions are confirmed by the user.
- * It follows the "User Control" principle by providing clear outcomes and cancel paths.
- */
-@Composable
-fun HIGAlert(
-    onDismissRequest: () -> Unit,
-    title: String,
-    message: String,
-    confirmButtonText: String,
-    onConfirm: () -> Unit,
-    dismissButtonText: String? = null,
-    onDismiss: (() -> Unit)? = null
-)
-{
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-        },
-        text = {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                onConfirm()
-                onDismissRequest()
-            }) {
-                Text(confirmButtonText, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = dismissButtonText?.let {
-            {
-                TextButton(onClick = {
-                    onDismiss?.invoke()
-                    onDismissRequest()
-                }) {
-                    Text(it)
-                }
-            }
-        },
-        shape = RoundedCornerShape(DesignSystem.CornerRadius.extraLarge),
-        containerColor = MaterialTheme.colorScheme.surface
-    )
-}

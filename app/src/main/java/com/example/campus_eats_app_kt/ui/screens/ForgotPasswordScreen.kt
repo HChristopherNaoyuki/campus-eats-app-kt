@@ -49,7 +49,7 @@ fun ForgotPasswordScreen(
     onResetSuccess: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ForgotPasswordViewModel
+    viewModel: ForgotPasswordViewModel,
 )
 {
     var userId by remember { mutableStateOf("") }
@@ -76,11 +76,11 @@ fun ForgotPasswordScreen(
                     {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
             )
         },
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     )
     { innerPadding ->
         Column(

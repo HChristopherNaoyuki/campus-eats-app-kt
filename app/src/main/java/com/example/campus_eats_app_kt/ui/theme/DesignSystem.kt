@@ -20,9 +20,6 @@ object DesignSystem
     object Typography
     {
         val titleSize = 20.sp
-        val bodySize = 16.sp
-        val labelSize = 14.sp
-        val smallLabelSize = 12.sp
     }
 
     object CornerRadius

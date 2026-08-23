@@ -40,7 +40,7 @@ class AuthRepositoryTest
         passwordHash = "[FIREBASE_SSO]",
         role = UserRole.STUDENT,
         status = UserStatus.ACTIVE,
-        usercode = "TEST-USER-CODE"
+        usercode = "TEST-USER-CODE",
     )
 
     @Before
@@ -75,6 +75,7 @@ class AuthRepositoryTest
 
             // Mocking the listeners that .await() might use
             every { task.addOnCompleteListener(any()) } answers {
+                @Suppress("UNCHECKED_CAST")
                 val listener =
                     it.invocation.args[0] as com.google.android.gms.tasks.OnCompleteListener<AuthResult>
                 listener.onComplete(task)
@@ -84,7 +85,7 @@ class AuthRepositoryTest
             every {
                 firebaseAuth.signInWithEmailAndPassword(
                     "test@example.com",
-                    "password123"
+                    "password123",
                 )
             } returns task
             coEvery { userDao.getUserByEmail("test@example.com") } returns testUser
@@ -115,6 +116,7 @@ class AuthRepositoryTest
 
             // Mocking the listeners that .await() might use
             every { task.addOnCompleteListener(any()) } answers {
+                @Suppress("UNCHECKED_CAST")
                 val listener =
                     it.invocation.args[0] as com.google.android.gms.tasks.OnCompleteListener<AuthResult>
                 listener.onComplete(task)

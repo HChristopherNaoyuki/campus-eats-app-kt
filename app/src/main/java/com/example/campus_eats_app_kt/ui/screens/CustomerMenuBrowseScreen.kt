@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -48,7 +49,7 @@ import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 fun CustomerMenuBrowseScreen(
     onBackClick: () -> Unit,
     onCartClick: () -> Unit,
-    viewModel: MenuBrowseViewModel
+    viewModel: MenuBrowseViewModel,
 )
 {
     val menuItems by viewModel.menuItems.collectAsState()
@@ -63,11 +64,12 @@ fun CustomerMenuBrowseScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onCartClick) {
+                    IconButton(onClick = onCartClick)
+                    {
                         Icon(
                             Icons.Rounded.ShoppingCart,
                             contentDescription = "View Cart",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                     }
                 }
@@ -102,7 +104,7 @@ fun CustomerMenuBrowseScreen(
                 verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
             ) {
                 items(menuItems) { item ->
-                    MenuItemGridCard(item = item, onAddToCart = { viewModel.addToCart(item) })
+                    MenuItemGridCard(item = item) { viewModel.addToCart(item) }
                 }
             }
         }
@@ -128,6 +130,7 @@ fun MenuItemGridCard(item: MenuItemEntity, onAddToCart: () -> Unit)
             )
 
             Column(modifier = Modifier.padding(DesignSystem.Spacing.medium)) {
+                val locale = LocalConfiguration.current.locales[0]
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.titleMedium,
@@ -135,7 +138,7 @@ fun MenuItemGridCard(item: MenuItemEntity, onAddToCart: () -> Unit)
                     maxLines = 1
                 )
                 Text(
-                    text = "R${String.format("%.2f", item.price)}",
+                    text = "R${String.format(locale, "%.2f", item.price)}",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Black

@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 class AddEditMenuViewModel(
     private val repository: MenuRepository,
     val vendorId: String,
-    val itemId: Long?
+    val itemId: Long?,
 ) : ViewModel()
 {
     var name by mutableStateOf("")
@@ -51,7 +51,7 @@ class AddEditMenuViewModel(
      */
     fun saveItem(onSuccess: () -> Unit)
     {
-        if (name.isBlank() || price.toDoubleOrNull() == null || stock.toIntOrNull() == null || category.isBlank())
+        if (name.isBlank() || (price.toDoubleOrNull() == null) || (stock.toIntOrNull() == null) || category.isBlank())
         {
             return
         }
@@ -65,7 +65,7 @@ class AddEditMenuViewModel(
                 price = price.toDoubleOrNull() ?: 0.0,
                 stock = stock.toIntOrNull() ?: 0,
                 category = category,
-                imageUrl = imageUrl.ifBlank { null }
+                imageUrl = imageUrl.ifBlank { null },
             )
 
             if (itemId == null)

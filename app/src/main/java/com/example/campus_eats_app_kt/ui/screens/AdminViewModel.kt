@@ -34,7 +34,7 @@ class AdminViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val vendors: StateFlow<List<UserEntity>> = users
-        .map { it.filter { user -> user.role == UserRole.VENDOR } }
+        .map { userList -> userList.filter { user -> user.role == UserRole.VENDOR } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val orders: StateFlow<List<OrderEntity>> = orderRepository.getAllOrders()

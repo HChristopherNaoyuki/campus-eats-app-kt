@@ -70,7 +70,7 @@ class ForgotPasswordViewModelTest
         coEvery {
             authRepository.resetPassword(
                 "WRONG",
-                "any"
+                "any",
             )
         } returns Result.failure(Exception("Invalid User ID"))
 

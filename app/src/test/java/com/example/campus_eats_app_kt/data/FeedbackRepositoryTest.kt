@@ -63,9 +63,11 @@ class FeedbackRepositoryTest
             repository.submitFeedback(userId, subject, message, type)
 
             coVerify {
-                feedbackDao.insertFeedback(match {
-                    it.userId == userId && it.subject == subject && it.message == message && it.type == type
-                })
+                feedbackDao.insertFeedback(
+                    match {
+                        (it.userId == userId) && (it.subject == subject) && (it.message == message) && (it.type == type)
+                    },
+                )
             }
         }
     }

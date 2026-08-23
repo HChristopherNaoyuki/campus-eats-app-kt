@@ -23,6 +23,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import java.math.BigDecimal
 import org.junit.Before
 import org.junit.Test
 
@@ -46,7 +47,7 @@ class CheckoutViewModelTest
         email = "t@t.com",
         passwordHash = "p",
         role = UserRole.STUDENT,
-        status = UserStatus.ACTIVE
+        status = UserStatus.ACTIVE,
     )
 
     @Before
@@ -88,7 +89,7 @@ class CheckoutViewModelTest
             if (summary == null) summary = awaitItem()
             
             assertNotNull(summary)
-            assertEquals(130.0, summary?.total ?: 0.0, 0.001)
+            assertEquals(130.0, (summary?.total ?: BigDecimal.ZERO).toDouble(), 0.001)
             cancelAndIgnoreRemainingEvents()
         }
     }

@@ -69,7 +69,8 @@ class AdminRepository(
             userDao.addCredits(userId, amount)
 
             // Fetch updated balance and sync to RTDB
-            userDao.getUserById(userId)?.let { updatedUser ->
+            userDao.getUserById(userId)?.let()
+            { updatedUser ->
                 firebaseDatabase.getReference("users").child(userId).child("walletBalance")
                     .setValue(updatedUser.walletBalance).await()
             }

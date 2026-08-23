@@ -66,7 +66,7 @@ fun RegistrationScreen(
     onRegistrationSuccess: (String, String) -> Unit, // userId, role
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: RegistrationViewModel
+    viewModel: RegistrationViewModel,
 )
 {
     var fullName by remember { mutableStateOf("") }
@@ -78,7 +78,7 @@ fun RegistrationScreen(
     var selectedRole by remember { mutableStateOf(UserRole.STUDENT) }
 
     val registrationState by viewModel.registrationState.collectAsState()
-    var showIdDialog by remember { mutableStateOf(false) }
+    var showIdDialog by remember { mutableStateOf(value = false) }
     var registeredUserId by remember { mutableStateOf("") }
 
     // Navigation trigger upon successful persistence
@@ -103,7 +103,7 @@ fun RegistrationScreen(
                     text = "Welcome to Campus Eats",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             },
             text = {
@@ -113,7 +113,7 @@ fun RegistrationScreen(
                         text = "Your unique 16-character User ID has been generated. Please store it securely.",
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.outline,
                     )
                     Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
                     Surface(
@@ -259,7 +259,7 @@ fun RegistrationScreen(
                     options = listOf(UserRole.STANDARD, UserRole.VENDOR, UserRole.ADMIN),
                     selectedOption = selectedRole,
                     onOptionSelected = { selectedRole = it },
-                    labelProvider = { it.name.lowercase().replaceFirstChar { it.uppercase() } }
+                    labelProvider = { role -> role.name.lowercase().replaceFirstChar { char -> char.uppercase() } }
                 )
             }
 

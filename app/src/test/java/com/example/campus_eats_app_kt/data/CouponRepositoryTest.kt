@@ -33,7 +33,7 @@ class CouponRepositoryTest
     @Test
     fun validateCoupon_activeCode_returnsCoupon() = runTest {
         // Given
-        val coupons = listOf(CouponEntity("SAVE10", 10.0, true))
+        val coupons = listOf(CouponEntity("SAVE10", 10.0, isActive = true))
         every { couponDao.getAllCoupons() } returns flowOf(coupons)
 
         // When
@@ -65,6 +65,12 @@ class CouponRepositoryTest
     @Test
     fun createCoupon_callsDao() = runTest {
         repository.createCoupon("NEW", 20.0)
-        coVerify { couponDao.insertCoupon(match { it.code == "NEW" && it.discountPercent == 20.0 }) }
+        coVerify {
+            couponDao.insertCoupon(
+                match {
+                    (it.code == "NEW") && (it.discountPercent == 20.0)
+                },
+            )
+        }
     }
 }

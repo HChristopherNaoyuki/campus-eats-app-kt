@@ -10,7 +10,6 @@ import com.example.campus_eats_app_kt.data.network.RegistrationRequest
 import com.example.campus_eats_app_kt.util.IdGenerator
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.example.campus_eats_app_kt.util.ValidationEngine
-import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.CoroutineScope
@@ -193,12 +192,7 @@ class AuthRepository(
                 user?.let { userDao.insertUser(it) }
             }
 
-            if (user == null)
-            {
-                throw Exception("Profile metadata missing in cloud. Account may be partially initialized.")
-            }
-
-            user
+            user ?: throw Exception("Profile metadata missing in cloud. Account may be partially initialized.")
         }
     }
 
@@ -231,29 +225,6 @@ class AuthRepository(
     fun isUserAuthenticated(): Boolean = firebaseAuth.currentUser != null
     fun getCurrentUserEmail(): String? = firebaseAuth.currentUser?.email
     fun logout() = firebaseAuth.signOut()
-
-    /**
-     * Re-authenticates the current user. Required for sensitive operations like 
-     * password changes or account deletion if the session has expired.
-     */
-    suspend fun reauthenticate(password: String): Result<Unit>
-    {
-        return kotlin.runCatching()
-        {
-            try
-            {
-                val email = getCurrentUserEmail() ?: throw Exception("No active user session found.")
-                val credential = EmailAuthProvider.getCredential(email, password)
-                firebaseAuth.currentUser?.reauthenticate(credential)?.await()
-                Log.d(tag, "User successfully re-authenticated.")
-            }
-            catch (e: Exception)
-            {
-                Log.e(tag, "Re-authentication failed: ${e.message}")
-                throw Exception(FirebaseExceptionHandler.parse(e))
-            }
-        }
-    }
 
     suspend fun resetPassword(userId: String, newPassword: String): Result<Unit>
     {
@@ -328,7 +299,7 @@ class AuthRepository(
         return kotlin.runCatching()
         {
             val user = userDao.getUserById(userId)
-            if ((user != null) && (user.role == UserRole.VENDOR))
+            if (user != null && user.role == UserRole.VENDOR)
             {
                 val updatedUser = user.copy(shopStatus = status)
                 userDao.updateUser(updatedUser)
@@ -364,49 +335,6 @@ class AuthRepository(
             catch (e: Exception)
             {
                 Log.e(tag, "Failed to sync bank info to RTDB: ${e.message}")
-            }
-        }
-    }
-
-    /**
-     * Deletes a user account from Firebase, local, and remote systems.
-     */
-    @Suppress("unused")
-    suspend fun deleteAccount(userId: String): Result<Unit>
-    {
-        return kotlin.runCatching()
-        {
-            val user = userDao.getUserById(userId)
-            if (user != null)
-            {
-                // 1. Delete from Firebase
-                try
-                {
-                    firebaseAuth.currentUser?.delete()?.await()
-                }
-                catch (e: Exception)
-                {
-                    throw Exception(FirebaseExceptionHandler.parse(e))
-                }
-
-                // 2. Delete from Remote API
-                if (user.usercode != null)
-                {
-                    try
-                    {
-                        apiService.deleteUser(user.usercode)
-                    }
-                    catch (_: Exception)
-                    {
-                    }
-                }
-
-                // 3. Delete from Local DB
-                userDao.deleteUser(user)
-            }
-            else
-            {
-                throw Exception("User not found locally. Account may already be deleted.")
             }
         }
     }
