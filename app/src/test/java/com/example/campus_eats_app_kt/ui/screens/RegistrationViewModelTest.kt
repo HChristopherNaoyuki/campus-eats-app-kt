@@ -66,7 +66,7 @@ class RegistrationViewModelTest
                 "email@test.com",
                 "pass",
                 UserRole.STUDENT,
-                null
+                null,
             )
         } returns Result.success(testUser)
 
@@ -101,7 +101,7 @@ class RegistrationViewModelTest
             assertTrue(error is RegistrationState.Error)
             assertEquals(
                 "Shop name is required for vendors",
-                (error as RegistrationState.Error).message
+                (error as RegistrationState.Error).message,
             )
             cancelAndIgnoreRemainingEvents()
         }

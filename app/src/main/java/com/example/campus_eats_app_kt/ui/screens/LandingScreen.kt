@@ -54,7 +54,7 @@ fun LandingScreen(
     {
         Column(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         )
         {
             Spacer(modifier = Modifier.weight(1f))

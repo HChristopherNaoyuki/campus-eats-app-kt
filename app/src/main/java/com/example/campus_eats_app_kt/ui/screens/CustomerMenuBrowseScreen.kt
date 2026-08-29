@@ -72,7 +72,7 @@ fun CustomerMenuBrowseScreen(
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }
-                }
+                },
             )
         },
         containerColor = MaterialTheme.colorScheme.background

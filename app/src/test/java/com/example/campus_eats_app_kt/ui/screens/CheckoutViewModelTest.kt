@@ -121,7 +121,7 @@ class CheckoutViewModelTest
                 totalAmount = 130.0,
                 paymentMethod = PaymentMethod.CAMPUS_WALLET,
                 pickupTime = "12:00",
-                specialRequests = "None"
+                specialRequests = "None",
             )
         }
     }

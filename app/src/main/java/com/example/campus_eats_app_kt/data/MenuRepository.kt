@@ -73,7 +73,7 @@ class MenuRepository(
                             price = networkItem.itemPrice,
                             stock = 99,
                             category = "General",
-                            imageUrl = networkItem.imageUrl
+                            imageUrl = networkItem.imageUrl,
                         )
                     } ?: emptyList()
                     Log.i(tag, "API sync successful: Received ${networkItems.size} items")
@@ -116,7 +116,7 @@ class MenuRepository(
                         price = networkItem.itemPrice,
                         stock = 99,
                         category = "General",
-                        imageUrl = networkItem.imageUrl
+                        imageUrl = networkItem.imageUrl,
                     )
                 } ?: emptyList()
                 emit(networkItems)
@@ -164,7 +164,7 @@ class MenuRepository(
                         }.com",
                         passwordHash = "",
                         role = UserRole.VENDOR,
-                        shopName = restaurant.restaurantName
+                        shopName = restaurant.restaurantName,
                     )
                 } ?: emptyList()
                 emit(networkVendors)

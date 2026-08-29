@@ -49,7 +49,7 @@ class CouponRepositoryTest
     @Test
     fun validateCoupon_inactiveCode_returnsNull() = runTest {
         // Given
-        val coupons = listOf(CouponEntity("EXPIRED", 50.0, false))
+        val coupons = listOf(CouponEntity("EXPIRED", 50.0, isActive = false))
         every { couponDao.getAllCoupons() } returns flowOf(coupons)
 
         // When

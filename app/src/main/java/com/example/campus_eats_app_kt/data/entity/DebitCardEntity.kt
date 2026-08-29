@@ -15,5 +15,5 @@ data class DebitCardEntity(
     val userId: String,
     val cardNumber: String,
     val expiryDate: String,
-    val cvv: String
+    val cvv: String,
 )

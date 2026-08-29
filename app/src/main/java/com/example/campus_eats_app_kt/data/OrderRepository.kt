@@ -66,7 +66,7 @@ class OrderRepository(
                 apiService.createOrder(
                     numericVendorId,
                     apikey,
-                    OrderRequest(networkItems)
+                    OrderRequest(networkItems),
                 )
                 Log.i(tag, "Remote order synchronization successful")
             }
@@ -85,7 +85,7 @@ class OrderRepository(
             status = OrderStatus.PENDING,
             paymentMethod = paymentMethod,
             pickupTime = pickupTime,
-            specialRequests = specialRequests
+            specialRequests = specialRequests,
         )
         val id = orderDao.insertOrder(order)
         Log.d(tag, "Local order record created. ID: $id")

@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
  */
 class VendorMenuViewModel(
     private val repository: MenuRepository,
-    val vendorId: String
+    val vendorId: String,
 ) : ViewModel()
 {
     /**
@@ -24,7 +24,7 @@ class VendorMenuViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+            initialValue = emptyList(),
         )
 
     /**

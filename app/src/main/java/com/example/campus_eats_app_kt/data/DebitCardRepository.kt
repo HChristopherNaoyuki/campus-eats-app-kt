@@ -12,6 +12,7 @@ class DebitCardRepository(private val debitCardDao: DebitCardDao)
     /**
      * Retrieves all saved cards for a specific user.
      */
+    @Suppress("unused")
     fun getCards(userId: String): Flow<List<DebitCardEntity>> =
         debitCardDao.getCardsByUserId(userId)
 
@@ -25,14 +26,15 @@ class DebitCardRepository(private val debitCardDao: DebitCardDao)
                 userId = userId,
                 cardNumber = cardNumber,
                 expiryDate = expiryDate,
-                cvv = cvv
-            )
+                cvv = cvv,
+            ),
         )
     }
 
     /**
      * Removes a card from the user's profile.
      */
+    @Suppress("unused")
     suspend fun deleteCard(card: DebitCardEntity)
     {
         debitCardDao.deleteCard(card)

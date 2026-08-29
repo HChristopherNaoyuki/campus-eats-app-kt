@@ -16,5 +16,5 @@ data class MenuItemEntity(
     val price: Double,
     val stock: Int,
     val category: String,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
 )

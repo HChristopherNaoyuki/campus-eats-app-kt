@@ -409,7 +409,7 @@ class MainActivity : ComponentActivity()
                                 backStack.add(Route.Main(route.userId, route.role))
                             }
                         }
-                    }
+                    },
                 )
             }
         }

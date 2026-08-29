@@ -16,7 +16,7 @@ import kotlinx.coroutines.tasks.await
 class FeedbackRepository(
     private val feedbackDao: FeedbackDao,
     private val connectivityManager: NetworkConnectivityManager,
-    private val firebaseDatabase: FirebaseDatabase
+    private val firebaseDatabase: FirebaseDatabase,
 )
 {
     /**
@@ -27,6 +27,7 @@ class FeedbackRepository(
     /**
      * Filters feedback to return only complaints.
      */
+    @Suppress("unused")
     fun getComplaints(): Flow<List<FeedbackEntity>> =
         feedbackDao.getAllFeedback()
             .map { list -> list.filter { it.type == FeedbackType.COMPLAINT } }
@@ -34,6 +35,7 @@ class FeedbackRepository(
     /**
      * Filters feedback to return only compliments.
      */
+    @Suppress("unused")
     fun getCompliments(): Flow<List<FeedbackEntity>> =
         feedbackDao.getAllFeedback()
             .map { list -> list.filter { it.type == FeedbackType.COMPLIMENT } }
@@ -47,7 +49,7 @@ class FeedbackRepository(
             userId = userId,
             subject = subject,
             message = message,
-            type = type
+            type = type,
         )
 
         // 1. Persist locally

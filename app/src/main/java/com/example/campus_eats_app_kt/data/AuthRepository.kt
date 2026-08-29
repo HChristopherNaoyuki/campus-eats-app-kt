@@ -10,6 +10,7 @@ import com.example.campus_eats_app_kt.data.network.RegistrationRequest
 import com.example.campus_eats_app_kt.util.IdGenerator
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.example.campus_eats_app_kt.util.ValidationEngine
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.CoroutineScope
@@ -208,15 +209,18 @@ class AuthRepository(
                 delay(10.seconds)
                 try
                 {
-                    if (connectivityManager.hasInternetConnection())
+                    // Ensure valid session before syncing to avoid "supplied auth credential" errors
+                    if (firebaseAuth.currentUser != null && connectivityManager.hasInternetConnection())
                     {
-                        userDao.getUserById(userId)?.let { user ->
+                        userDao.getUserById(userId)?.let()
+                        { user ->
                             firebaseDatabase.getReference("users").child(userId).setValue(user)
                         }
                     }
                 }
-                catch (_: Exception)
+                catch (e: Exception)
                 {
+                    Log.w(tag, "Periodic background sync failed: ${e.message}")
                 }
             }
         }
@@ -225,6 +229,29 @@ class AuthRepository(
     fun isUserAuthenticated(): Boolean = firebaseAuth.currentUser != null
     fun getCurrentUserEmail(): String? = firebaseAuth.currentUser?.email
     fun logout() = firebaseAuth.signOut()
+
+    /**
+     * Re-authenticates the current user. Required for sensitive operations like 
+     * password changes or account deletion if the session has expired.
+     */
+    suspend fun reauthenticate(password: String): Result<Unit>
+    {
+        return kotlin.runCatching()
+        {
+            try
+            {
+                val email = getCurrentUserEmail() ?: throw Exception("No active user session found.")
+                val credential = EmailAuthProvider.getCredential(email, password)
+                firebaseAuth.currentUser?.reauthenticate(credential)?.await()
+                Log.d(tag, "User successfully re-authenticated.")
+            }
+            catch (e: Exception)
+            {
+                Log.e(tag, "Re-authentication failed: ${e.message}")
+                throw Exception(FirebaseExceptionHandler.parse(e))
+            }
+        }
+    }
 
     suspend fun resetPassword(userId: String, newPassword: String): Result<Unit>
     {
@@ -299,7 +326,7 @@ class AuthRepository(
         return kotlin.runCatching()
         {
             val user = userDao.getUserById(userId)
-            if (user != null && user.role == UserRole.VENDOR)
+            if ((user != null) && (user.role == UserRole.VENDOR))
             {
                 val updatedUser = user.copy(shopStatus = status)
                 userDao.updateUser(updatedUser)

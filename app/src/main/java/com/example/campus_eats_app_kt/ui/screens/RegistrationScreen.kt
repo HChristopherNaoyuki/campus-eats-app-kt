@@ -119,7 +119,7 @@ fun RegistrationScreen(
                     Surface(
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
                         shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     {
                         Text(
@@ -127,12 +127,12 @@ fun RegistrationScreen(
                             style = MaterialTheme.typography.headlineSmall.copy(
                                 fontWeight = FontWeight.Black,
                                 color = MaterialTheme.colorScheme.primary,
-                                letterSpacing = 1.5.sp
+                                letterSpacing = 1.5.sp,
                             ),
                             modifier = Modifier
                                 .padding(DesignSystem.Spacing.medium)
                                 .fillMaxWidth(),
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
                         )
                     }
                     Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
@@ -148,13 +148,13 @@ fun RegistrationScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
-                        shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+                        shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                     )
                     {
                         Icon(
                             Icons.Rounded.ContentCopy,
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
                         )
                         Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
                         Text("Copy ID to Clipboard")
@@ -168,9 +168,9 @@ fun RegistrationScreen(
                         onRegistrationSuccess(registeredUserId, selectedRole.name)
                     },
                     text = "Go to Dashboard",
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
-            }
+            },
         )
     }
 
@@ -183,11 +183,11 @@ fun RegistrationScreen(
                     {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
             )
         },
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     )
     { innerPadding ->
         Column(
@@ -197,7 +197,7 @@ fun RegistrationScreen(
                 .padding(DesignSystem.Spacing.screenPadding)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             // Form Fields
@@ -208,7 +208,7 @@ fun RegistrationScreen(
                 placeholder = { Text("Aisha Patel") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
             )
 
             OutlinedTextField(
@@ -219,7 +219,7 @@ fun RegistrationScreen(
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
             )
 
             OutlinedTextField(
@@ -230,7 +230,7 @@ fun RegistrationScreen(
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
             )
 
             OutlinedTextField(
@@ -241,7 +241,7 @@ fun RegistrationScreen(
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
             )
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
@@ -253,13 +253,13 @@ fun RegistrationScreen(
                     text = "Account type",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = 8.dp),
                 )
                 HIGSegmentedControl(
                     options = listOf(UserRole.STANDARD, UserRole.VENDOR, UserRole.ADMIN),
                     selectedOption = selectedRole,
                     onOptionSelected = { selectedRole = it },
-                    labelProvider = { role -> role.name.lowercase().replaceFirstChar { char -> char.uppercase() } }
+                    labelProvider = { role -> role.name.lowercase().replaceFirstChar { char -> char.uppercase() } },
                 )
             }
 
@@ -267,7 +267,7 @@ fun RegistrationScreen(
             AnimatedVisibility(
                 visible = selectedRole == UserRole.VENDOR,
                 enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
+                exit = shrinkVertically() + fadeOut(),
             )
             {
                 OutlinedTextField(
@@ -277,7 +277,7 @@ fun RegistrationScreen(
                     modifier = Modifier.fillMaxWidth(),
                     leadingIcon = { Icon(Icons.Rounded.Store, contentDescription = null) },
                     singleLine = true,
-                    shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+                    shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                 )
             }
 
@@ -290,7 +290,7 @@ fun RegistrationScreen(
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(vertical = DesignSystem.Spacing.small),
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 )
             }
 
@@ -304,7 +304,7 @@ fun RegistrationScreen(
                             email,
                             password,
                             selectedRole,
-                            if (selectedRole == UserRole.VENDOR) shopName else null
+                            if (selectedRole == UserRole.VENDOR) shopName else null,
                         )
                     }
                 },
@@ -312,7 +312,7 @@ fun RegistrationScreen(
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = ActionBlue,
                 contentColor = Color.White,
-                enabled = registrationState !is RegistrationState.Loading
+                enabled = registrationState !is RegistrationState.Loading,
             )
 
             if (registrationState is RegistrationState.Loading)
@@ -320,7 +320,7 @@ fun RegistrationScreen(
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     color = ActionBlue,
-                    strokeWidth = 2.dp
+                    strokeWidth = 2.dp,
                 )
             }
 

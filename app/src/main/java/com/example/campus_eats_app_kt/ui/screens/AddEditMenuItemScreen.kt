@@ -59,7 +59,7 @@ fun AddEditMenuItemScreen(
                 },
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
         Column(
             modifier = Modifier

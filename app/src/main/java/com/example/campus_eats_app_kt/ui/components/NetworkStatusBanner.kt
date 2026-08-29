@@ -49,7 +49,7 @@ fun NetworkStatusBanner(status: NetworkConnectivityObserver.Status)
                     imageVector = Icons.Rounded.WifiOff,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(

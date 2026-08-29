@@ -83,7 +83,7 @@ object CheckoutEngine
             tax = tax,
             serviceFee = serviceFee,
             studentDiscount = studentDiscount,
-            total = total
+            total = total,
         )
     }
 }

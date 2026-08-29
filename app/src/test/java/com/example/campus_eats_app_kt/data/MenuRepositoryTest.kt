@@ -76,7 +76,7 @@ class MenuRepositoryTest
                 description = "Test Desc",
                 price = 10.0,
                 stock = 10,
-                category = "Test"
+                category = "Test",
             )
             repository.addMenuItem(item)
             coVerify { menuItemDao.insertMenuItem(item) }

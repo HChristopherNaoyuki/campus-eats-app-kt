@@ -86,7 +86,7 @@ abstract class CampusEatsDatabase : RoomDatabase()
                     db,
                     "orders",
                     "paymentMethod",
-                    "TEXT NOT NULL DEFAULT 'DEBIT_CARD'"
+                    "TEXT NOT NULL DEFAULT 'DEBIT_CARD'",
                 )
                 addColumnIfNotExists(db, "orders", "pickupTime", "TEXT NOT NULL DEFAULT ''")
                 addColumnIfNotExists(db, "orders", "specialRequests", "TEXT")
@@ -108,7 +108,7 @@ abstract class CampusEatsDatabase : RoomDatabase()
             db: SupportSQLiteDatabase,
             tableName: String,
             columnName: String,
-            columnDefinition: String
+            columnDefinition: String,
         )
         {
             // Execute PRAGMA to get the list of columns in the table
@@ -145,7 +145,7 @@ abstract class CampusEatsDatabase : RoomDatabase()
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     CampusEatsDatabase::class.java,
-                    "campus_eats_database"
+                    "campus_eats_database",
                 )
                     .addMigrations(MIGRATION_6_7, MIGRATION_7_8)
                     .fallbackToDestructiveMigration(dropAllTables = true) // Last resort if no valid migration path is found

@@ -26,6 +26,7 @@ class CouponRepository(private val couponDao: CouponDao)
     /**
      * Permanently removes a coupon from the system.
      */
+    @Suppress("unused")
     suspend fun deleteCoupon(coupon: CouponEntity)
     {
         couponDao.deleteCoupon(coupon)
@@ -38,9 +39,9 @@ class CouponRepository(private val couponDao: CouponDao)
     {
         return try
         {
-            getAllCoupons().first().find { it.code == code && it.isActive }
+            getAllCoupons().first().find { (it.code == code) && it.isActive }
         }
-        catch (e: Exception)
+        catch (_: Exception)
         {
             null
         }

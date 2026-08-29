@@ -62,7 +62,7 @@ class LoginViewModelTest
         coEvery {
             authRepository.login(
                 "test@example.com",
-                "pass"
+                "pass",
             )
         } returns Result.success(testUser)
 
@@ -112,7 +112,7 @@ class LoginViewModelTest
         coEvery {
             authRepository.login(
                 any(),
-                any()
+                any(),
             )
         } returns Result.failure(Exception("Network error"))
 

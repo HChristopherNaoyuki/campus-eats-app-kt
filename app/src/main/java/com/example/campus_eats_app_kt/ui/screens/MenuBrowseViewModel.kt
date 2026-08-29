@@ -15,10 +15,10 @@ import kotlinx.coroutines.launch
  * It exposes a reactive list of menu items.
  */
 class MenuBrowseViewModel(
-    private val menuRepository: MenuRepository,
+    @Suppress("unused") private val menuRepository: MenuRepository,
     private val cartRepository: CartRepository,
     val userId: String,
-    val vendorId: String
+    val vendorId: String,
 ) : ViewModel()
 {
     /**
@@ -28,7 +28,7 @@ class MenuBrowseViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+            initialValue = emptyList(),
         )
 
     /**

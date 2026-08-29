@@ -9,11 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.serialization.json.Json
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /**
  * VendorStats holds the performance metrics for a single shop owner.
@@ -89,7 +84,7 @@ class StatsRepository(
         return combine(
             userDao.getAllUsers(),
             menuItemDao.getAllMenuItems(),
-            orderDao.getOrdersByStatus(OrderStatus.COMPLETED)
+            orderDao.getOrdersByStatus(OrderStatus.COMPLETED),
         ) { users, menuItems, completedOrders ->
             val now = System.currentTimeMillis()
             val startOfDay = now - (now % MILLIS_PER_DAY)

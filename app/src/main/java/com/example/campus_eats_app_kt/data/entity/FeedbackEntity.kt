@@ -23,5 +23,5 @@ data class FeedbackEntity(
     val subject: String,
     val message: String,
     val type: FeedbackType,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
 )

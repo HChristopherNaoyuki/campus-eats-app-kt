@@ -36,13 +36,13 @@ interface FakeRestaurantApiService
 
     @GET("api/Restaurant/{restaurantId}/menu")
     suspend fun getRestaurantMenu(
-        @Path("restaurantId") restaurantId: Int
+        @Path("restaurantId") restaurantId: Int,
     ): Response<List<NetworkMenuItem>>
 
     @GET("api/Restaurant/{restaurantId}/menu")
     suspend fun getSortedMenu(
         @Path("restaurantId") restaurantId: Int,
-        @Query("sortbyprice") sortOrder: String?
+        @Query("sortbyprice") sortOrder: String?,
     ): Response<List<NetworkMenuItem>>
 
     @GET("api/Restaurant/items")
@@ -67,9 +67,10 @@ interface FakeRestaurantApiService
     ): Response<NetworkRestaurant>
 
     @POST("api/Restaurant/{restaurantId}/additem")
+    @Suppress("unused")
     suspend fun addMenuItem(
         @Path("restaurantId") restaurantId: Int,
-        @Body menuItem: MenuItemRequest
+        @Body menuItem: MenuItemRequest,
     ): Response<NetworkMenuItem>
 
     // User endpoints
@@ -86,24 +87,25 @@ interface FakeRestaurantApiService
 
     @POST("api/User/register")
     suspend fun registerUser(
-        @Body registration: RegistrationRequest
+        @Body registration: RegistrationRequest,
     ): Response<NetworkUser>
 
     @DELETE("api/User/{apikey}")
+    @Suppress("unused")
     suspend fun deleteUser(
-        @Path("apikey") apiKey: String
+        @Path("apikey") apiKey: String,
     ): Response<DeleteResponse>
 
     @PUT("api/User/{apikey}")
     suspend fun updatePassword(
         @Path("apikey") apiKey: String,
-        @Body newPassword: String
+        @Body newPassword: String,
     ): Response<NetworkUser>
 
     // Order endpoints
     @GET("api/Order")
     suspend fun getUserOrders(
-        @Query("apikey") apiKey: String
+        @Query("apikey") apiKey: String,
     ): Response<List<MasterOrder>>
 
     @GET("api/Order/{masterId}")
@@ -117,13 +119,13 @@ interface FakeRestaurantApiService
     suspend fun createOrder(
         @Path("restaurantId") restaurantId: Int,
         @Query("apikey") apiKey: String,
-        @Body orderRequest: OrderRequest
+        @Body orderRequest: OrderRequest,
     ): Response<OrderResponse>
 
     @DELETE("api/Order/master/{masterId}")
     suspend fun deleteMasterOrder(
         @Path("masterId") masterId: Int,
-        @Query("apikey") apiKey: String
+        @Query("apikey") apiKey: String,
     ): Response<DeleteMasterOrderResponse>
 
     @DELETE("api/Order/{orderId}")

@@ -35,8 +35,8 @@ class CartRepository(private val cartDao: CartDao)
                     vendorId = item.vendorId,
                     name = item.name,
                     price = item.price,
-                    quantity = 1
-                )
+                    quantity = 1,
+                ),
             )
         }
     }

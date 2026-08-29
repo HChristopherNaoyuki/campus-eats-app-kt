@@ -58,7 +58,7 @@ class OrderStatusEngineTest
             OrderStatusEngine.isValidTransition(
                 OrderStatus.PREPARING,
                 OrderStatus.CANCELLED,
-            )
+            ),
         )
         assertTrue(OrderStatusEngine.isValidTransition(OrderStatus.READY, OrderStatus.CANCELLED))
     }
@@ -72,20 +72,20 @@ class OrderStatusEngineTest
         assertFalse(
             OrderStatusEngine.isValidTransition(
                 OrderStatus.COMPLETED,
-                OrderStatus.ACCEPTED
-            )
+                OrderStatus.ACCEPTED,
+            ),
         )
         assertFalse(
             OrderStatusEngine.isValidTransition(
                 OrderStatus.CANCELLED,
-                OrderStatus.ACCEPTED
-            )
+                OrderStatus.ACCEPTED,
+            ),
         )
         assertFalse(
             OrderStatusEngine.isValidTransition(
                 OrderStatus.COMPLETED,
                 OrderStatus.CANCELLED,
-            )
+            ),
         )
     }
 
@@ -101,8 +101,8 @@ class OrderStatusEngineTest
         assertFalse(
             OrderStatusEngine.isValidTransition(
                 OrderStatus.ACCEPTED,
-                OrderStatus.COMPLETED
-            )
+                OrderStatus.COMPLETED,
+            ),
         )
     }
 }

@@ -89,7 +89,7 @@ fun ForgotPasswordScreen(
                 .padding(innerPadding)
                 .padding(DesignSystem.Spacing.screenPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))

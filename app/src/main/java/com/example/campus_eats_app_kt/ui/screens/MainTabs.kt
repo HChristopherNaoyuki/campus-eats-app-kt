@@ -180,7 +180,7 @@ fun HomeScreenTab(
                             Row(verticalAlignment = Alignment.CenterVertically)
                             {
                                 Icon(
-                                    Icons.Rounded.Notifications,
+                                    imageVector = Icons.Rounded.Notifications,
                                     contentDescription = null,
                                     tint = CampusOrange,
                                     modifier = Modifier.size(28.dp),
@@ -219,7 +219,9 @@ fun HomeScreenTab(
                                         shape = CircleShape,
                                         color = if (user?.shopStatus == ShopStatus.OPEN) Color.Green else Color.Red,
                                         modifier = Modifier.size(8.dp),
-                                    ) {}
+                                    )
+                                    {
+                                    }
                                     Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
                                     Text(
                                         text = if (user?.shopStatus == ShopStatus.OPEN) "Open" else "Closed",
@@ -247,16 +249,23 @@ fun HomeScreenTab(
         }
 
         // Student Search and Vendor List
-        if ((role == UserRole.STUDENT) || (role == UserRole.STANDARD))
+        if (role == UserRole.STUDENT || role == UserRole.STANDARD)
         {
             item()
             {
                 OutlinedTextField(
                     value = "",
                     onValueChange = {},
-                    placeholder = { Text("Search vendors or items") },
+                    placeholder = {
+                        Text(text = "Search vendors or items")
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = null,
+                        )
+                    },
                     shape = CircleShape,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
@@ -284,7 +293,11 @@ fun HomeScreenTab(
                     )
                     TextButton(onClick = onExploreVendors)
                     {
-                        Text("View all", color = CampusOrange, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "View all",
+                            color = CampusOrange,
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
                 }
             }
@@ -297,13 +310,13 @@ fun HomeScreenTab(
                         Modifier
                             .fillMaxWidth()
                             .padding(DesignSystem.Spacing.large),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     )
                     {
                         Text(
-                            "Discovering campus dining...",
+                            text = "Discovering campus dining...",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.outline
+                            color = MaterialTheme.colorScheme.outline,
                         )
                     }
                 }
@@ -316,7 +329,9 @@ fun HomeScreenTab(
                         title = vendor.shopName ?: vendor.fullName,
                         description = "Tap to browse full menu and items.",
                         icon = Icons.Rounded.Store,
-                        onClick = { onNavigateToMenuBrowse(userId, vendor.userId) }
+                        onClick = {
+                            onNavigateToMenuBrowse(userId, vendor.userId)
+                        },
                     )
                 }
             }
@@ -325,22 +340,27 @@ fun HomeScreenTab(
         // Vendor Dashboard
         if (role == UserRole.VENDOR)
         {
-            item {
+            item()
+            {
                 vendorStats?.let { stats ->
-                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+                    )
+                    {
                         Text(
                             text = "Overview",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                         StatCardFull(
                             label = "All-time Earnings",
-                            value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}"
+                            value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}",
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-                        ) {
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+                        )
+                        {
                             StatCardHalf(
                                 label = "Menu Items",
                                 value = stats.menuItemCount.toString(),
@@ -355,7 +375,7 @@ fun HomeScreenTab(
                         StatCardFull(
                             label = "Today's Revenue",
                             value = "R${String.format(locale, "%.2f", stats.todayRevenue)}",
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         )
                     }
                 }
@@ -365,23 +385,27 @@ fun HomeScreenTab(
         // Admin Dashboard remains similar or adjusted for HIG
         if (role == UserRole.ADMIN)
         {
-            item {
+            item()
+            {
                 adminStats?.let { stats ->
-                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+                    )
+                    {
                         Text(
                             text = "Administrator",
                             style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Black
+                            fontWeight = FontWeight.Black,
                         )
                         StatCardFull(
                             label = "System-wide Earnings",
-                            value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}"
+                            value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}",
                         )
                         AdminGridStats(stats = stats)
                         StatCardFull(
                             label = "Today's Summary",
                             value = "R${String.format(locale, "%.2f", stats.todayRevenue)}",
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         )
                     }
                 }
@@ -400,8 +424,10 @@ fun StatCardFull(
     HIGCard(
         modifier = Modifier.fillMaxWidth(),
         containerColor = containerColor,
-    ) {
-        Column {
+    )
+    {
+        Column()
+        {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge,
@@ -413,20 +439,26 @@ fun StatCardFull(
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
-                letterSpacing = (-1).sp
+                letterSpacing = (-1).sp,
             )
         }
     }
 }
 
 @Composable
-fun StatCardHalf(label: String, value: String, modifier: Modifier = Modifier)
+fun StatCardHalf(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+)
 {
     HIGCard(
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surfaceVariant
-    ) {
-        Column {
+        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+    )
+    {
+        Column()
+        {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
@@ -437,7 +469,7 @@ fun StatCardHalf(label: String, value: String, modifier: Modifier = Modifier)
                 text = value,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -449,11 +481,13 @@ fun AdminGridStats(stats: AdminStats)
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-    ) {
+    )
+    {
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        )
+        {
             StatCardHalf(
                 label = "Users",
                 value = stats.totalUsers.toString(),
@@ -467,8 +501,9 @@ fun AdminGridStats(stats: AdminStats)
         }
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        )
+        {
             StatCardHalf(
                 label = "Menu Items",
                 value = stats.menuItemCount.toString(),
@@ -505,8 +540,9 @@ fun ServicesScreenTab(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(DesignSystem.Spacing.screenPadding)
-                .verticalScroll(rememberScrollState())
-        ) {
+                .verticalScroll(rememberScrollState()),
+        )
+        {
             // Principle: Aesthetic Integrity - Removed redundant heading to reduce visual clutter.
 
             when (role)
@@ -517,19 +553,25 @@ fun ServicesScreenTab(
                         title = "Vendors",
                         description = "Browse available campus dining options.",
                         icon = Icons.Rounded.Store,
-                        onClick = { activeView = "VendorsList" },
+                        onClick = {
+                            activeView = "VendorsList"
+                        },
                     )
                     HIGServiceRow(
                         title = "Order Receipts",
                         description = "Audit your past transaction history.",
                         icon = Icons.Rounded.Receipt,
-                        onClick = { activeView = "Receipts" },
+                        onClick = {
+                            activeView = "Receipts"
+                        },
                     )
                     HIGServiceRow(
                         title = "Cumulative Spending",
                         description = "Monitor your total platform expenditure.",
                         icon = Icons.Rounded.AccountBalance,
-                        onClick = { activeView = "Spending" },
+                        onClick = {
+                            activeView = "Spending"
+                        },
                     )
                 }
 
@@ -539,13 +581,17 @@ fun ServicesScreenTab(
                         title = "New Menu Item",
                         description = "Add a fresh food offering to your shop.",
                         icon = Icons.Rounded.Add,
-                        onClick = { onNavigateToAddMenuItem(userId, null) },
+                        onClick = {
+                            onNavigateToAddMenuItem(userId, null)
+                        },
                     )
                     HIGServiceRow(
                         title = "Inventory Manager",
                         description = "Update and monitor your current stock.",
                         icon = Icons.Rounded.Inventory,
-                        onClick = { onNavigateToVendorMenu(userId) },
+                        onClick = {
+                            onNavigateToVendorMenu(userId)
+                        },
                     )
                 }
 
@@ -555,19 +601,25 @@ fun ServicesScreenTab(
                         title = "User Directory",
                         description = "Manage and moderate platform accounts.",
                         icon = Icons.Rounded.People,
-                        onClick = { activeView = "Users" },
+                        onClick = {
+                            activeView = "Users"
+                        },
                     )
                     HIGServiceRow(
                         title = "Vendor Directory",
                         description = "Manage campus shop registry and status.",
                         icon = Icons.Rounded.Store,
-                        onClick = { activeView = "Vendors" },
+                        onClick = {
+                            activeView = "Vendors"
+                        },
                     )
                     HIGServiceRow(
                         title = "System Orders",
                         description = "Supervise all active and past transactions.",
                         icon = Icons.AutoMirrored.Rounded.List,
-                        onClick = { activeView = "Orders" },
+                        onClick = {
+                            activeView = "Orders"
+                        },
                     )
                 }
             }
@@ -575,23 +627,31 @@ fun ServicesScreenTab(
     }
     else
     {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize())
+        {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(DesignSystem.Spacing.medium),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                verticalAlignment = Alignment.CenterVertically,
+            )
+            {
                 IconButton(
                     onClick = {
-                        activeView = if (activeView == "OrderDetail") "Receipts"
-                        else "Main"
-                    }
+                        activeView = if (activeView == "OrderDetail")
+                        {
+                            "Receipts"
+                        }
+                        else
+                        {
+                            "Main"
+                        }
+                    },
                 )
                 {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back"
+                        contentDescription = "Back",
                     )
                 }
                 Text(
@@ -600,7 +660,8 @@ fun ServicesScreenTab(
                     fontWeight = FontWeight.Bold,
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = onReturnHome) {
+                TextButton(onClick = onReturnHome)
+                {
                     Text(text = "Home")
                 }
             }
@@ -609,7 +670,8 @@ fun ServicesScreenTab(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = DesignSystem.Spacing.medium),
-            ) {
+            )
+            {
                 when (activeView)
                 {
                     "VendorsList" -> StudentVendorList(
@@ -624,7 +686,8 @@ fun ServicesScreenTab(
                     "Receipts" -> StudentReceipts(
                         userId = userId,
                         orderRepository = orderRepository,
-                    ) {
+                    )
+                    {
                         selectedOrder = it
                         activeView = "OrderDetail"
                     }
@@ -639,7 +702,10 @@ fun ServicesScreenTab(
                         role = role,
                         userId = userId,
                         orderRepository = orderRepository,
-                    ) { activeView = "Main" }
+                    )
+                    {
+                        activeView = "Main"
+                    }
                 }
             }
         }
@@ -653,7 +719,7 @@ fun ActivityScreenTab(
     orderRepository: OrderRepository,
     cartRepository: CartRepository,
     onNavigateToCheckout: () -> Unit,
-    onReturnHome: () -> Unit
+    onReturnHome: () -> Unit,
 )
 {
     var currentHubView by remember { mutableStateOf("Main") }
@@ -683,19 +749,25 @@ fun ActivityScreenTab(
                         title = "Active Cart",
                         description = "Complete your purchase and track status.",
                         icon = Icons.Rounded.ShoppingCart,
-                        onClick = { currentHubView = "Current" },
+                        onClick = {
+                            currentHubView = "Current"
+                        },
                     )
                     HIGServiceRow(
                         title = "Order History",
                         description = "Comprehensive list of all past meals.",
                         icon = Icons.Rounded.History,
-                        onClick = { currentHubView = "ReceiptsHub" },
+                        onClick = {
+                            currentHubView = "ReceiptsHub"
+                        },
                     )
                     HIGServiceRow(
                         title = "Analytics",
                         description = "Personal consumption trends and reports.",
                         icon = Icons.Rounded.Analytics,
-                        onClick = { currentHubView = "ReportsHub" },
+                        onClick = {
+                            currentHubView = "ReportsHub"
+                        },
                     )
                 }
 
@@ -705,13 +777,17 @@ fun ActivityScreenTab(
                         title = "Live Orders",
                         description = "Fulfill pending and active customer tasks.",
                         icon = Icons.AutoMirrored.Rounded.ListAlt,
-                        onClick = { currentHubView = "VendorOrders" },
+                        onClick = {
+                            currentHubView = "VendorOrders"
+                        },
                     )
                     HIGServiceRow(
                         title = "Financial Reports",
                         description = "Detailed revenue and growth analytics.",
                         icon = Icons.Rounded.BarChart,
-                        onClick = { currentHubView = "VendorReports" },
+                        onClick = {
+                            currentHubView = "VendorReports"
+                        },
                     )
                 }
 
@@ -721,19 +797,25 @@ fun ActivityScreenTab(
                         title = "Global Receipts",
                         description = "Audit every transaction on the platform.",
                         icon = Icons.AutoMirrored.Rounded.ReceiptLong,
-                        onClick = { currentHubView = "AdminReceipts" },
+                        onClick = {
+                            currentHubView = "AdminReceipts"
+                        },
                     )
                     HIGServiceRow(
                         title = "System Summary",
                         description = "High-level financial aggregates.",
                         icon = Icons.Rounded.AccountBalance,
-                        onClick = { currentHubView = "AdminSummary" },
+                        onClick = {
+                            currentHubView = "AdminSummary"
+                        },
                     )
                     HIGServiceRow(
                         title = "Insight Reports",
                         description = "Advanced user and revenue analytics.",
                         icon = Icons.Rounded.Assessment,
-                        onClick = { currentHubView = "AdminReports" },
+                        onClick = {
+                            currentHubView = "AdminReports"
+                        },
                     )
                 }
             }
@@ -747,19 +829,25 @@ fun ActivityScreenTab(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(DesignSystem.Spacing.medium),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             )
             {
                 IconButton(
                     onClick = {
-                        currentHubView = if (currentHubView == "OrderDetail") "ReceiptsHub"
-                        else "Main"
-                    }
+                        currentHubView = if (currentHubView == "OrderDetail")
+                        {
+                            "ReceiptsHub"
+                        }
+                        else
+                        {
+                            "Main"
+                        }
+                    },
                 )
                 {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back"
+                        contentDescription = "Back",
                     )
                 }
                 Text(
@@ -768,7 +856,10 @@ fun ActivityScreenTab(
                     fontWeight = FontWeight.Bold,
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = onReturnHome) { Text(text = "Home") }
+                TextButton(onClick = onReturnHome)
+                {
+                    Text(text = "Home")
+                }
             }
 
             Box(
@@ -789,7 +880,8 @@ fun ActivityScreenTab(
                     "ReceiptsHub" -> StudentReceipts(
                         userId,
                         orderRepository,
-                    ) {
+                    )
+                    {
                         selectedOrder = it
                         currentHubView = "OrderDetail"
                     }
@@ -798,7 +890,8 @@ fun ActivityScreenTab(
                     "VendorOrders" -> VendorOrderHub(
                         vendorId = userId,
                         orderRepository = orderRepository,
-                    ) {
+                    )
+                    {
                         selectedOrder = it
                         currentHubView = "OrderDetail"
                     }
@@ -812,7 +905,10 @@ fun ActivityScreenTab(
                         role = userRole,
                         userId = userId,
                         orderRepository = orderRepository,
-                    ) { currentHubView = "Main" }
+                    )
+                    {
+                        currentHubView = "Main"
+                    }
                 }
             }
         }
@@ -836,7 +932,9 @@ fun StudentVendorList(
         { vendor ->
             HIGCard(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { onNavigateToMenuBrowse(userId, vendor.userId) }
+                onClick = {
+                    onNavigateToMenuBrowse(userId, vendor.userId)
+                },
             )
             {
                 Row(verticalAlignment = Alignment.CenterVertically)
@@ -844,7 +942,7 @@ fun StudentVendorList(
                     Surface(
                         shape = MaterialTheme.shapes.medium,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(56.dp)
+                        modifier = Modifier.size(56.dp),
                     )
                     {
                         Box(contentAlignment = Alignment.Center)
@@ -852,7 +950,7 @@ fun StudentVendorList(
                             Icon(
                                 imageVector = Icons.Rounded.Store,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary
+                                tint = MaterialTheme.colorScheme.onPrimary,
                             )
                         }
                     }
@@ -862,12 +960,12 @@ fun StudentVendorList(
                         Text(
                             text = vendor.shopName ?: vendor.fullName,
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                         Text(
                             text = "Tap to browse menu",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outline
+                            color = MaterialTheme.colorScheme.outline,
                         )
                     }
                 }
@@ -882,7 +980,7 @@ fun AdminUserManagement(viewModel: AdminViewModel)
     val users by viewModel.users.collectAsState()
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
+        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
     )
     {
         items(users)
@@ -894,16 +992,16 @@ fun AdminUserManagement(viewModel: AdminViewModel)
                     Text(
                         text = "ID: ${user.userId}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.outline,
                     )
                     Text(
                         text = user.fullName,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     Text(
                         text = "${user.role.name} • ${user.status.name}",
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
                     )
 
                     Row(
@@ -917,17 +1015,26 @@ fun AdminUserManagement(viewModel: AdminViewModel)
                             },
                         )
                         {
-                            Text(text = if (user.status == UserStatus.ACTIVE) "Suspend" else "Activate")
+                            Text(
+                                text = if (user.status == UserStatus.ACTIVE)
+                                {
+                                    "Suspend"
+                                }
+                                else
+                                {
+                                    "Activate"
+                                },
+                            )
                         }
 
                         TextButton(
                             onClick = {
                                 viewModel.deleteUser(user)
                             },
-                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
                         )
                         {
-                            Text("Delete")
+                            Text(text = "Delete")
                         }
                     }
                 }
@@ -942,7 +1049,7 @@ fun AdminVendorManagement(viewModel: AdminViewModel)
     val vendors by viewModel.vendors.collectAsState()
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
+        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
     )
     {
         items(vendors)
@@ -954,9 +1061,12 @@ fun AdminVendorManagement(viewModel: AdminViewModel)
                     Text(
                         text = vendor.shopName ?: vendor.fullName,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
-                    Text(text = vendor.email, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        text = vendor.email,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                     Text(
                         text = "Status: ${vendor.status.name}",
                         style = MaterialTheme.typography.labelMedium,
@@ -975,7 +1085,7 @@ fun AdminOrderManagement(viewModel: AdminViewModel)
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
+        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
     )
     {
         items(orders)
@@ -990,11 +1100,14 @@ fun AdminOrderManagement(viewModel: AdminViewModel)
                         modifier = Modifier.fillMaxWidth(),
                     )
                     {
-                        Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Order #${order.orderId}",
+                            fontWeight = FontWeight.Bold,
+                        )
                         Text(
                             text = "R${String.format(locale, "%.2f", order.totalAmount)}",
                             color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Black
+                            fontWeight = FontWeight.Black,
                         )
                     }
                     Text(
@@ -1008,15 +1121,23 @@ fun AdminOrderManagement(viewModel: AdminViewModel)
                         {
                             Text(text = "Update Status")
                         }
-                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false })
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = {
+                                expanded = false
+                            },
+                        )
                         {
-                            OrderStatus.entries.forEach { status ->
+                            OrderStatus.entries.forEach()
+                            { status ->
                                 DropdownMenuItem(
-                                    text = { Text(text = status.name) },
+                                    text = {
+                                        Text(text = status.name)
+                                    },
                                     onClick = {
                                         viewModel.updateOrderStatus(order, status)
                                         expanded = false
-                                    }
+                                    },
                                 )
                             }
                         }
@@ -1058,17 +1179,23 @@ fun StudentReceipts(
     )
     val currentYear = Calendar.getInstance()[Calendar.YEAR]
     val years = listOf("All Years") + (currentYear downTo (currentYear - 5)).map { it.toString() }
-    val sortOptions =
-        listOf("Amount (High to Low)", "Amount (Low to High)", "Date (Newest)", "Date (Oldest)")
+    val sortOptions = listOf(
+        "Amount (High to Low)",
+        "Amount (Low to High)",
+        "Date (Newest)",
+        "Date (Oldest)",
+    )
 
     val filteredOrders = remember(orders, selectedMonth, selectedYear, sortBy)
     {
-        orders.asSequence().filter { order ->
+        orders.asSequence().filter()
+        { order ->
             val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
-            val monthMatch = selectedMonth == -1 || cal[Calendar.MONTH] == selectedMonth
-            val yearMatch = selectedYear == -1 || cal[Calendar.YEAR] == selectedYear
+            val monthMatch = (selectedMonth == -1) || (cal[Calendar.MONTH] == selectedMonth)
+            val yearMatch = (selectedYear == -1) || (cal[Calendar.YEAR] == selectedYear)
             monthMatch && yearMatch
-        }.let { seq ->
+        }.let()
+        { seq ->
             when (sortBy)
             {
                 "Amount (High to Low)" -> seq.sortedByDescending { it.totalAmount }
@@ -1088,15 +1215,19 @@ fun StudentReceipts(
                 label = "Month",
                 selectedOption = if (selectedMonth == -1) "All" else months[selectedMonth + 1],
                 options = months,
-                onOptionSelected = { selectedMonth = months.indexOf(it) - 1 },
-                modifier = Modifier.weight(1f)
+                onOptionSelected = {
+                    selectedMonth = months.indexOf(it) - 1
+                },
+                modifier = Modifier.weight(1f),
             )
             MinimalDropdown(
                 label = "Year",
                 selectedOption = if (selectedYear == -1) "All" else selectedYear.toString(),
                 options = years,
-                onOptionSelected = { selectedYear = if (it == "All Years") -1 else it.toInt() },
-                modifier = Modifier.weight(1f)
+                onOptionSelected = {
+                    selectedYear = if (it == "All Years") -1 else it.toInt()
+                },
+                modifier = Modifier.weight(1f),
             )
         }
 
@@ -1104,14 +1235,16 @@ fun StudentReceipts(
             label = "Sort",
             selectedOption = sortBy,
             options = sortOptions,
-            onOptionSelected = { sortBy = it },
-            modifier = Modifier.fillMaxWidth()
+            onOptionSelected = {
+                sortBy = it
+            },
+            modifier = Modifier.fillMaxWidth(),
         )
 
         LazyColumn(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
-            contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
+            contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
         )
         {
             if (filteredOrders.isEmpty())
@@ -1122,10 +1255,13 @@ fun StudentReceipts(
                         Modifier
                             .fillMaxWidth()
                             .padding(DesignSystem.Spacing.extraLarge),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     )
                     {
-                        Text("No records found.", color = MaterialTheme.colorScheme.outline)
+                        Text(
+                            text = "No records found.",
+                            color = MaterialTheme.colorScheme.outline,
+                        )
                     }
                 }
             }
@@ -1133,7 +1269,9 @@ fun StudentReceipts(
             { order ->
                 HIGCard(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { onOrderClick(order) }
+                    onClick = {
+                        onOrderClick(order)
+                    },
                 )
                 {
                     Row(
@@ -1144,20 +1282,23 @@ fun StudentReceipts(
                     {
                         Column()
                         {
-                            Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "Order #${order.orderId}",
+                                fontWeight = FontWeight.Bold,
+                            )
                             Text(
                                 text = SimpleDateFormat("dd MMM yyyy", locale).format(
-                                    Date(order.timestamp)
+                                    Date(order.timestamp),
                                 ),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.outline
+                                color = MaterialTheme.colorScheme.outline,
                             )
                         }
                         Text(
                             text = "R${String.format(locale, "%.2f", order.totalAmount)}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                     }
                 }
@@ -1167,27 +1308,33 @@ fun StudentReceipts(
 }
 
 @Composable
-fun StudentTotalSpending(userId: String, orderRepository: OrderRepository)
+fun StudentTotalSpending(
+    userId: String,
+    orderRepository: OrderRepository,
+)
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
     val total = orders.sumOf { it.totalAmount }
     val locale = LocalConfiguration.current.locales[0]
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    )
     {
         Column(horizontalAlignment = Alignment.CenterHorizontally)
         {
             Text(
                 text = "Lifetime Spending",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.outline
+                color = MaterialTheme.colorScheme.outline,
             )
             Text(
                 text = "R${String.format(locale, "%.2f", total)}",
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.primary,
-                letterSpacing = (-1).sp
+                letterSpacing = (-1).sp,
             )
         }
     }
@@ -1202,7 +1349,7 @@ fun SettingsScreenTab(
     couponRepository: CouponRepository,
     adminViewModel: AdminViewModel,
     debitCardRepository: DebitCardRepository,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
 )
 {
     var activeSettingView by remember { mutableStateOf("Main") }
@@ -1217,7 +1364,7 @@ fun SettingsScreenTab(
                 .fillMaxSize()
                 .padding(DesignSystem.Spacing.screenPadding)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large),
         )
         {
             // Principle: Aesthetic Integrity - Removed redundant heading.
@@ -1230,7 +1377,10 @@ fun SettingsScreenTab(
 
                 LaunchedEffect(user)
                 {
-                    if (newEmail.isEmpty()) newEmail = user?.email ?: ""
+                    if (newEmail.isEmpty())
+                    {
+                        newEmail = user?.email ?: ""
+                    }
                 }
 
                 Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
@@ -1238,45 +1388,56 @@ fun SettingsScreenTab(
                     Text(
                         text = "Profile Identity",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     OutlinedTextField(
                         value = newEmail,
-                        onValueChange = { newEmail = it },
-                        label = { Text("Email Address") },
+                        onValueChange = {
+                            newEmail = it
+                        },
+                        label = {
+                            Text(text = "Email Address")
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium
+                        shape = MaterialTheme.shapes.medium,
                     )
                     OutlinedTextField(
                         value = newPassword,
-                        onValueChange = { newPassword = it },
-                        label = { Text("New Security Key") },
+                        onValueChange = {
+                            newPassword = it
+                        },
+                        label = {
+                            Text(text = "New Security Key")
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                        shape = MaterialTheme.shapes.medium
+                        shape = MaterialTheme.shapes.medium,
                     )
                     val context = LocalContext.current
                     Button(
                         onClick = {
-                            coroutineScope.launch {
+                            coroutineScope.launch()
+                            {
                                 val result = authRepository.updateProfile(
                                     userId,
                                     newEmail,
                                     newPassword,
                                 )
-                                result.onSuccess {
+                                result.onSuccess()
+                                {
                                     Toast.makeText(context, "Credentials successfully updated.", Toast.LENGTH_SHORT).show()
                                     newPassword = ""
-                                }.onFailure { e ->
+                                }.onFailure()
+                                { e ->
                                     Toast.makeText(context, e.message ?: "Update failed.", Toast.LENGTH_LONG).show()
                                 }
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium
+                        shape = MaterialTheme.shapes.medium,
                     )
                     {
-                        Text("Update Credentials")
+                        Text(text = "Update Credentials")
                     }
                 }
             }
@@ -1289,7 +1450,7 @@ fun SettingsScreenTab(
                     Text(
                         text = "Financial Controls",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     when (role)
                     {
@@ -1300,40 +1461,49 @@ fun SettingsScreenTab(
                                     String.format(
                                         locale,
                                         "%.2f",
-                                        user?.walletBalance ?: 0.0
+                                        user?.walletBalance ?: 0.0,
                                     )
                                 }",
                                 fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
                             )
                             TextButton(
                                 onClick = {
                                     activeSettingView = "AddCard"
-                                }
+                                },
                             )
                             {
-                                Text("Link Debit Card")
+                                Text(text = "Link Debit Card")
                             }
                             TextButton(
                                 onClick = {
                                     activeSettingView = "Redeem"
-                                }
+                                },
                             )
                             {
-                                Text("Redeem Coupon")
+                                Text(text = "Redeem Coupon")
                             }
                         }
 
                         UserRole.VENDOR ->
                         {
-                            Text(text = if (user?.bankAccountInfo != null) "Payout Enabled" else "Payout Not Configured")
+                            Text(
+                                text = if (user?.bankAccountInfo != null)
+                                {
+                                    "Payout Enabled"
+                                }
+                                else
+                                {
+                                    "Payout Not Configured"
+                                },
+                            )
                             TextButton(
                                 onClick = {
                                     activeSettingView = "Bank"
-                                }
+                                },
                             )
                             {
-                                Text("Update Bank Details")
+                                Text(text = "Update Bank Details")
                             }
                         }
 
@@ -1342,18 +1512,18 @@ fun SettingsScreenTab(
                             TextButton(
                                 onClick = {
                                     activeSettingView = "Credits"
-                                }
+                                },
                             )
                             {
-                                Text("Issue System Credits")
+                                Text(text = "Issue System Credits")
                             }
                             TextButton(
                                 onClick = {
                                     activeSettingView = "Coupons"
-                                }
+                                },
                             )
                             {
-                                Text("Generate Coupons")
+                                Text(text = "Generate Coupons")
                             }
                         }
                     }
@@ -1368,36 +1538,38 @@ fun SettingsScreenTab(
                     Text(
                         text = "System Support",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     if (role == UserRole.ADMIN)
                     {
                         TextButton(
                             onClick = {
                                 activeSettingView = "Complaints"
-                            }
+                            },
                         )
                         {
-                            Text("Review Complaints")
+                            Text(text = "Review Complaints")
                         }
                         TextButton(
                             onClick = {
                                 activeSettingView = "Compliments"
-                            }
+                            },
                         )
                         {
-                            Text("Review Compliments")
+                            Text(text = "Review Compliments")
                         }
                     }
                     else
                     {
                         Button(
-                            onClick = { activeSettingView = "Feedback" },
+                            onClick = {
+                                activeSettingView = "Feedback"
+                            },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = MaterialTheme.shapes.medium
+                            shape = MaterialTheme.shapes.medium,
                         )
                         {
-                            Text("Submit Feedback")
+                            Text(text = "Submit Feedback")
                         }
                     }
                 }
@@ -1409,16 +1581,22 @@ fun SettingsScreenTab(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                shape = MaterialTheme.shapes.large
+                shape = MaterialTheme.shapes.large,
             )
             {
-                Icon(Icons.AutoMirrored.Rounded.Logout, null)
-                Spacer(Modifier.width(DesignSystem.Spacing.small))
-                Text("Logout Session", fontWeight = FontWeight.Bold)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.Logout,
+                    contentDescription = null,
+                )
+                Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
+                Text(
+                    text = "Logout Session",
+                    fontWeight = FontWeight.Bold,
+                )
             }
 
             Text(
-                "Campus Eats v2.0.0 Stable",
+                text = "Campus Eats v2.0.0 Stable",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.labelSmall,
@@ -1433,21 +1611,24 @@ fun SettingsScreenTab(
         {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(DesignSystem.Spacing.medium)
+                modifier = Modifier.padding(DesignSystem.Spacing.medium),
             )
             {
-                            IconButton(
-                                onClick = {
-                                    activeSettingView = "Main"
-                                }
-                            )
-                            {
-                                Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
-                            }
+                IconButton(
+                    onClick = {
+                        activeSettingView = "Main"
+                    },
+                )
+                {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = "Back",
+                    )
+                }
                 Text(
                     text = activeSettingView.replace(Regex("([a-z])([A-Z])"), "$1 $2"),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
 
@@ -1459,18 +1640,31 @@ fun SettingsScreenTab(
             {
                 when (activeSettingView)
                 {
-                    "Credits" -> AdminIssueCreditsWindow(adminViewModel)
-                    "Coupons" -> AdminGenerateCouponsWindow(adminViewModel)
-                    "Complaints" -> AdminFeedbackWindow(adminViewModel, FeedbackType.COMPLAINT)
+                    "Credits" -> AdminIssueCreditsWindow(viewModel = adminViewModel)
+                    "Coupons" -> AdminGenerateCouponsWindow(viewModel = adminViewModel)
+                    "Complaints" -> AdminFeedbackWindow(
+                        viewModel = adminViewModel,
+                        type = FeedbackType.COMPLAINT,
+                    )
                     "Compliments" -> AdminFeedbackWindow(
-                        adminViewModel,
-                        FeedbackType.COMPLIMENT
+                        viewModel = adminViewModel,
+                        type = FeedbackType.COMPLIMENT,
                     )
 
-                    "Redeem" -> StudentRedeemCouponWindow(couponRepository)
-                    "AddCard" -> StudentAddCardWindow(debitCardRepository, userId)
-                    "Bank" -> VendorBankDetailsWindow(authRepository, userId, user?.bankAccountInfo)
-                    "Feedback" -> UserFeedbackWindow(feedbackRepository, userId)
+                    "Redeem" -> StudentRedeemCouponWindow(couponRepository = couponRepository)
+                    "AddCard" -> StudentAddCardWindow(
+                        debitCardRepository = debitCardRepository,
+                        userId = userId,
+                    )
+                    "Bank" -> VendorBankDetailsWindow(
+                        authRepository = authRepository,
+                        userId = userId,
+                        currentInfo = user?.bankAccountInfo,
+                    )
+                    "Feedback" -> UserFeedbackWindow(
+                        feedbackRepository = feedbackRepository,
+                        userId = userId,
+                    )
                 }
             }
         }
@@ -1484,23 +1678,25 @@ fun MinimalDropdown(
     selectedOption: String,
     options: List<String>,
     onOptionSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 )
 {
     var expanded by remember { mutableStateOf(value = false) }
     Box(modifier = modifier)
     {
         Surface(
-            onClick = { expanded = true },
+            onClick = {
+                expanded = true
+            },
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
         {
             Row(
                 modifier = Modifier.padding(DesignSystem.Spacing.medium),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             )
             {
                 Column()
@@ -1509,26 +1705,40 @@ fun MinimalDropdown(
                         text = label,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     Text(
                         text = selectedOption,
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
                     )
                 }
                 Icon(
-                    imageVector = if (expanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
-                    contentDescription = null
+                    imageVector = if (expanded)
+                    {
+                        Icons.Rounded.KeyboardArrowUp
+                    }
+                    else
+                    {
+                        Icons.Rounded.KeyboardArrowDown
+                    },
+                    contentDescription = null,
                 )
             }
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false })
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+            },
+        )
         {
             options.forEach()
             { option ->
                 DropdownMenuItem(
-                    text = { Text(option) },
+                    text = {
+                        Text(text = option)
+                    },
                     onClick = {
                         onOptionSelected(option)
                         expanded = false
@@ -1544,7 +1754,7 @@ fun StudentCurrentOrderHub(
     userId: String,
     cartRepository: CartRepository,
     onNavigateToCheckout: () -> Unit,
-    onReturnHome: () -> Unit
+    onReturnHome: () -> Unit,
 )
 {
     val items by cartRepository.getCart(userId).collectAsState(emptyList())
@@ -1553,21 +1763,29 @@ fun StudentCurrentOrderHub(
 
     if (items.isEmpty())
     {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        )
+        {
+            Column(horizontalAlignment = Alignment.CenterHorizontally)
+            {
                 Icon(
-                    Icons.Rounded.RemoveShoppingCart,
-                    null,
+                    imageVector = Icons.Rounded.RemoveShoppingCart,
+                    contentDescription = null,
                     modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.outline
+                    tint = MaterialTheme.colorScheme.outline,
                 )
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
                 Text(
                     text = "Your active cart is empty.",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.outline,
                 )
-                TextButton(onClick = onReturnHome) { Text("Start Shopping") }
+                TextButton(onClick = onReturnHome)
+                {
+                    Text(text = "Start Shopping")
+                }
             }
         }
     }
@@ -1575,31 +1793,37 @@ fun StudentCurrentOrderHub(
     {
         Column(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        )
+        {
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
-                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
-            ) {
-                items(items) { item ->
-                    HIGCard(modifier = Modifier.fillMaxWidth()) {
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
+            )
+            {
+                items(items)
+                { item ->
+                    HIGCard(modifier = Modifier.fillMaxWidth())
+                    {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                        )
+                        {
+                            Column(modifier = Modifier.weight(1f))
+                            {
                                 Text(
                                     text = item.name,
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
                                 )
                                 Text(
                                     text = "R${String.format(locale, "%.2f", item.price)}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
                                 )
                             }
 
@@ -1607,7 +1831,8 @@ fun StudentCurrentOrderHub(
                             {
                                 IconButton(
                                     onClick = {
-                                        coroutineScope.launch {
+                                        coroutineScope.launch()
+                                        {
                                             if (item.quantity > 1)
                                             {
                                                 cartRepository.removeFromCart(item)
@@ -1659,13 +1884,14 @@ fun StudentCurrentOrderHub(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) {
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            )
+            {
                 val subtotal = items.sumOf { it.price * it.quantity }
                 Text(
                     text = "Proceed to Checkout • R${String.format(locale, "%.2f", subtotal)}",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -1673,24 +1899,36 @@ fun StudentCurrentOrderHub(
 }
 
 @Composable
-fun StudentActivityReports(userId: String, orderRepository: OrderRepository)
+fun StudentActivityReports(
+    userId: String,
+    orderRepository: OrderRepository,
+)
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
     val context = LocalContext.current
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth())
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth(),
+    )
     {
-        Text("Generate financial activity report.", color = MaterialTheme.colorScheme.outline)
-        Spacer(Modifier.height(DesignSystem.Spacing.large))
+        Text(
+            text = "Generate financial activity report.",
+            color = MaterialTheme.colorScheme.outline,
+        )
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
         Button(
             onClick = {
                 val json = Json.encodeToString(orders)
                 File(context.getExternalFilesDir(null), "order_history.json").writeText(json)
                 Toast.makeText(context, "Report saved to local storage", Toast.LENGTH_SHORT).show()
-            }
+            },
         )
         {
-            Icon(Icons.Rounded.Download, null)
-            Text("Export as JSON")
+            Icon(
+                imageVector = Icons.Rounded.Download,
+                contentDescription = null,
+            )
+            Text(text = "Export as JSON")
         }
     }
 }
@@ -1699,14 +1937,14 @@ fun StudentActivityReports(userId: String, orderRepository: OrderRepository)
 fun VendorOrderHub(
     vendorId: String,
     orderRepository: OrderRepository,
-    onOrderClick: (OrderEntity) -> Unit
+    onOrderClick: (OrderEntity) -> Unit,
 )
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
     val locale = LocalConfiguration.current.locales[0]
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large)
+        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
     )
     {
         if (orders.isEmpty())
@@ -1717,10 +1955,13 @@ fun VendorOrderHub(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(DesignSystem.Spacing.extraLarge),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 )
                 {
-                    Text("No orders assigned yet.", color = MaterialTheme.colorScheme.outline)
+                    Text(
+                        text = "No orders assigned yet.",
+                        color = MaterialTheme.colorScheme.outline,
+                    )
                 }
             }
         }
@@ -1729,7 +1970,9 @@ fun VendorOrderHub(
         { order ->
             HIGCard(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { onOrderClick(order) }
+                onClick = {
+                    onOrderClick(order)
+                },
             )
             {
                 Column()
@@ -1739,27 +1982,36 @@ fun VendorOrderHub(
                         modifier = Modifier.fillMaxWidth(),
                     )
                     {
-                        Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Order #${order.orderId}",
+                            fontWeight = FontWeight.Bold,
+                        )
                         Text(
                             text = "R${String.format(locale, "%.2f", order.totalAmount)}",
                             fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                     }
                     Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraSmall))
                     Text(
                         text = "Status: ${order.status.name}",
                         style = MaterialTheme.typography.labelMedium,
-                        color = if (order.status == OrderStatus.PENDING) MaterialTheme.colorScheme.error
-                        else MaterialTheme.colorScheme.outline
+                        color = if (order.status == OrderStatus.PENDING)
+                        {
+                            MaterialTheme.colorScheme.error
+                        }
+                        else
+                        {
+                            MaterialTheme.colorScheme.outline
+                        },
                     )
                     Text(
                         text = "Received: ${
                             SimpleDateFormat("HH:mm", locale).format(
-                                Date(order.timestamp)
+                                Date(order.timestamp),
                             )
                         }",
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }
@@ -1768,23 +2020,29 @@ fun VendorOrderHub(
 }
 
 @Composable
-fun VendorReportHub(vendorId: String, orderRepository: OrderRepository)
+fun VendorReportHub(
+    vendorId: String,
+    orderRepository: OrderRepository,
+)
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
     val total = orders.asSequence().filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
     val locale = LocalConfiguration.current.locales[0]
     HIGCard(
         modifier = Modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.primaryContainer
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
     )
     {
         Column()
         {
-            Text("Total Revenue", style = MaterialTheme.typography.labelMedium)
             Text(
-                "R${String.format(locale, "%.2f", total)}",
+                text = "Total Revenue",
+                style = MaterialTheme.typography.labelMedium,
+            )
+            Text(
+                text = "R${String.format(locale, "%.2f", total)}",
                 style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Black
+                fontWeight = FontWeight.Black,
             )
         }
     }
@@ -1803,14 +2061,17 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
             {
                 Column()
                 {
-                    Text("Order #${order.orderId} • ${order.status}", fontWeight = FontWeight.Bold)
                     Text(
-                        "Customer: ${order.customerId} | Vendor: ${order.vendorId}",
-                        style = MaterialTheme.typography.labelSmall
+                        text = "Order #${order.orderId} • ${order.status}",
+                        fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        "Amount: R${String.format(locale, "%.2f", order.totalAmount)}",
-                        color = MaterialTheme.colorScheme.primary
+                        text = "Customer: ${order.customerId} | Vendor: ${order.vendorId}",
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                    Text(
+                        text = "Amount: R${String.format(locale, "%.2f", order.totalAmount)}",
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -1826,11 +2087,14 @@ fun AdminGlobalSummary(orderRepository: OrderRepository)
     val locale = LocalConfiguration.current.locales[0]
     Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
     {
-        StatCardFull(label = "Platform Revenue", value = "R${String.format(locale, "%.2f", total)}")
+        StatCardFull(
+            label = "Platform Revenue",
+            value = "R${String.format(locale, "%.2f", total)}",
+        )
         StatCardHalf(
             label = "Total Transactions",
             value = orders.size.toString(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -1847,13 +2111,17 @@ fun AdminReportHub()
                 title = "Daily Trends",
                 description = "View platform activity over time.",
                 icon = Icons.AutoMirrored.Rounded.TrendingUp,
-                onClick = { reportType = "Trends" },
+                onClick = {
+                    reportType = "Trends"
+                },
             )
             HIGServiceRow(
                 title = "Vendor Rankings",
                 description = "Top performers by revenue.",
                 icon = Icons.Rounded.AttachMoney,
-                onClick = { reportType = "Vendors" },
+                onClick = {
+                    reportType = "Vendors"
+                },
             )
         }
     }
@@ -1867,19 +2135,22 @@ fun AdminReportHub()
                 },
             )
             {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = null,
+                )
             }
             Text(
-                "Report: $reportType",
+                text = "Report: $reportType",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
             )
             Box(
-                Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
             )
             {
-                Text("Data aggregation in progress...")
+                Text(text = "Data aggregation in progress...")
             }
         }
     }
@@ -1901,7 +2172,10 @@ fun OrderDetailWindow(
             contentAlignment = Alignment.Center,
         )
         {
-            Text("Detailed receipt data is unavailable.", color = MaterialTheme.colorScheme.error)
+            Text(
+                text = "Detailed receipt data is unavailable.",
+                color = MaterialTheme.colorScheme.error,
+            )
         }
     }
     else
@@ -1910,8 +2184,7 @@ fun OrderDetailWindow(
         val coroutineScope = rememberCoroutineScope()
         var statusExpanded by remember { mutableStateOf(value = false) }
 
-        val canUpdateStatus =
-            (role == UserRole.ADMIN) || ((role == UserRole.VENDOR) && (order.vendorId == userId))
+        val canUpdateStatus = (role == UserRole.ADMIN) || (role == UserRole.VENDOR && order.vendorId == userId)
 
         val items = remember(order)
         {
@@ -1929,7 +2202,7 @@ fun OrderDetailWindow(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             HIGCard(modifier = Modifier.fillMaxWidth())
@@ -1943,9 +2216,9 @@ fun OrderDetailWindow(
                     )
                     {
                         Text(
-                            "Order Audit",
+                            text = "Order Audit",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
 
                         // Role-based Status Update Controls
@@ -1955,22 +2228,31 @@ fun OrderDetailWindow(
                             {
                                 TextButton(onClick = { statusExpanded = true })
                                 {
-                                    Text("Update Status", fontWeight = FontWeight.Bold)
+                                    Text(
+                                        text = "Update Status",
+                                        fontWeight = FontWeight.Bold,
+                                    )
                                 }
                                 DropdownMenu(
                                     expanded = statusExpanded,
-                                    onDismissRequest = { statusExpanded = false }
+                                    onDismissRequest = {
+                                        statusExpanded = false
+                                    },
                                 )
                                 {
-                                    OrderStatus.entries.forEach { status ->
+                                    OrderStatus.entries.forEach()
+                                    { status ->
                                         DropdownMenuItem(
-                                            text = { Text(status.name) },
+                                            text = {
+                                                Text(text = status.name)
+                                            },
                                             onClick = {
-                                                coroutineScope.launch {
+                                                coroutineScope.launch()
+                                                {
                                                     orderRepository.updateOrderStatus(order, status)
                                                     statusExpanded = false
                                                 }
-                                            }
+                                            },
                                         )
                                     }
                                 }
@@ -1979,27 +2261,28 @@ fun OrderDetailWindow(
                     }
 
                     Text(
-                        "Serial: #${order.orderId}",
+                        text = "Serial: #${order.orderId}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.outline,
                     )
                     Text(
-                        "Merchant: ${order.vendorId}",
+                        text = "Merchant: ${order.vendorId}",
                         style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        "Transaction Date: ${
+                        text = "Transaction Date: ${
                             SimpleDateFormat(
                                 "dd/MM/yyyy HH:mm",
-                                locale
+                                locale,
                             ).format(Date(order.timestamp))
-                        }", style = MaterialTheme.typography.bodySmall
+                        }",
+                        style = MaterialTheme.typography.bodySmall,
                     )
                     Text(
-                        "Scheduled Pickup: ${order.pickupTime}",
+                        text = "Scheduled Pickup: ${order.pickupTime}",
                         style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     Text(
                         text = "Status: ${order.status.name}",
@@ -2030,7 +2313,10 @@ fun OrderDetailWindow(
                         modifier = Modifier.fillMaxWidth(),
                     )
                     {
-                        Text("${item.quantity}x ${item.name}", modifier = Modifier.weight(1f))
+                        Text(
+                            text = "${item.quantity}x ${item.name}",
+                            modifier = Modifier.weight(1f),
+                        )
                         Text(
                             text = "R${String.format(locale, "%.2f", item.price * item.quantity)}",
                             fontWeight = FontWeight.Bold,
@@ -2043,24 +2329,36 @@ fun OrderDetailWindow(
 
             HIGCard(
                 modifier = Modifier.fillMaxWidth(),
-                containerColor = MaterialTheme.colorScheme.primaryContainer
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
             )
             {
                 Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.extraSmall))
                 {
                     val subtotal = items.sumOf { it.price * it.quantity }
-                    DetailRow("Cart Subtotal", subtotal, locale)
-                    DetailRow("Platform Fees & Tax", order.totalAmount - subtotal, locale)
-                    DetailRow("Settlement Method", 0.0, locale) // Mock zero for label
+                    DetailRow(
+                        label = "Cart Subtotal",
+                        amount = subtotal,
+                        locale = locale,
+                    )
+                    DetailRow(
+                        label = "Platform Fees & Tax",
+                        amount = order.totalAmount - subtotal,
+                        locale = locale,
+                    )
+                    DetailRow(
+                        label = "Settlement Method",
+                        amount = 0.0,
+                        locale = locale,
+                    ) // Mock zero for label
                     Text(
                         text = order.paymentMethod.name,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
 
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f),
-                        modifier = Modifier.padding(vertical = 4.dp)
+                        modifier = Modifier.padding(vertical = 4.dp),
                     )
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -2068,14 +2366,14 @@ fun OrderDetailWindow(
                     )
                     {
                         Text(
-                            "Total Settlement",
+                            text = "Total Settlement",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            "R${String.format(locale, "%.2f", order.totalAmount)}",
+                            text = "R${String.format(locale, "%.2f", order.totalAmount)}",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Black
+                            fontWeight = FontWeight.Black,
                         )
                     }
                 }
@@ -2087,8 +2385,14 @@ fun OrderDetailWindow(
                 {
                     Column()
                     {
-                        Text("Customer Instructions", fontWeight = FontWeight.Bold)
-                        Text(order.specialRequests, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = "Customer Instructions",
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = order.specialRequests,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     }
                 }
             }
@@ -2098,7 +2402,7 @@ fun OrderDetailWindow(
             HIGButton(
                 onClick = onReturnHome,
                 text = "Back",
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
@@ -2107,12 +2411,23 @@ fun OrderDetailWindow(
 }
 
 @Composable
-fun DetailRow(label: String, amount: Double, locale: java.util.Locale)
+fun DetailRow(
+    label: String,
+    amount: Double,
+    locale: java.util.Locale,
+)
 {
-    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-        Text(label, style = MaterialTheme.typography.bodyMedium)
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    {
         Text(
-            "R${String.format(locale, "%.2f", amount)}",
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            text = "R${String.format(locale, "%.2f", amount)}",
             style = MaterialTheme.typography.bodyMedium,
         )
     }
@@ -2132,11 +2447,11 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             Text(
-                "Manually add credits to a user's campus wallet for support or refunds.",
+                text = "Manually add credits to a user's campus wallet for support or refunds.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
             )
@@ -2146,7 +2461,9 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
                     targetId = it
                     successMsg.value = ""
                 },
-                label = { Text("Target User ID") },
+                label = {
+                    Text(text = "Target User ID")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
                 singleLine = true,
@@ -2157,7 +2474,9 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
                     amount = it
                     successMsg.value = ""
                 },
-                label = { Text("Amount (R)") },
+                label = {
+                    Text(text = "Amount (R)")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
                 singleLine = true,
@@ -2166,7 +2485,7 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
             if (successMsg.value.isNotEmpty())
             {
                 Text(
-                    successMsg.value,
+                    text = successMsg.value,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
@@ -2174,7 +2493,7 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
         }
 
         // Principle: Direct Manipulation - Fixed action button for clarity.
-        val isFormValid = (targetId.isNotBlank()) && ((amount.toDoubleOrNull() ?: 0.0) > 0)
+        val isFormValid = targetId.isNotBlank() && (amount.toDoubleOrNull() ?: 0.0) > 0
         HIGButton(
             onClick = {
                 val a = amount.toDoubleOrNull() ?: 0.0
@@ -2188,7 +2507,7 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
             },
             text = "Finalize Credit Issue",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid
+            enabled = isFormValid,
         )
         Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
@@ -2207,11 +2526,11 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             Text(
-                "Create unique promotional codes for student discounts.",
+                text = "Create unique promotional codes for student discounts.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
             )
@@ -2221,7 +2540,9 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
                     code = it
                     successMsg.value = ""
                 },
-                label = { Text("Coupon Code") },
+                label = {
+                    Text(text = "Coupon Code")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
                 singleLine = true,
@@ -2232,7 +2553,9 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
                     discount = it
                     successMsg.value = ""
                 },
-                label = { Text("Discount Percentage") },
+                label = {
+                    Text(text = "Discount Percentage")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
                 singleLine = true,
@@ -2241,14 +2564,14 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
             if (successMsg.value.isNotEmpty())
             {
                 Text(
-                    successMsg.value,
+                    text = successMsg.value,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
             }
         }
 
-        val isFormValid = (code.isNotBlank()) && ((discount.toDoubleOrNull() ?: 0.0) > 0)
+        val isFormValid = code.isNotBlank() && (discount.toDoubleOrNull() ?: 0.0) > 0
         HIGButton(
             onClick = {
                 val d = discount.toDoubleOrNull() ?: 0.0
@@ -2262,29 +2585,40 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
             },
             text = "Generate Promo Code",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid
+            enabled = isFormValid,
         )
         Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
 
 @Composable
-fun AdminFeedbackWindow(viewModel: AdminViewModel, type: FeedbackType)
+fun AdminFeedbackWindow(
+    viewModel: AdminViewModel,
+    type: FeedbackType,
+)
 {
     val feedbacks by viewModel.getFeedbackByType(type).collectAsState(
-        emptyList()
+        emptyList(),
     )
 
     if (feedbacks.isEmpty())
     {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        )
         {
-            Text("No feedback items in this category.", color = MaterialTheme.colorScheme.outline)
+            Text(
+                text = "No feedback items in this category.",
+                color = MaterialTheme.colorScheme.outline,
+            )
         }
     }
     else
     {
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        )
         {
             items(feedbacks)
             { fb ->
@@ -2300,31 +2634,41 @@ fun AdminFeedbackWindow(viewModel: AdminViewModel, type: FeedbackType)
                             modifier = Modifier.fillMaxWidth(),
                         )
                         {
-                            Text(fb.subject, fontWeight = FontWeight.Black)
+                            Text(
+                                text = fb.subject,
+                                fontWeight = FontWeight.Black,
+                            )
                             if (resolved)
                             {
                                 Icon(
-                                    Icons.Rounded.CheckCircle,
-                                    null,
-                                    tint = MaterialTheme.colorScheme.primary
+                                    imageVector = Icons.Rounded.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
                                 )
                             }
                         }
-                        Text(fb.message, style = MaterialTheme.typography.bodySmall)
                         Text(
-                            "Audit Trace: ${fb.feedbackId} • From: ${fb.userId}",
+                            text = fb.message,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        Text(
+                            text = "Audit Trace: ${fb.feedbackId} • From: ${fb.userId}",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.outline
+                            color = MaterialTheme.colorScheme.outline,
                         )
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = DesignSystem.Spacing.small))
 
                         OutlinedTextField(
                             value = response,
-                            onValueChange = { response = it },
-                            label = { Text("Administrator Response") },
+                            onValueChange = {
+                                response = it
+                            },
+                            label = {
+                                Text(text = "Administrator Response")
+                            },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = MaterialTheme.shapes.small
+                            shape = MaterialTheme.shapes.small,
                         )
                         val context = LocalContext.current
                         Row(
@@ -2334,7 +2678,16 @@ fun AdminFeedbackWindow(viewModel: AdminViewModel, type: FeedbackType)
                         {
                             TextButton(onClick = { resolved = !resolved })
                             {
-                                Text(if (resolved) "Reopen" else "Mark Resolved")
+                                Text(
+                                    text = if (resolved)
+                                    {
+                                        "Reopen"
+                                    }
+                                    else
+                                    {
+                                        "Mark Resolved"
+                                    },
+                                )
                             }
                             TextButton(
                                 onClick = {
@@ -2348,10 +2701,10 @@ fun AdminFeedbackWindow(viewModel: AdminViewModel, type: FeedbackType)
                                         response = ""
                                         resolved = true
                                     }
-                                }
+                                },
                             )
                             {
-                                Text("Send Response")
+                                Text(text = "Send Response")
                             }
                         }
                     }
@@ -2374,11 +2727,11 @@ fun StudentRedeemCouponWindow(couponRepository: CouponRepository)
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             Text(
-                "Enter a promotional code to apply a discount to your next order.",
+                text = "Enter a promotional code to apply a discount to your next order.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
             )
@@ -2388,18 +2741,27 @@ fun StudentRedeemCouponWindow(couponRepository: CouponRepository)
                     code = it
                     status = ""
                 },
-                label = { Text("Promo Code") },
+                label = {
+                    Text(text = "Promo Code")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                singleLine = true
+                singleLine = true,
             )
 
             if (status.isNotEmpty())
             {
                 Text(
-                    status,
-                    color = if (status.startsWith("Valid")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Bold
+                    text = status,
+                    color = if (status.startsWith("Valid"))
+                    {
+                        MaterialTheme.colorScheme.primary
+                    }
+                    else
+                    {
+                        MaterialTheme.colorScheme.error
+                    },
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -2410,20 +2772,29 @@ fun StudentRedeemCouponWindow(couponRepository: CouponRepository)
                 coroutineScope.launch()
                 {
                     val c = couponRepository.validateCoupon(code)
-                    status =
-                        if (c != null) "Valid: ${c.discountPercent}% discount activated." else "Error: Code not found or inactive."
+                    status = if (c != null)
+                    {
+                        "Valid: ${c.discountPercent}% discount activated."
+                    }
+                    else
+                    {
+                        "Error: Code not found or inactive."
+                    }
                 }
             },
             text = "Verify Code",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid
+            enabled = isFormValid,
         )
         Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
 
 @Composable
-fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: String)
+fun StudentAddCardWindow(
+    debitCardRepository: DebitCardRepository,
+    userId: String,
+)
 {
     var cardNumber by remember { mutableStateOf("") }
     var expiryDate by remember { mutableStateOf("") }
@@ -2437,11 +2808,11 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             Text(
-                "Link a debit card for secure campus wallet top-ups.",
+                text = "Link a debit card for secure campus wallet top-ups.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
             )
@@ -2451,10 +2822,12 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
                     cardNumber = it
                     successMsg = ""
                 },
-                label = { Text("16-Digit Card Number") },
+                label = {
+                    Text(text = "16-Digit Card Number")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                singleLine = true
+                singleLine = true,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
             {
@@ -2464,10 +2837,12 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
                         expiryDate = it
                         successMsg = ""
                     },
-                    label = { Text("MM/YY") },
+                    label = {
+                        Text(text = "MM/YY")
+                    },
                     modifier = Modifier.weight(1f),
                     shape = MaterialTheme.shapes.medium,
-                    singleLine = true
+                    singleLine = true,
                 )
                 OutlinedTextField(
                     value = cvv,
@@ -2475,24 +2850,26 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
                         cvv = it
                         successMsg = ""
                     },
-                    label = { Text("CVV") },
+                    label = {
+                        Text(text = "CVV")
+                    },
                     modifier = Modifier.weight(1f),
                     shape = MaterialTheme.shapes.medium,
-                    singleLine = true
+                    singleLine = true,
                 )
             }
 
             if (successMsg.isNotEmpty())
             {
                 Text(
-                    successMsg,
+                    text = successMsg,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
 
-        val isFormValid = (cardNumber.length == 16) && expiryDate.isNotBlank() && cvv.isNotBlank()
+        val isFormValid = cardNumber.length == 16 && expiryDate.isNotBlank() && cvv.isNotBlank()
         HIGButton(
             onClick = {
                 if (isFormValid)
@@ -2503,23 +2880,29 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
                             userId,
                             cardNumber,
                             expiryDate,
-                            cvv
+                            cvv,
                         )
                     }
                     successMsg = "Success: Card ending in ${cardNumber.takeLast(4)} linked."
-                    cardNumber = ""; expiryDate = ""; cvv = ""
+                    cardNumber = ""
+                    expiryDate = ""
+                    cvv = ""
                 }
             },
             text = "Securely Save Card",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid
+            enabled = isFormValid,
         )
         Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
 
 @Composable
-fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, currentInfo: String?)
+fun VendorBankDetailsWindow(
+    authRepository: AuthRepository,
+    userId: String,
+    currentInfo: String?,
+)
 {
     var bankName by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(0) ?: "") }
     var accNum by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(1) ?: "") }
@@ -2537,11 +2920,11 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             Text(
-                "Provide your banking information to receive periodic revenue payouts.",
+                text = "Provide your banking information to receive periodic revenue payouts.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
             )
@@ -2553,10 +2936,12 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
                     successMsg = ""
                     errorMsg = ""
                 },
-                label = { Text("Financial Institution (Bank Name)") },
+                label = {
+                    Text(text = "Financial Institution (Bank Name)")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                singleLine = true
+                singleLine = true,
             )
             OutlinedTextField(
                 value = accNum,
@@ -2564,10 +2949,12 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
                     accNum = it
                     errorMsg = ""
                 },
-                label = { Text("Account Number") },
+                label = {
+                    Text(text = "Account Number")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                singleLine = true
+                singleLine = true,
             )
             OutlinedTextField(
                 value = confirmAccNum,
@@ -2575,10 +2962,12 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
                     confirmAccNum = it
                     errorMsg = ""
                 },
-                label = { Text("Confirm Account Number") },
+                label = {
+                    Text(text = "Confirm Account Number")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                singleLine = true
+                singleLine = true,
             )
             OutlinedTextField(
                 value = holder,
@@ -2586,10 +2975,12 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
                     holder = it
                     errorMsg = ""
                 },
-                label = { Text("Account Holder Name") },
+                label = {
+                    Text(text = "Account Holder Name")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                singleLine = true
+                singleLine = true,
             )
             OutlinedTextField(
                 value = branch,
@@ -2597,32 +2988,33 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
                     branch = it
                     errorMsg = ""
                 },
-                label = { Text("Branch Code") },
+                label = {
+                    Text(text = "Branch Code")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                singleLine = true
+                singleLine = true,
             )
 
             if (successMsg.isNotEmpty())
             {
                 Text(
-                    successMsg,
+                    text = successMsg,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
             if (errorMsg.isNotEmpty())
             {
                 Text(
-                    errorMsg,
+                    text = errorMsg,
                     color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
 
-        val isFormValid =
-            bankName.isNotBlank() && accNum.isNotBlank() && holder.isNotBlank() && branch.isNotBlank() && confirmAccNum.isNotBlank()
+        val isFormValid = bankName.isNotBlank() && accNum.isNotBlank() && holder.isNotBlank() && branch.isNotBlank() && confirmAccNum.isNotBlank()
 
         HIGButton(
             onClick = {
@@ -2642,14 +3034,17 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
             },
             text = "Update Payout Details",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid
+            enabled = isFormValid,
         )
         Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
 
 @Composable
-fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
+fun UserFeedbackWindow(
+    feedbackRepository: FeedbackRepository,
+    userId: String,
+)
 {
     var subj by remember { mutableStateOf("") }
     var msg by remember { mutableStateOf("") }
@@ -2663,11 +3058,11 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             Text(
-                "Your feedback helps us improve the campus dining experience.",
+                text = "Your feedback helps us improve the campus dining experience.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
             )
@@ -2680,8 +3075,10 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
                         type = FeedbackType.COMPLIMENT
                         successMsg = ""
                     },
-                    label = { Text("Compliment") },
-                    shape = MaterialTheme.shapes.medium
+                    label = {
+                        Text(text = "Compliment")
+                    },
+                    shape = MaterialTheme.shapes.medium,
                 )
                 FilterChip(
                     selected = type == FeedbackType.COMPLAINT,
@@ -2689,8 +3086,10 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
                         type = FeedbackType.COMPLAINT
                         successMsg = ""
                     },
-                    label = { Text("Complaint") },
-                    shape = MaterialTheme.shapes.medium
+                    label = {
+                        Text(text = "Complaint")
+                    },
+                    shape = MaterialTheme.shapes.medium,
                 )
             }
 
@@ -2700,7 +3099,9 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
                     subj = it
                     successMsg = ""
                 },
-                label = { Text("Topic / Subject") },
+                label = {
+                    Text(text = "Topic / Subject")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
                 singleLine = true,
@@ -2711,7 +3112,9 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
                     msg = it
                     successMsg = ""
                 },
-                label = { Text("Detailed Message") },
+                label = {
+                    Text(text = "Detailed Message")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 4,
                 shape = MaterialTheme.shapes.medium,
@@ -2720,9 +3123,9 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
             if (successMsg.isNotEmpty())
             {
                 Text(
-                    successMsg,
+                    text = successMsg,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -2732,7 +3135,8 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
             onClick = {
                 if (isFormValid)
                 {
-                    coroutineScope.launch {
+                    coroutineScope.launch()
+                    {
                         feedbackRepository.submitFeedback(
                             userId,
                             subj,
@@ -2747,7 +3151,7 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
             },
             text = "Finalize Submission",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid
+            enabled = isFormValid,
         )
         Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }

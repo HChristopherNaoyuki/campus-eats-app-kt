@@ -54,11 +54,12 @@ fun MainScreen(
     onNavigateToCheckout: () -> Unit,
     onNavigateToVendorMenu: (String) -> Unit,
     onNavigateToAddMenuItem: (String, Long?) -> Unit,
-    onNavigateToMenuBrowse: (String, String) -> Unit
+    onNavigateToMenuBrowse: (String, String) -> Unit,
 )
 {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val userRole = remember(role) {
+    val userRole = remember(role)
+    {
         UserRole.entries.find { it.name == role } ?: UserRole.STANDARD
     }
 
@@ -84,7 +85,7 @@ fun MainScreen(
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.onSurface,
-                tonalElevation = 8.dp
+                tonalElevation = 8.dp,
             )
             {
                 // Home Tab
@@ -92,38 +93,38 @@ fun MainScreen(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
                     icon = { Icon(Icons.Rounded.Home, contentDescription = "Home") },
-                    label = { Text("Home") }
+                    label = { Text("Home") },
                 )
                 // Browse Tab
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
                     icon = { Icon(Icons.Rounded.Search, contentDescription = "Browse") },
-                    label = { Text("Browse") }
+                    label = { Text("Browse") },
                 )
                 // Orders Tab
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
                     icon = { Icon(Icons.Rounded.History, contentDescription = "Orders") },
-                    label = { Text("Orders") }
+                    label = { Text("Orders") },
                 )
                 // Reports Tab
                 NavigationBarItem(
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3 },
                     icon = { Icon(Icons.Rounded.Analytics, contentDescription = "Reports") },
-                    label = { Text("Reports") }
+                    label = { Text("Reports") },
                 )
                 // Settings Tab
                 NavigationBarItem(
                     selected = selectedTab == 4,
                     onClick = { selectedTab = 4 },
                     icon = { Icon(Icons.Rounded.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") }
+                    label = { Text("Settings") },
                 )
             }
-        }
+        },
     )
     { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding))
@@ -137,8 +138,11 @@ fun MainScreen(
                     statsRepository = statsRepository,
                     menuRepository = menuRepository,
                     onNavigateToMenuBrowse = onNavigateToMenuBrowse,
-                    onExploreVendors = { selectedTab = 1 }
                 )
+                {
+                    selectedTab = 1
+                }
+
                 1 -> ServicesScreenTab(
                     userId = userId,
                     role = userRole,
@@ -148,24 +152,33 @@ fun MainScreen(
                     onNavigateToVendorMenu = onNavigateToVendorMenu,
                     onNavigateToMenuBrowse = onNavigateToMenuBrowse,
                     onNavigateToAddMenuItem = onNavigateToAddMenuItem,
-                    onReturnHome = { selectedTab = 0 }
                 )
+                {
+                    selectedTab = 0
+                }
+
                 2 -> ActivityScreenTab(
                     userId = userId,
                     role = role,
                     orderRepository = orderRepository,
                     cartRepository = cartRepository,
                     onNavigateToCheckout = onNavigateToCheckout,
-                    onReturnHome = { selectedTab = 0 }
                 )
-                3 -> ActivityScreenTab( // Reports Tab reused same tab logic with different active view
+                {
+                    selectedTab = 0
+                }
+
+                3 -> ActivityScreenTab(
+                    // Reports Tab reused same tab logic with different active view
                     userId = userId,
                     role = role,
                     orderRepository = orderRepository,
                     cartRepository = cartRepository,
                     onNavigateToCheckout = onNavigateToCheckout,
-                    onReturnHome = { selectedTab = 0 }
                 )
+                {
+                    selectedTab = 0
+                }
 
                 4 -> SettingsScreenTab(
                     userId = userId,
@@ -175,7 +188,7 @@ fun MainScreen(
                     couponRepository = couponRepository,
                     adminViewModel = adminViewModel,
                     debitCardRepository = debitCardRepository,
-                    onLogout = onLogout
+                    onLogout = onLogout,
                 )
             }
         }

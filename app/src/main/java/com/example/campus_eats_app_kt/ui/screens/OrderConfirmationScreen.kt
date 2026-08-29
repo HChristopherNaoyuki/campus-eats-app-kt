@@ -32,7 +32,7 @@ import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 fun OrderConfirmationScreen(
     orderId: Long,
     onTrackOrder: () -> Unit,
-    onReturnHome: () -> Unit
+    onReturnHome: () -> Unit,
 )
 {
     Scaffold { innerPadding ->

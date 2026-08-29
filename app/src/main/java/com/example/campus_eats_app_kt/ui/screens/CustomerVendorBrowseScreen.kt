@@ -74,7 +74,7 @@ fun CustomerVendorBrowseScreen(
                     IconButton(onClick = onLogout) {
                         Icon(Icons.AutoMirrored.Rounded.Logout, contentDescription = "Logout")
                     }
-                }
+                },
             )
         },
         containerColor = MaterialTheme.colorScheme.background

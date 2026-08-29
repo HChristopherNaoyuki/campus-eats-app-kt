@@ -1,6 +1,7 @@
 package com.example.campus_eats_app_kt.data
 
 import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
@@ -21,36 +22,32 @@ object FirebaseExceptionHandler
      */
     fun parse(throwable: Throwable): String
     {
+        // First check for specific exception types that indicate common issues
         return when (throwable)
         {
             is FirebaseAuthInvalidCredentialsException ->
             {
-                // Root Cause: Incorrect password, malformed email, or mismatched project configuration.
+                // This covers ERROR_INVALID_CREDENTIAL, ERROR_INVALID_EMAIL, ERROR_WRONG_PASSWORD
                 "The email address or password you entered is incorrect. Please verify your credentials and try again."
-            }
-            is FirebaseAuthInvalidUserException ->
-            {
-                // Root Cause: Account has been disabled by an administrator or deleted.
-                "This account has been disabled or no longer exists. Please contact system support."
-            }
-            is FirebaseAuthUserCollisionException ->
-            {
-                // Root Cause: User is trying to register with an email that is already registered.
-                "An account with this email address already exists. Try signing in instead."
             }
             is FirebaseAuthRecentLoginRequiredException ->
             {
-                // Root Cause: Sensitive operation (e.g., password change) requires a fresh session.
                 "For security reasons, this action requires a recent login. Please sign out and sign back in to continue."
+            }
+            is FirebaseAuthUserCollisionException ->
+            {
+                "An account with this email address already exists. Try signing in instead."
+            }
+            is FirebaseAuthInvalidUserException ->
+            {
+                "This account has been disabled or no longer exists. Please contact system support."
             }
             is FirebaseNetworkException ->
             {
-                // Root Cause: Device is offline or Firebase servers are unreachable.
                 "Network error occurred. Please check your internet connection."
             }
             is FirebaseAuthWebException ->
             {
-                // Root Cause: Configuration mismatch (e.g., API Key restriction) or unauthorized domain.
                 if (throwable.message?.contains("CONFIGURATION_NOT_FOUND") == true)
                 {
                     "Authentication service is currently unavailable. Please ensure Email/Password provider is enabled in the Firebase Console."
@@ -60,9 +57,35 @@ object FirebaseExceptionHandler
                     "A security configuration error occurred. Please contact the application administrator."
                 }
             }
+            is FirebaseAuthException ->
+            {
+                // Handle base FirebaseAuthException by checking error codes
+                // This handles errors that don't have dedicated subclasses in the Android SDK
+                when (throwable.errorCode)
+                {
+                    "ERROR_INVALID_CREDENTIAL" -> "The supplied authentication credential has expired or is malformed. Please try signing in again."
+                    "ERROR_USER_TOKEN_EXPIRED" -> "Your session has expired. Please sign in again to refresh your credentials."
+                    "ERROR_USER_NOT_FOUND" -> "No account found with this email address."
+                    "ERROR_WRONG_PASSWORD" -> "The password you entered is incorrect."
+                    "ERROR_TOO_MANY_REQUESTS" -> "Too many unsuccessful attempts. Access to this account has been temporarily disabled due to suspicious activity. Please try again later."
+                    "ERROR_OPERATION_NOT_ALLOWED" -> "The authentication method used is currently disabled in the server configuration."
+                    else -> throwable.message ?: "An authentication error occurred. Please try again."
+                }
+            }
             else ->
             {
-                throwable.message ?: "An unexpected authentication error occurred. Please try again."
+                // Fallback for non-Auth exceptions (e.g. general Exception from RTDB or API)
+                val message = throwable.message ?: ""
+                
+                // Specifically map the reported "auth credential" string if it leaks through non-Auth exceptions
+                if (message.contains("supplied auth credential", ignoreCase = true))
+                {
+                    "Your session has expired or is invalid. Please sign out and sign back in."
+                }
+                else
+                {
+                    throwable.message ?: "An unexpected error occurred. Please try again."
+                }
             }
         }
     }

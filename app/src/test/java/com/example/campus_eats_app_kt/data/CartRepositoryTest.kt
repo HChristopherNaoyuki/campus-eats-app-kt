@@ -39,7 +39,7 @@ class CartRepositoryTest
             description = "Tasty",
             price = 50.0,
             stock = 10,
-            category = "Food"
+            category = "Food",
         )
         coEvery { cartDao.getCartItem(userId, 1) } returns null
 
@@ -47,7 +47,13 @@ class CartRepositoryTest
         repository.addToCart(userId, item)
 
         // Then
-        coVerify { cartDao.addToCart(match { it.itemId == 1L && it.quantity == 1 }) }
+        coVerify {
+            cartDao.addToCart(
+                match {
+                    (it.itemId == 1L) && (it.quantity == 1)
+                },
+            )
+        }
     }
 
     /**
@@ -64,7 +70,7 @@ class CartRepositoryTest
             description = "Tasty",
             price = 50.0,
             stock = 10,
-            category = "Food"
+            category = "Food",
         )
         val existing = CartItemEntity(
             cartItemId = 10,
@@ -73,7 +79,7 @@ class CartRepositoryTest
             vendorId = "V1",
             name = "Burger",
             price = 50.0,
-            quantity = 1
+            quantity = 1,
         )
         coEvery { cartDao.getCartItem(userId, 1) } returns existing
 
@@ -81,7 +87,13 @@ class CartRepositoryTest
         repository.addToCart(userId, item)
 
         // Then
-        coVerify { cartDao.updateCartItem(match { it.cartItemId == 10L && it.quantity == 2 }) }
+        coVerify {
+            cartDao.updateCartItem(
+                match {
+                    (it.cartItemId == 10L) && (it.quantity == 2)
+                },
+            )
+        }
     }
 
     /**
@@ -97,7 +109,7 @@ class CartRepositoryTest
             vendorId = "V1",
             name = "Burger",
             price = 50.0,
-            quantity = 2
+            quantity = 2,
         )
 
         // When
@@ -120,7 +132,7 @@ class CartRepositoryTest
             vendorId = "V1",
             name = "Burger",
             price = 50.0,
-            quantity = 1
+            quantity = 1,
         )
 
         // When

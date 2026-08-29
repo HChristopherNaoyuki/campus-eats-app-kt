@@ -11,5 +11,5 @@ data class CouponEntity(
     @PrimaryKey
     val code: String,
     val discountPercent: Double,
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
 )
