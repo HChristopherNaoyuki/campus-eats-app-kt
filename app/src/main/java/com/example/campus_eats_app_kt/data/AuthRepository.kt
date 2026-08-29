@@ -13,6 +13,7 @@ import com.example.campus_eats_app_kt.util.ValidationEngine
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,10 +36,17 @@ class AuthRepository(
     private val connectivityManager: NetworkConnectivityManager,
     private val firebaseAuth: FirebaseAuth,
     private val firebaseDatabase: FirebaseDatabase,
+    // Dependency Injection: Injecting dispatchers to ensure testability and control over execution context.
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 )
 {
     private val tag = "AuthRepository"
-    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * repositoryScope is used for "fire-and-forget" operations like database synchronization.
+     * It uses a SupervisorJob to ensure that a failure in one operation doesn't cancel others.
+     */
+    private val repositoryScope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
     /**
      * Requirement: Registration process completes within 3 seconds.
@@ -81,7 +89,7 @@ class AuthRepository(
                 {
                     val result =
                         firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-                    result.user?.uid ?: throw Exception("Firebase UID error")
+                    result.user?.uid ?: throw Exception("Firebase UID generation failed.")
                 }
                 catch (e: Exception)
                 {
@@ -134,7 +142,6 @@ class AuthRepository(
                 {
                     firebaseDatabase.getReference("users").child(campusUserId).setValue(user)
                         .await()
-                    firebaseDatabase.getReference("users").child(campusUserId).keepSynced(true)
                 }
                 catch (e: Exception)
                 {
@@ -253,6 +260,10 @@ class AuthRepository(
         }
     }
 
+    /**
+     * Resets the user's password.
+     * Note: This operation requires a recent login session in Firebase.
+     */
     suspend fun resetPassword(userId: String, newPassword: String): Result<Unit>
     {
         Log.d(tag, "Password reset initiated for User ID: $userId")
@@ -261,8 +272,19 @@ class AuthRepository(
             connectivityManager.ensureInternet()
             val user = userDao.getUserById(userId) ?: throw Exception("Invalid User ID")
             
-            // Note: Firebase password reset usually via email, but we allow forced update here
-            firebaseAuth.currentUser?.updatePassword(newPassword)?.await()
+            // SECURITY: Ensure a user is signed in to use updatePassword, 
+            // otherwise Firebase throws the 'expired credential' error.
+            val currentUser = firebaseAuth.currentUser ?: throw Exception("You must be signed in to change your password.")
+            
+            try
+            {
+                currentUser.updatePassword(newPassword).await()
+            }
+            catch (e: Exception)
+            {
+                // Root Cause of "supplied auth credential" error: session expiry for sensitive operations.
+                throw Exception(FirebaseExceptionHandler.parse(e))
+            }
             
             if (user.usercode != null)
             {
