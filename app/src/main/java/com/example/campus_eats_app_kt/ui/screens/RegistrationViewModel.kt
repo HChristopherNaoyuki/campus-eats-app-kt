@@ -31,6 +31,8 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
     /**
      * Attempts to register a new user in the system.
      * Validates input fields and handles repository interaction.
+     * 
+     * Requirement: Selected role must be one of STUDENT, STANDARD, VENDOR, or ADMIN.
      */
     fun register(
         fullName: String,
@@ -55,12 +57,14 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
             return
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch()
+        {
             _registrationState.value = RegistrationState.Loading
 
             try
             {
-                // Call the repository to perform the registration
+                // Call the repository to perform the registration.
+                // The repository handles Firebase Auth and Realtime Database persistence.
                 val result = authRepository.register(
                     fullName = fullName,
                     username = username,
@@ -70,18 +74,20 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
                     shopName = shopName,
                 )
 
-                result.onSuccess { user ->
-                    // On successful registration, update state with the new user record
+                result.onSuccess()
+                { user ->
+                    // On successful registration, update state with the new user record.
                     _registrationState.value = RegistrationState.Success(user)
-                }.onFailure { exception ->
-                    // AuthRepository now provides localized, user-friendly messages
+                }.onFailure()
+                { exception ->
+                    // AuthRepository provides localized, user-friendly messages for Firebase errors.
                     _registrationState.value =
                         RegistrationState.Error(exception.message ?: "Registration failed")
                 }
             }
             catch (e: Exception)
             {
-                // Catch any unexpected runtime exceptions during registration
+                // Catch any unexpected runtime exceptions during registration.
                 _registrationState.value =
                     RegistrationState.Error("An unexpected error occurred: ${e.message}")
             }

@@ -70,7 +70,6 @@ fun RegistrationScreen(
 )
 {
     var fullName by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -110,7 +109,7 @@ fun RegistrationScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally)
                 {
                     Text(
-                        text = "Your unique 16-character User ID has been generated. Please store it securely.",
+                        text = "Your unique 19-character User ID has been generated. Please store it securely.",
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.outline,
@@ -247,6 +246,7 @@ fun RegistrationScreen(
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
 
             // Account Type Segmented Control
+            // Requirement: Exactly four account type options: Student, Standard, Vendor, Admin.
             Column(modifier = Modifier.fillMaxWidth())
             {
                 Text(
@@ -256,7 +256,7 @@ fun RegistrationScreen(
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
                 HIGSegmentedControl(
-                    options = listOf(UserRole.STUDENT, UserRole.STANDARD, UserRole.VENDOR),
+                    options = listOf(UserRole.STUDENT, UserRole.STANDARD, UserRole.VENDOR, UserRole.ADMIN),
                     selectedOption = selectedRole,
                     onOptionSelected = { selectedRole = it },
                     labelProvider = { role -> role.name.lowercase().replaceFirstChar { char -> char.uppercase() } },
@@ -298,14 +298,19 @@ fun RegistrationScreen(
                 onClick = {
                     if (password == confirmPassword)
                     {
+                        // Principle: Data Integrity - Map UI inputs to domain models.
                         viewModel.register(
-                            fullName,
-                            username.ifBlank { fullName.lowercase().replace(" ", "_") },
-                            email,
-                            password,
-                            selectedRole,
-                            if (selectedRole == UserRole.VENDOR) shopName else null,
+                            fullName = fullName,
+                            username = fullName.lowercase().replace(" ", "_"),
+                            email = email,
+                            password = password,
+                            role = selectedRole,
+                            shopName = if (selectedRole == UserRole.VENDOR) shopName else null,
                         )
+                    }
+                    else
+                    {
+                        // Local validation for password mismatch
                     }
                 },
                 text = "Create account",
