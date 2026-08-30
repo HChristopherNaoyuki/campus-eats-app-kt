@@ -92,7 +92,7 @@ abstract class CampusEatsDatabase : RoomDatabase()
                 addColumnIfNotExists(db, "orders", "specialRequests", "TEXT")
 
                 // Update feedback table with categorization (Fixed crash target)
-                addColumnIfNotExists(db, "feedback", "type", "TEXT NOT NULL DEFAULT 'COMPLIMENT'")
+                addColumnIfNotExists(db, "feedback", "type", "TEXT NOT NULL DEFAULT 'compliment'")
             }
         }
 

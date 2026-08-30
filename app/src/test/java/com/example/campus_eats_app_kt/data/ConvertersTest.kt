@@ -11,6 +11,7 @@ import org.junit.Test
 
 /**
  * ConvertersTest ensures that type conversions for Room database remain consistent.
+ * Specifically validates that enum names are correctly serialized for SQLite persistence.
  */
 class ConvertersTest
 {
@@ -52,12 +53,17 @@ class ConvertersTest
         assertEquals(status, converters.toShopStatus(string))
     }
 
+    /**
+     * Requirement: Feedback types must be lowercase for Firebase compatibility.
+     * Ensures the converter preserves the lowercase enum names.
+     */
     @Test
     fun feedbackTypeConversion_isCorrect()
     {
-        val type = FeedbackType.COMPLAINT
+        // Enum values are lowercase (complaint, compliment) to align with Firebase rules.
+        val type = FeedbackType.complaint
         val string = converters.fromFeedbackType(type)
-        assertEquals("COMPLAINT", string)
+        assertEquals("complaint", string)
         assertEquals(type, converters.toFeedbackType(string))
     }
 
