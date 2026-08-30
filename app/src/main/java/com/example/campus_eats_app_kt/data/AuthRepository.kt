@@ -191,7 +191,7 @@ class AuthRepository(
                 delay(10.seconds)
                 try
                 {
-                    if (firebaseAuth.currentUser != null && connectivityManager.hasInternetConnection())
+                    if ((firebaseAuth.currentUser != null) && connectivityManager.hasInternetConnection())
                     {
                         userDao.getUserById(userId)?.let()
                         { user ->
@@ -200,7 +200,7 @@ class AuthRepository(
                                 "username" to user.username,
                                 "shopName" to user.shopName,
                                 "shopStatus" to user.shopStatus?.name,
-                                "bankAccountInfo" to user.bankAccountInfo
+                                "bankAccountInfo" to user.bankAccountInfo,
                             )
                             
                             firebaseDatabase.getReference("users").child(userId)
@@ -266,14 +266,46 @@ class AuthRepository(
     }
 
     /**
+     * Requirement: Reliability - Restore profile if local DB was cleared.
+     */
+    suspend fun getUserByEmail(email: String): UserEntity?
+    {
+        return userDao.getUserByEmail(email)
+    }
+
+    /**
+     * Requirement: Security - Links bank account info while syncing to RTDB.
+     */
+    suspend fun linkBankAccount(userId: String, bankInfo: String): Result<Unit>
+    {
+        return kotlin.runCatching()
+        {
+            val user = userDao.getUserById(userId) ?: throw Exception("User not found")
+            val updatedUser = user.copy(bankAccountInfo = bankInfo)
+            userDao.updateUser(updatedUser)
+            
+            try
+            {
+                firebaseDatabase.getReference("users").child(userId).child("bankAccountInfo")
+                    .setValue(bankInfo).await()
+            }
+            catch (e: Exception)
+            {
+                Log.e(tag, "Failed to sync bank info to RTDB: ${e.message}")
+            }
+        }
+    }
+
+    /**
      * Updates user profile while respecting immutable field rules.
-     * Password changes are applied to Firebase Auth only; RTDB stores "[FIREBASE_SSO]".
+     * Password changes are applied to Firebase Auth only; the database stores 
+     * a constant placeholder to indicate SSO usage.
      */
     suspend fun updateProfile(
         userId: String,
         fullName: String,
         username: String,
-        newPassword: String? = null
+        newPassword: String? = null,
     ): Result<Unit>
     {
         return kotlin.runCatching()

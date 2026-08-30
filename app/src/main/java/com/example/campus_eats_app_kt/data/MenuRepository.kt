@@ -193,7 +193,7 @@ class MenuRepository(
                         itemName = item.name,
                         itemPrice = item.price,
                         itemDescription = item.description,
-                        imageUrl = item.imageUrl
+                        imageUrl = item.imageUrl,
                     )
                 )
             }

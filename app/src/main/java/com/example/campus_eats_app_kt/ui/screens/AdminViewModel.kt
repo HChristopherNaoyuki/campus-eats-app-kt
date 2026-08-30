@@ -32,7 +32,7 @@ class AdminViewModel(
     private val feedbackRepository: FeedbackRepository,
 ) : ViewModel()
 {
-    private val _isAdmin = MutableStateFlow(false)
+    private val _isAdmin = MutableStateFlow(value = false)
     val isAdmin: StateFlow<Boolean> = _isAdmin
 
     init

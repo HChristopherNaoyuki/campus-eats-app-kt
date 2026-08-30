@@ -115,6 +115,7 @@ class MainActivity : ComponentActivity()
         )
         val adminRepository = AdminRepository(
             userDao = database.userDao(),
+            authRepository = authRepository,
             connectivityManager = connectivityManager,
             firebaseDatabase = firebaseDatabase,
         )
@@ -122,6 +123,7 @@ class MainActivity : ComponentActivity()
             StatsRepository(database.userDao(), database.menuItemDao(), database.orderDao())
         val feedbackRepository = FeedbackRepository(
             feedbackDao = database.feedbackDao(),
+            userDao = database.userDao(),
             connectivityManager = connectivityManager,
             firebaseDatabase = firebaseDatabase,
         )
@@ -246,6 +248,7 @@ class MainActivity : ComponentActivity()
                                     initializer {
                                         AdminViewModel(
                                             adminRepository,
+                                            authRepository,
                                             orderRepository,
                                             couponRepository,
                                             feedbackRepository,

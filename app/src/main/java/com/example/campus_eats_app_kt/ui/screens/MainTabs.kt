@@ -249,7 +249,7 @@ fun HomeScreenTab(
         }
 
         // Student Search and Vendor List
-        if (role == UserRole.STUDENT || role == UserRole.STANDARD)
+        if ((role == UserRole.STUDENT) || (role == UserRole.STANDARD))
         {
             item()
             {
@@ -1661,11 +1661,11 @@ fun SettingsScreenTab(
                     "Coupons" -> AdminGenerateCouponsWindow(viewModel = adminViewModel)
                     "Complaints" -> AdminFeedbackWindow(
                         viewModel = adminViewModel,
-                        type = FeedbackType.COMPLAINT,
+                        type = FeedbackType.complaint,
                     )
                     "Compliments" -> AdminFeedbackWindow(
                         viewModel = adminViewModel,
-                        type = FeedbackType.COMPLIMENT,
+                        type = FeedbackType.compliment,
                     )
 
                     "Redeem" -> StudentRedeemCouponWindow(couponRepository = couponRepository)
@@ -3065,7 +3065,7 @@ fun UserFeedbackWindow(
 {
     var subj by remember { mutableStateOf("") }
     var msg by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf(FeedbackType.COMPLIMENT) }
+    var type by remember { mutableStateOf(FeedbackType.compliment) }
     val coroutineScope = rememberCoroutineScope()
     var successMsg by remember { mutableStateOf("") }
 
@@ -3087,9 +3087,9 @@ fun UserFeedbackWindow(
             Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
             {
                 FilterChip(
-                    selected = type == FeedbackType.COMPLIMENT,
+                    selected = type == FeedbackType.compliment,
                     onClick = {
-                        type = FeedbackType.COMPLIMENT
+                        type = FeedbackType.compliment
                         successMsg = ""
                     },
                     label = {
@@ -3098,9 +3098,9 @@ fun UserFeedbackWindow(
                     shape = MaterialTheme.shapes.medium,
                 )
                 FilterChip(
-                    selected = type == FeedbackType.COMPLAINT,
+                    selected = type == FeedbackType.complaint,
                     onClick = {
-                        type = FeedbackType.COMPLAINT
+                        type = FeedbackType.complaint
                         successMsg = ""
                     },
                     label = {
