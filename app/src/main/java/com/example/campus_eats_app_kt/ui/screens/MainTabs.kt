@@ -1356,6 +1356,7 @@ fun SettingsScreenTab(
     val user by authRepository.getUserFlow(userId).collectAsState(null)
     val coroutineScope = rememberCoroutineScope()
     val locale = LocalConfiguration.current.locales[0]
+    val isAdmin by adminViewModel.isAdmin.collectAsState()
 
     if (activeSettingView == "Main")
     {
@@ -1655,19 +1656,25 @@ fun SettingsScreenTab(
                     .padding(horizontal = DesignSystem.Spacing.medium),
             )
             {
+                if (isAdmin)
+                {
+                    when (activeSettingView)
+                    {
+                        "Credits" -> AdminIssueCreditsWindow(viewModel = adminViewModel)
+                        "Coupons" -> AdminGenerateCouponsWindow(viewModel = adminViewModel)
+                        "Complaints" -> AdminFeedbackWindow(
+                            viewModel = adminViewModel,
+                            type = FeedbackType.complaint,
+                        )
+                        "Compliments" -> AdminFeedbackWindow(
+                            viewModel = adminViewModel,
+                            type = FeedbackType.compliment,
+                        )
+                    }
+                }
+
                 when (activeSettingView)
                 {
-                    "Credits" -> AdminIssueCreditsWindow(viewModel = adminViewModel)
-                    "Coupons" -> AdminGenerateCouponsWindow(viewModel = adminViewModel)
-                    "Complaints" -> AdminFeedbackWindow(
-                        viewModel = adminViewModel,
-                        type = FeedbackType.complaint,
-                    )
-                    "Compliments" -> AdminFeedbackWindow(
-                        viewModel = adminViewModel,
-                        type = FeedbackType.compliment,
-                    )
-
                     "Redeem" -> StudentRedeemCouponWindow(couponRepository = couponRepository)
                     "AddCard" -> StudentAddCardWindow(
                         debitCardRepository = debitCardRepository,
@@ -2201,7 +2208,7 @@ fun OrderDetailWindow(
         val coroutineScope = rememberCoroutineScope()
         var statusExpanded by remember { mutableStateOf(value = false) }
 
-        val canUpdateStatus = (role == UserRole.ADMIN) || (role == UserRole.VENDOR && order.vendorId == userId)
+        val canUpdateStatus = (role == UserRole.ADMIN) || ((role == UserRole.VENDOR) && (order.vendorId == userId))
 
         val items = remember(order)
         {

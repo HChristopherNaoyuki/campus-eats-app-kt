@@ -237,7 +237,9 @@ class AuthRepository(
 
     /**
      * Refreshes the current user's token to pick up new custom claims.
+     * Essential for administrative authorization compliance when roles are granted.
      */
+    @Suppress("unused")
     suspend fun refreshUserClaims()
     {
         try
@@ -255,6 +257,53 @@ class AuthRepository(
     fun getCurrentUserEmail(): String? = firebaseAuth.currentUser?.email
     fun logout() = firebaseAuth.signOut()
 
+    /**
+     * Resets the user's password.
+     * Note: This operation requires a recent login session in Firebase.
+     */
+    suspend fun resetPassword(userId: String, newPassword: String): Result<Unit>
+    {
+        Log.d(tag, "Password reset initiated for User ID: $userId")
+        return kotlin.runCatching()
+        {
+            connectivityManager.ensureInternet()
+            val user = userDao.getUserById(userId) ?: throw Exception("Invalid User ID")
+            
+            // SECURITY: Ensure a user is signed in to use updatePassword, 
+            // otherwise Firebase throws the 'expired credential' error.
+            val currentUser = firebaseAuth.currentUser ?: throw Exception("You must be signed in to change your password.")
+            
+            try
+            {
+                currentUser.updatePassword(newPassword).await()
+            }
+            catch (e: Exception)
+            {
+                // Root Cause of "supplied auth credential" error: session expiry for sensitive operations.
+                throw Exception(FirebaseExceptionHandler.parse(e))
+            }
+            
+            if (user.usercode != null)
+            {
+                try
+                {
+                    apiService.updatePassword(user.usercode, newPassword)
+                }
+                catch (e: Exception)
+                {
+                    Log.e(tag, "Remote password sync failed: ${e.message}")
+                }
+            }
+        }.onFailure { e ->
+            throw Exception(FirebaseExceptionHandler.parse(e))
+        }
+    }
+
+    /**
+     * Re-authenticates the current user. Required for sensitive operations like 
+     * password changes or account deletion if the session has expired.
+     */
+    @Suppress("unused")
     suspend fun reauthenticate(password: String): Result<Unit>
     {
         return kotlin.runCatching()

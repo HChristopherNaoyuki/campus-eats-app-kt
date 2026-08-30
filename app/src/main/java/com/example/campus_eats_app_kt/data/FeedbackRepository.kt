@@ -40,6 +40,7 @@ class FeedbackRepository(
     /**
      * Filters feedback to return only complaints.
      */
+    @Suppress("unused")
     fun getComplaints(): Flow<List<FeedbackEntity>> =
         feedbackDao.getAllFeedback()
             .map { list -> list.filter { it.type == FeedbackType.complaint } }
@@ -47,6 +48,7 @@ class FeedbackRepository(
     /**
      * Filters feedback to return only compliments.
      */
+    @Suppress("unused")
     fun getCompliments(): Flow<List<FeedbackEntity>> =
         feedbackDao.getAllFeedback()
             .map { list -> list.filter { it.type == FeedbackType.compliment } }
