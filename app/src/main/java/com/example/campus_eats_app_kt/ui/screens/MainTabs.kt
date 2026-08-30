@@ -1372,14 +1372,19 @@ fun SettingsScreenTab(
             // Account Group
             HIGCard(modifier = Modifier.fillMaxWidth())
             {
-                var newEmail by remember { mutableStateOf(user?.email ?: "") }
+                var newFullName by remember { mutableStateOf(user?.fullName ?: "") }
+                var newUsername by remember { mutableStateOf(user?.username ?: "") }
                 var newPassword by remember { mutableStateOf("") }
 
                 LaunchedEffect(user)
                 {
-                    if (newEmail.isEmpty())
+                    if (newFullName.isEmpty())
                     {
-                        newEmail = user?.email ?: ""
+                        newFullName = user?.fullName ?: ""
+                    }
+                    if (newUsername.isEmpty())
+                    {
+                        newUsername = user?.username ?: ""
                     }
                 }
 
@@ -1391,12 +1396,23 @@ fun SettingsScreenTab(
                         fontWeight = FontWeight.Bold,
                     )
                     OutlinedTextField(
-                        value = newEmail,
+                        value = newFullName,
                         onValueChange = {
-                            newEmail = it
+                            newFullName = it
                         },
                         label = {
-                            Text(text = "Email Address")
+                            Text(text = "Full Name")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium,
+                    )
+                    OutlinedTextField(
+                        value = newUsername,
+                        onValueChange = {
+                            newUsername = it
+                        },
+                        label = {
+                            Text(text = "Username")
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.medium,
@@ -1420,8 +1436,9 @@ fun SettingsScreenTab(
                             {
                                 val result = authRepository.updateProfile(
                                     userId,
-                                    newEmail,
-                                    newPassword,
+                                    newFullName,
+                                    newUsername,
+                                    newPassword.takeIf { it.isNotBlank() },
                                 )
                                 result.onSuccess()
                                 {

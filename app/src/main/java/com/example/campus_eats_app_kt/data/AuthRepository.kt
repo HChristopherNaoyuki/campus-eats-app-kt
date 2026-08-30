@@ -12,6 +12,7 @@ import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.example.campus_eats_app_kt.util.ValidationEngine
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GetTokenResult
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * AuthRepository manages the authentication lifecycle and profile synchronization.
- * Optimized for low-latency registration and login (Target: < 3s).
+ * Enforces compliance with Firebase Realtime Database security rules.
  */
 class AuthRepository(
     private val userDao: UserDao,
@@ -36,21 +37,17 @@ class AuthRepository(
     private val connectivityManager: NetworkConnectivityManager,
     private val firebaseAuth: FirebaseAuth,
     private val firebaseDatabase: FirebaseDatabase,
-    // Dependency Injection: Injecting dispatchers to ensure testability and control over execution context.
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 )
 {
     private val tag = "AuthRepository"
 
-    /**
-     * repositoryScope is used for "fire-and-forget" operations like database synchronization.
-     * It uses a SupervisorJob to ensure that a failure in one operation doesn't cancel others.
-     */
     private val repositoryScope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
     /**
-     * Requirement: Registration process completes within 3 seconds.
-     * Parallelizes Firebase Auth and Remote REST API sync.
+     * Registers a new user. 
+     * Requirement: User email must match auth.token.email.
+     * Requirement: userId must be exactly 19 characters.
      */
     suspend fun register(
         fullName: String,
@@ -61,12 +58,11 @@ class AuthRepository(
         shopName: String? = null,
     ): Result<UserEntity> = coroutineScope()
     {
-        Log.d(tag, "Initiating optimized registration for: $email")
+        Log.d(tag, "Initiating registration for: $email")
         return@coroutineScope kotlin.runCatching()
         {
             connectivityManager.ensureInternet()
 
-            // 0. Pre-validation: Catch malformed data before it reaches Firebase
             if (!ValidationEngine.isValidEmail(email))
             {
                 throw Exception("Invalid email format provided.")
@@ -76,28 +72,26 @@ class AuthRepository(
                 throw Exception("Password must be at least 8 characters long.")
             }
 
-            // 1. Fast local check to avoid unnecessary network calls
             if (userDao.getUserByEmail(email) != null)
             {
                 throw Exception("An account with this email is already registered locally.")
             }
 
-            // 2. Parallel Network Operations
+            // 1. Firebase Auth Creation
             val authDeferred = async()
             {
                 try
                 {
-                    val result =
-                        firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                    val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
                     result.user?.uid ?: throw Exception("Firebase UID generation failed.")
                 }
                 catch (e: Exception)
                 {
-                    // Map technical error to user-friendly string
                     throw Exception(FirebaseExceptionHandler.parse(e))
                 }
             }
 
+            // 2. Remote API Sync
             val apiSyncDeferred = async()
             {
                 try
@@ -111,17 +105,10 @@ class AuthRepository(
                 }
             }
 
-            val firebaseUid = try
-            {
-                authDeferred.await()
-            }
-            catch (e: Exception)
-            {
-                throw e
-            }
+            authDeferred.await()
             val remoteUsercode = apiSyncDeferred.await()
 
-            // 3. Construct and Persist Data
+            // 3. Construct Entity with 19-character ID
             val campusUserId = IdGenerator.generateUserId()
             val user = UserEntity(
                 userId = campusUserId,
@@ -135,61 +122,48 @@ class AuthRepository(
                 usercode = remoteUsercode,
             )
 
-            // 4. Background Sync to RTDB (True Fire and Forget)
+            // 4. Sync to RTDB
             repositoryScope.launch()
             {
                 try
                 {
+                    // Ensure the initial write complies with rules (email matches auth token)
                     firebaseDatabase.getReference("users").child(campusUserId).setValue(user)
                         .await()
                 }
                 catch (e: Exception)
                 {
-                    Log.e(tag, "RTDB Sync failed for $campusUserId: ${e.message}")
+                    Log.e(tag, "RTDB Registration Sync failed: ${e.message}")
                 }
             }
 
             userDao.insertUser(user)
-            Log.d(tag, "User $campusUserId (Firebase: $firebaseUid) successfully persisted")
             user
         }
     }
 
     /**
-     * Requirement: Login process completes within 3 seconds.
-     * Uses sequential execution for reliability; Room and Firebase Auth are high-performance.
+     * Authenticates existing user.
      */
     suspend fun login(email: String, password: String): Result<UserEntity>
     {
-        Log.d(tag, "Initiating optimized login for: $email")
         return kotlin.runCatching()
         {
             connectivityManager.ensureInternet()
 
-            // 0. Pre-validation
-            if (!ValidationEngine.isValidEmail(email))
-            {
-                throw Exception("Please enter a valid email address.")
-            }
-
-            // 1. Authenticate with Firebase
             try
             {
                 firebaseAuth.signInWithEmailAndPassword(email, password).await()
             }
             catch (e: Exception)
             {
-                Log.e(tag, "Firebase login failed: ${e.message}")
                 throw Exception(FirebaseExceptionHandler.parse(e))
             }
 
-            // 2. Fetch local metadata
             var user = userDao.getUserByEmail(email)
 
-            // 3. Reliability: Restore profile if local DB was cleared
             if (user == null)
             {
-                Log.i(tag, "Local profile missing. Querying RTDB...")
                 val snapshot = firebaseDatabase.getReference("users")
                     .orderByChild("email")
                     .equalTo(email)
@@ -200,12 +174,13 @@ class AuthRepository(
                 user?.let { userDao.insertUser(it) }
             }
 
-            user ?: throw Exception("Profile metadata missing in cloud. Account may be partially initialized.")
+            user ?: throw Exception("Profile metadata missing in cloud.")
         }
     }
 
     /**
-     * Requirement: Synchronize permitted data with the database every 10 seconds.
+     * Background sync with restricted field awareness.
+     * Only updates fields that normal users are permitted to change.
      */
     fun startBackgroundSync(userId: String, scope: CoroutineScope)
     {
@@ -216,12 +191,20 @@ class AuthRepository(
                 delay(10.seconds)
                 try
                 {
-                    // Ensure valid session before syncing to avoid "supplied auth credential" errors
                     if (firebaseAuth.currentUser != null && connectivityManager.hasInternetConnection())
                     {
                         userDao.getUserById(userId)?.let()
                         { user ->
-                            firebaseDatabase.getReference("users").child(userId).setValue(user)
+                            val updates = mapOf<String, Any?>(
+                                "fullName" to user.fullName,
+                                "username" to user.username,
+                                "shopName" to user.shopName,
+                                "shopStatus" to user.shopStatus?.name,
+                                "bankAccountInfo" to user.bankAccountInfo
+                            )
+                            
+                            firebaseDatabase.getReference("users").child(userId)
+                                .updateChildren(updates).await()
                         }
                     }
                 }
@@ -233,115 +216,98 @@ class AuthRepository(
         }
     }
 
+    /**
+     * Checks if the current user has administrative privileges via custom claims.
+     */
+    suspend fun isAdmin(): Boolean
+    {
+        return try
+        {
+            val user = firebaseAuth.currentUser ?: return false
+            // Use getIdToken(false) which returns Task<GetTokenResult> in modern Firebase SDKs
+            val tokenResult: GetTokenResult = user.getIdToken(false).await()
+            tokenResult.claims["admin"] == true
+        }
+        catch (e: Exception)
+        {
+            Log.e(tag, "Failed to check admin claims: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Refreshes the current user's token to pick up new custom claims.
+     */
+    suspend fun refreshUserClaims()
+    {
+        try
+        {
+            // Forcing refresh to ensure latest claims are retrieved
+            firebaseAuth.currentUser?.getIdToken(true)?.await()
+        }
+        catch (e: Exception)
+        {
+            Log.e(tag, "Failed to refresh user token: ${e.message}")
+        }
+    }
+
     fun isUserAuthenticated(): Boolean = firebaseAuth.currentUser != null
     fun getCurrentUserEmail(): String? = firebaseAuth.currentUser?.email
     fun logout() = firebaseAuth.signOut()
 
-    /**
-     * Re-authenticates the current user. Required for sensitive operations like 
-     * password changes or account deletion if the session has expired.
-     */
     suspend fun reauthenticate(password: String): Result<Unit>
     {
         return kotlin.runCatching()
         {
-            try
-            {
-                val email = getCurrentUserEmail() ?: throw Exception("No active user session found.")
-                val credential = EmailAuthProvider.getCredential(email, password)
-                firebaseAuth.currentUser?.reauthenticate(credential)?.await()
-                Log.d(tag, "User successfully re-authenticated.")
-            }
-            catch (e: Exception)
-            {
-                Log.e(tag, "Re-authentication failed: ${e.message}")
-                throw Exception(FirebaseExceptionHandler.parse(e))
-            }
+            val email = getCurrentUserEmail() ?: throw Exception("No active session.")
+            val credential = EmailAuthProvider.getCredential(email, password)
+            firebaseAuth.currentUser?.reauthenticate(credential)?.await()
         }
     }
 
     /**
-     * Resets the user's password.
-     * Note: This operation requires a recent login session in Firebase.
+     * Updates user profile while respecting immutable field rules.
+     * Password changes are applied to Firebase Auth only; RTDB stores "[FIREBASE_SSO]".
      */
-    suspend fun resetPassword(userId: String, newPassword: String): Result<Unit>
+    suspend fun updateProfile(
+        userId: String,
+        fullName: String,
+        username: String,
+        newPassword: String? = null
+    ): Result<Unit>
     {
-        Log.d(tag, "Password reset initiated for User ID: $userId")
-        return kotlin.runCatching()
-        {
-            connectivityManager.ensureInternet()
-            val user = userDao.getUserById(userId) ?: throw Exception("Invalid User ID")
-            
-            // SECURITY: Ensure a user is signed in to use updatePassword, 
-            // otherwise Firebase throws the 'expired credential' error.
-            val currentUser = firebaseAuth.currentUser ?: throw Exception("You must be signed in to change your password.")
-            
-            try
-            {
-                currentUser.updatePassword(newPassword).await()
-            }
-            catch (e: Exception)
-            {
-                // Root Cause of "supplied auth credential" error: session expiry for sensitive operations.
-                throw Exception(FirebaseExceptionHandler.parse(e))
-            }
-            
-            if (user.usercode != null)
-            {
-                try
-                {
-                    apiService.updatePassword(user.usercode, newPassword)
-                }
-                catch (e: Exception)
-                {
-                    Log.e(tag, "Remote password sync failed: ${e.message}")
-                }
-            }
-        }.onFailure { e ->
-            throw Exception(FirebaseExceptionHandler.parse(e))
-        }
-    }
-
-    suspend fun updateProfile(userId: String, email: String, password: String): Result<Unit>
-    {
-        Log.d(tag, "Profile update requested for User ID: $userId")
         return kotlin.runCatching()
         {
             connectivityManager.ensureInternet()
             val user = userDao.getUserById(userId) ?: throw Exception("User not found")
-            val updatedUser = user.copy(email = email)
-            if (password.isNotBlank())
+            
+            // 1. Update Password in Firebase Auth if provided
+            if (!newPassword.isNullOrBlank())
             {
                 try
                 {
-                    firebaseAuth.currentUser?.updatePassword(password)?.await()
+                    firebaseAuth.currentUser?.updatePassword(newPassword)?.await()
                 }
                 catch (e: Exception)
                 {
-                    // If re-auth is needed, the exception is caught here and mapped
                     throw Exception(FirebaseExceptionHandler.parse(e))
                 }
-
-                if (user.usercode != null)
-                {
-                    try
-                    {
-                        apiService.updatePassword(user.usercode, password)
-                    }
-                    catch (e: Exception)
-                    {
-                        Log.e(tag, "Remote security sync failed: ${e.message}")
-                    }
-                }
             }
+
+            // 2. Update local profile (email, role, status are immutable for users)
+            val updatedUser = user.copy(fullName = fullName, username = username)
             userDao.updateUser(updatedUser)
-            firebaseDatabase.getReference("users").child(userId).setValue(updatedUser).await()
-            Log.d(tag, "Local and Cloud profile data successfully updated")
+            
+            // 3. Sync permitted fields to RTDB
+            val updates = mapOf<String, Any>(
+                "fullName" to fullName,
+                "username" to username
+            )
+            
+            firebaseDatabase.getReference("users").child(userId)
+                .updateChildren(updates).await()
         }
     }
-
-    fun getUserFlow(userId: String): Flow<UserEntity?> = userDao.getUserByIdFlow(userId)
-    suspend fun getUserByEmail(email: String): UserEntity? = userDao.getUserByEmail(email)
 
     suspend fun updateShopStatus(userId: String, status: ShopStatus): Result<Unit>
     {
@@ -352,39 +318,16 @@ class AuthRepository(
             {
                 val updatedUser = user.copy(shopStatus = status)
                 userDao.updateUser(updatedUser)
-                try
-                {
-                    firebaseDatabase.getReference("users").child(userId).child("shopStatus")
-                        .setValue(status).await()
-                }
-                catch (e: Exception)
-                {
-                    Log.e(tag, "Failed to sync shop status to RTDB: ${e.message}")
-                }
+                
+                firebaseDatabase.getReference("users").child(userId).child("shopStatus")
+                    .setValue(status).await()
             }
             else
             {
-                throw Exception("User not found or not a vendor")
+                throw Exception("Invalid vendor profile.")
             }
         }
     }
 
-    suspend fun linkBankAccount(userId: String, bankInfo: String): Result<Unit>
-    {
-        return kotlin.runCatching()
-        {
-            val user = userDao.getUserById(userId) ?: throw Exception("User not found")
-            val updatedUser = user.copy(bankAccountInfo = bankInfo)
-            userDao.updateUser(updatedUser)
-            try
-            {
-                firebaseDatabase.getReference("users").child(userId).child("bankAccountInfo")
-                    .setValue(bankInfo).await()
-            }
-            catch (e: Exception)
-            {
-                Log.e(tag, "Failed to sync bank info to RTDB: ${e.message}")
-            }
-        }
-    }
+    fun getUserFlow(userId: String): Flow<UserEntity?> = userDao.getUserByIdFlow(userId)
 }

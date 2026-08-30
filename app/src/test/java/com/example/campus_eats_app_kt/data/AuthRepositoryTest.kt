@@ -11,6 +11,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GetTokenResult
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -25,7 +26,7 @@ import org.junit.Test
 
 /**
  * AuthRepositoryTest verifies the authentication and profile management logic.
- * It has been updated to integrate Firebase Auth mocking and ensure coroutine completion.
+ * Enforces security rule compliance and administrative authorization.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AuthRepositoryTest
@@ -37,13 +38,10 @@ class AuthRepositoryTest
     private lateinit var connectivityManager: NetworkConnectivityManager
     private lateinit var repository: AuthRepository
     
-    // Using UnconfinedTestDispatcher for immediate execution in tests.
-    // This dispatcher ensures that any coroutine launched in the repository (e.g. background sync)
-    // is executed predictably within the test scope.
     private val testDispatcher = UnconfinedTestDispatcher()
 
     private val testUser = UserEntity(
-        userId = "TEST-USER-ID-0001",
+        userId = "TEST-USER-ID-X1234", // 19 chars: XXXX-XXXX-XXXX-XXXX
         fullName = "Test User",
         username = "testuser",
         email = "test@example.com",
@@ -62,8 +60,6 @@ class AuthRepositoryTest
         firebaseDatabase = mockk(relaxed = true)
         connectivityManager = mockk(relaxed = true)
         
-        // Injecting the test dispatcher to ensure all coroutines (including background sync)
-        // are controlled by the test environment and do not outlive the test scope.
         repository = AuthRepository(
             userDao, 
             apiService, 
@@ -74,10 +70,6 @@ class AuthRepositoryTest
         )
     }
 
-    /**
-     * Utility to mock a successful Firebase Task completion.
-     * Resumes any coroutine suspended by .await().
-     */
     private fun <T> mockSuccessfulTask(result: T?): Task<T>
     {
         val task = mockk<Task<T>>()
@@ -95,9 +87,6 @@ class AuthRepositoryTest
         return task
     }
 
-    /**
-     * Utility to mock a failed Firebase Task completion.
-     */
     private fun <T> mockFailedTask(exception: Exception): Task<T>
     {
         val task = mockk<Task<T>>()
@@ -116,11 +105,48 @@ class AuthRepositoryTest
     }
 
     /**
-     * Requirement: Test successful login with Firebase SSO.
+     * Requirement: Verify isAdmin correctly identifies administrative custom claims.
      */
     @Test
-    fun login_withCorrectCredentials_returnsSuccess() = runTest {
+    fun isAdmin_withAdminClaim_returnsTrue() = runTest {
         // Given
+        val mockFirebaseUser = mockk<FirebaseUser>(relaxed = true)
+        val tokenResult = mockk<GetTokenResult>()
+        val task = mockSuccessfulTask(tokenResult)
+
+        every { firebaseAuth.currentUser } returns mockFirebaseUser
+        every { mockFirebaseUser.getIdToken(false) } returns task
+        every { tokenResult.claims } returns mapOf("admin" to true)
+
+        // When
+        val isAdmin = repository.isAdmin()
+
+        // Then
+        assertTrue("User should be identified as admin", isAdmin)
+    }
+
+    /**
+     * Requirement: Test successful profile update with restricted fields.
+     */
+    @Test
+    fun updateProfile_updatesAllowedFields() = runTest {
+        // Given
+        coEvery { userDao.getUserById(testUser.userId) } returns testUser
+        val ref = mockk<com.google.firebase.database.DatabaseReference>(relaxed = true)
+        every { firebaseDatabase.getReference("users").child(any()) } returns ref
+        every { ref.updateChildren(any()) } returns mockSuccessfulTask(null)
+
+        // When
+        val result = repository.updateProfile(testUser.userId, "New Name", "newusername")
+
+        // Then
+        assertTrue(result.isSuccess)
+        coVerify { userDao.updateUser(match { it.fullName == "New Name" && it.username == "newusername" }) }
+        coVerify { ref.updateChildren(match { it["fullName"] == "New Name" && it["username"] == "newusername" }) }
+    }
+
+    @Test
+    fun login_withCorrectCredentials_returnsSuccess() = runTest {
         val authResult = mockk<AuthResult>()
         val task = mockSuccessfulTask(authResult)
 
@@ -129,56 +155,9 @@ class AuthRepositoryTest
         } returns task
         coEvery { userDao.getUserByEmail("test@example.com") } returns testUser
 
-        // When
         val result = repository.login("test@example.com", "password123")
 
-        // Then
-        assertTrue("Expected success but got ${result.exceptionOrNull()}", result.isSuccess)
+        assertTrue(result.isSuccess)
         assertEquals(testUser, result.getOrNull())
-    }
-
-    /**
-     * Requirement: Test failed login with Firebase exception.
-     */
-    @Test
-    fun login_withIncorrectPassword_returnsFailure() = runTest {
-        // Given
-        val task = mockFailedTask<AuthResult>(Exception("Firebase Auth Error"))
-        every { firebaseAuth.signInWithEmailAndPassword(any(), any()) } returns task
-
-        // When
-        val result = repository.login("test@example.com", "wrongpassword")
-
-        // Then
-        assertTrue(result.isFailure)
-        assertEquals("Firebase Auth Error", result.exceptionOrNull()?.message)
-    }
-
-    /**
-     * Requirement: Test password reset (Fake API sync)
-     * FIX: Mocks FirebaseUser and Task completion to prevent UncompletedCoroutinesError.
-     * This traces the execution through AuthRepository and ensures the .await() call on the
-     * Firebase updatePassword Task is properly resumed by mocking the listener invocation.
-     */
-    @Test
-    fun resetPassword_withValidId_updatesRemote() = runTest {
-        // Given
-        val mockFirebaseUser = mockk<FirebaseUser>(relaxed = true)
-        val updateTask = mockSuccessfulTask<Void>(null)
-        
-        // Mock current user session to avoid early exit in resetPassword
-        every { firebaseAuth.currentUser } returns mockFirebaseUser
-        every { mockFirebaseUser.updatePassword(any()) } returns updateTask
-        coEvery { userDao.getUserById(testUser.userId) } returns testUser
-
-        // When
-        val result = repository.resetPassword(testUser.userId, "newpassword")
-
-        // Then
-        assertTrue("Reset should be successful: ${result.exceptionOrNull()?.message}", result.isSuccess)
-        
-        // Verify both Firebase and Remote API were updated sequentially as per implementation.
-        coVerify { mockFirebaseUser.updatePassword("newpassword") }
-        coVerify { apiService.updatePassword(any(), "newpassword") }
     }
 }

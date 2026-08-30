@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWebException
+import com.google.firebase.database.DatabaseException
 
 /**
  * FirebaseExceptionHandler provides a centralized mechanism for translating technical 
@@ -72,15 +73,35 @@ object FirebaseExceptionHandler
                     else -> throwable.message ?: "An authentication error occurred. Please try again."
                 }
             }
+            is DatabaseException ->
+            {
+                val message = throwable.message ?: ""
+                when
+                {
+                    message.contains("Permission denied", ignoreCase = true) ->
+                    {
+                        "Access denied. You do not have the required permissions to perform this operation. Please ensure you are authorized."
+                    }
+                    message.contains("Index not defined", ignoreCase = true) ->
+                    {
+                        "A database indexing error occurred. Please contact the application administrator."
+                    }
+                    else -> "A database error occurred: ${throwable.localizedMessage}"
+                }
+            }
             else ->
             {
-                // Fallback for non-Auth exceptions (e.g. general Exception from RTDB or API)
+                // Fallback for non-Auth/Database exceptions (e.g. general Exception from API)
                 val message = throwable.message ?: ""
                 
                 // Specifically map the reported "auth credential" string if it leaks through non-Auth exceptions
                 if (message.contains("supplied auth credential", ignoreCase = true))
                 {
                     "Your session has expired or is invalid. Please sign out and sign back in."
+                }
+                else if (message.contains("Permission denied", ignoreCase = true))
+                {
+                    "Access denied. You do not have the required permissions to perform this operation."
                 }
                 else
                 {

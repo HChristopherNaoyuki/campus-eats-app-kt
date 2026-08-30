@@ -5,6 +5,9 @@ import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.ShopStatus
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.entity.UserStatus
+import com.example.campus_eats_app_kt.data.entity.FeedbackType
+import com.example.campus_eats_app_kt.data.entity.FeedbackStatus
+import com.example.campus_eats_app_kt.data.entity.PaymentMethod
 
 /**
  * Converters handles the transformation of complex types (Enums) into 
@@ -13,42 +16,86 @@ import com.example.campus_eats_app_kt.data.entity.UserStatus
 class Converters
 {
     @TypeConverter
-    fun fromUserRole(role: UserRole): String = role.name
+    fun fromUserRole(role: UserRole): String
+    {
+        return role.name
+    }
 
     @TypeConverter
-    fun toUserRole(role: String): UserRole = UserRole.valueOf(role)
+    fun toUserRole(role: String): UserRole
+    {
+        return UserRole.valueOf(role)
+    }
 
     @TypeConverter
-    fun fromOrderStatus(status: OrderStatus): String = status.name
+    fun fromOrderStatus(status: OrderStatus): String
+    {
+        return status.name
+    }
 
     @TypeConverter
-    fun toOrderStatus(status: String): OrderStatus = OrderStatus.valueOf(status)
+    fun toOrderStatus(status: String): OrderStatus
+    {
+        return OrderStatus.valueOf(status)
+    }
 
     @TypeConverter
-    fun fromUserStatus(status: UserStatus): String = status.name
+    fun fromUserStatus(status: UserStatus): String
+    {
+        return status.name
+    }
 
     @TypeConverter
-    fun toUserStatus(status: String): UserStatus = UserStatus.valueOf(status)
+    fun toUserStatus(status: String): UserStatus
+    {
+        return UserStatus.valueOf(status)
+    }
 
     @TypeConverter
-    fun fromShopStatus(status: ShopStatus?): String? = status?.name
+    fun fromShopStatus(status: ShopStatus?): String?
+    {
+        return status?.name
+    }
 
     @TypeConverter
-    fun toShopStatus(status: String?): ShopStatus? = status?.let { ShopStatus.valueOf(it) }
+    fun toShopStatus(status: String?): ShopStatus?
+    {
+        return status?.let { ShopStatus.valueOf(it) }
+    }
 
     @TypeConverter
-    fun fromFeedbackType(type: com.example.campus_eats_app_kt.data.entity.FeedbackType): String =
-        type.name
+    fun fromFeedbackType(type: FeedbackType): String
+    {
+        return type.name
+    }
 
     @TypeConverter
-    fun toFeedbackType(type: String): com.example.campus_eats_app_kt.data.entity.FeedbackType =
-        com.example.campus_eats_app_kt.data.entity.FeedbackType.valueOf(type)
+    fun toFeedbackType(type: String): FeedbackType
+    {
+        return FeedbackType.valueOf(type)
+    }
 
     @TypeConverter
-    fun fromPaymentMethod(method: com.example.campus_eats_app_kt.data.entity.PaymentMethod): String =
-        method.name
+    fun fromFeedbackStatus(status: FeedbackStatus): String
+    {
+        return status.name
+    }
 
     @TypeConverter
-    fun toPaymentMethod(method: String): com.example.campus_eats_app_kt.data.entity.PaymentMethod =
-        com.example.campus_eats_app_kt.data.entity.PaymentMethod.valueOf(method)
+    fun toFeedbackStatus(status: String): FeedbackStatus
+    {
+        return FeedbackStatus.valueOf(status)
+    }
+
+    @TypeConverter
+    fun fromPaymentMethod(method: PaymentMethod): String
+    {
+        return method.name
+    }
+
+    @TypeConverter
+    fun toPaymentMethod(method: String): PaymentMethod
+    {
+        return PaymentMethod.valueOf(method)
+    }
 }

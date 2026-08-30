@@ -256,7 +256,7 @@ fun RegistrationScreen(
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
                 HIGSegmentedControl(
-                    options = listOf(UserRole.STANDARD, UserRole.VENDOR, UserRole.ADMIN),
+                    options = listOf(UserRole.STUDENT, UserRole.STANDARD, UserRole.VENDOR),
                     selectedOption = selectedRole,
                     onOptionSelected = { selectedRole = it },
                     labelProvider = { role -> role.name.lowercase().replaceFirstChar { char -> char.uppercase() } },

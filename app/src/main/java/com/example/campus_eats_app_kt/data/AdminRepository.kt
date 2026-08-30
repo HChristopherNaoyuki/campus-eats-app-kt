@@ -11,10 +11,11 @@ import kotlinx.coroutines.tasks.await
 
 /**
  * AdminRepository provides administrative oversight over user accounts and system finances.
- * Integrates local persistence with Realtime Database synchronization.
+ * Enforces compliance with Firebase Realtime Database security rules using custom claims.
  */
 class AdminRepository(
     private val userDao: UserDao,
+    private val authRepository: AuthRepository,
     private val connectivityManager: NetworkConnectivityManager,
     private val firebaseDatabase: FirebaseDatabase,
 )
@@ -23,20 +24,29 @@ class AdminRepository(
 
     /**
      * Retrieves all registered users in the system.
+     * Firebase rules restrict read access to /users if not admin or own record.
      */
-    fun getAllUsers(): Flow<List<UserEntity>> = userDao.getAllUsers()
+    fun getAllUsers(): Flow<List<UserEntity>>
+    {
+        return userDao.getAllUsers()
+    }
 
     /**
      * Temporarily disables a user's access to the application.
+     * Restricted to authenticated administrators in Firebase rules.
      */
     suspend fun suspendUser(userId: String): Result<Unit>
     {
         return kotlin.runCatching()
         {
+            if (!authRepository.isAdmin())
+            {
+                throw Exception("Unauthorized: Administrator privileges required.")
+            }
+            
             connectivityManager.ensureInternet()
             userDao.updateStatus(userId, UserStatus.SUSPENDED)
 
-            // Sync to RTDB
             firebaseDatabase.getReference("users").child(userId).child("status")
                 .setValue(UserStatus.SUSPENDED).await()
         }
@@ -44,15 +54,20 @@ class AdminRepository(
 
     /**
      * Restores a suspended user's access to the application.
+     * Restricted to authenticated administrators in Firebase rules.
      */
     suspend fun activateUser(userId: String): Result<Unit>
     {
         return kotlin.runCatching()
         {
+            if (!authRepository.isAdmin())
+            {
+                throw Exception("Unauthorized: Administrator privileges required.")
+            }
+
             connectivityManager.ensureInternet()
             userDao.updateStatus(userId, UserStatus.ACTIVE)
 
-            // Sync to RTDB
             firebaseDatabase.getReference("users").child(userId).child("status")
                 .setValue(UserStatus.ACTIVE).await()
         }
@@ -60,15 +75,20 @@ class AdminRepository(
 
     /**
      * Manually adds credit to a specific user's Campus Wallet.
+     * Restricted to authenticated administrators in Firebase rules.
      */
     suspend fun issueCredits(userId: String, amount: Double): Result<Unit>
     {
         return kotlin.runCatching()
         {
+            if (!authRepository.isAdmin())
+            {
+                throw Exception("Unauthorized: Administrator privileges required.")
+            }
+
             connectivityManager.ensureInternet()
             userDao.addCredits(userId, amount)
 
-            // Fetch updated balance and sync to RTDB
             userDao.getUserById(userId)?.let()
             { updatedUser ->
                 firebaseDatabase.getReference("users").child(userId).child("walletBalance")
@@ -79,14 +99,19 @@ class AdminRepository(
 
     /**
      * Permanently removes a user record from the database.
+     * Restricted to authenticated administrators in Firebase rules.
      */
     suspend fun deleteUser(user: UserEntity): Result<Unit>
     {
         return kotlin.runCatching()
         {
+            if (!authRepository.isAdmin())
+            {
+                throw Exception("Unauthorized: Administrator privileges required.")
+            }
+
             connectivityManager.ensureInternet()
 
-            // Delete from RTDB first to ensure cloud state is updated
             try
             {
                 firebaseDatabase.getReference("users").child(user.userId).removeValue().await()
@@ -97,7 +122,6 @@ class AdminRepository(
                 throw e
             }
 
-            // Then delete locally
             userDao.deleteUser(user)
         }
     }

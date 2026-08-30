@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 
 /**
  * UserRole defines the access levels for the application.
+ * Values must match Firebase Realtime Database security rules.
  */
 @Serializable
 enum class UserRole
@@ -18,6 +19,7 @@ enum class UserRole
 
 /**
  * UserStatus defines the account state.
+ * Values must match Firebase Realtime Database security rules.
  */
 @Serializable
 enum class UserStatus
@@ -39,18 +41,18 @@ enum class ShopStatus
 }
 
 /**
- * UserEntity represents a user record in the local database.
- * The primary key is a generated 16-character alphanumeric string.
+ * UserEntity represents a user record in the local database and Firebase Realtime Database.
+ * The primary key is a 19-character formatted string: XXXX-XXXX-XXXX-XXXX.
  */
 @Serializable
 @Entity(tableName = "users")
 data class UserEntity(
     @PrimaryKey
-    val userId: String, // 16-character alphanumeric (XXXX-XXXX-XXXX-XXXX)
+    val userId: String, // 19-character formatted (XXXX-XXXX-XXXX-XXXX)
     val fullName: String,
     val username: String,
     val email: String,
-    val passwordHash: String,
+    val passwordHash: String = "[FIREBASE_SSO]",
     val role: UserRole,
     val status: UserStatus = UserStatus.ACTIVE,
     val walletBalance: Double = 0.0,

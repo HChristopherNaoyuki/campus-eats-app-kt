@@ -1,11 +1,16 @@
 package com.example.campus_eats_app_kt.data
 
 import com.example.campus_eats_app_kt.data.dao.FeedbackDao
+import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.FeedbackType
+import com.example.campus_eats_app_kt.data.entity.FeedbackStatus
+import com.example.campus_eats_app_kt.data.entity.UserEntity
+import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.google.android.gms.tasks.Task
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -14,23 +19,33 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * FeedbackRepositoryTest verifies user feedback submission and categorization.
+ * FeedbackRepositoryTest verifies user feedback submission and validation compliance.
  */
 class FeedbackRepositoryTest
 {
     private lateinit var feedbackDao: FeedbackDao
+    private lateinit var userDao: UserDao
     private lateinit var connectivityManager: NetworkConnectivityManager
     private lateinit var firebaseDatabase: FirebaseDatabase
     private lateinit var repository: FeedbackRepository
+
+    private val testUser = UserEntity(
+        userId = "U1-XXXX-XXXX-XXXX-XX",
+        fullName = "Jane Doe",
+        username = "janedoe",
+        email = "jane@example.com",
+        passwordHash = "[FIREBASE_SSO]",
+        role = UserRole.STUDENT
+    )
 
     @Before
     fun setUp()
     {
         feedbackDao = mockk(relaxed = true)
+        userDao = mockk(relaxed = true)
         connectivityManager = mockk(relaxed = true)
         firebaseDatabase = mockk(relaxed = true)
 
-        // Mock successful RTDB task completion
         val task = mockk<Task<Void>>()
         every { task.isComplete } returns true
         every { task.isSuccessful } returns true
@@ -43,32 +58,35 @@ class FeedbackRepositoryTest
         every { ref.child(any()) } returns ref
         every { ref.push() } returns ref
         every { ref.setValue(any()) } returns task
+        
+        coEvery { userDao.getUserById("U1") } returns testUser
 
-        repository = FeedbackRepository(feedbackDao, connectivityManager, firebaseDatabase)
+        repository = FeedbackRepository(feedbackDao, userDao, connectivityManager, firebaseDatabase)
     }
 
     /**
-     * Requirement: Test feedback submission
+     * Requirement: Test feedback submission with all mandatory Firebase validation fields.
      */
     @Test
-    fun submitFeedback_persistsInDao()
-    {
-        runTest()
-        {
-            val userId = "U1"
-            val subject = "Subject"
-            val message = "Message"
-            val type = FeedbackType.COMPLIMENT
+    fun submitFeedback_populatesRequiredFields() = runTest {
+        val userId = "U1"
+        val subject = "App Crashed"
+        val message = "The app closes when I select a vendor."
+        val type = FeedbackType.complaint
 
-            repository.submitFeedback(userId, subject, message, type)
+        repository.submitFeedback(userId, subject, message, type)
 
-            coVerify {
-                feedbackDao.insertFeedback(
-                    match {
-                        (it.userId == userId) && (it.subject == subject) && (it.message == message) && (it.type == type)
-                    },
-                )
-            }
+        coVerify {
+            feedbackDao.insertFeedback(
+                match {
+                    (it.userId == userId) && 
+                    (it.userName == testUser.fullName) &&
+                    (it.userEmail == testUser.email) &&
+                    (it.status == FeedbackStatus.pending) &&
+                    (it.createdAt.isNotEmpty()) &&
+                    (it.type == type)
+                },
+            )
         }
     }
 }

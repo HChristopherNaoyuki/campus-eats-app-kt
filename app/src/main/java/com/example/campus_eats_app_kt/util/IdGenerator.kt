@@ -12,10 +12,10 @@ object IdGenerator
     private const val SEGMENT_COUNT = 4
 
     /**
-     * Generates a unique 16-character alphanumeric User ID in the format XXXX-XXXX-XXXX-XXXX.
-     * This format is optimized for human readability and manual account recovery.
+     * Generates a unique 19-character User ID in the format XXXX-XXXX-XXXX-XXXX.
+     * This format is optimized for human readability and matches Firebase security rules.
      * 
-     * @return A randomly generated, formatted User ID.
+     * @return A randomly generated, formatted User ID of exactly 19 characters.
      */
     fun generateUserId(): String
     {

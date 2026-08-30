@@ -3,6 +3,7 @@ package com.example.campus_eats_app_kt.ui.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.campus_eats_app_kt.data.AdminRepository
+import com.example.campus_eats_app_kt.data.AuthRepository
 import com.example.campus_eats_app_kt.data.CouponRepository
 import com.example.campus_eats_app_kt.data.FeedbackRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
@@ -12,6 +13,7 @@ import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.entity.UserStatus
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -24,12 +26,32 @@ import kotlinx.coroutines.launch
  */
 class AdminViewModel(
     private val adminRepository: AdminRepository,
+    private val authRepository: AuthRepository,
     private val orderRepository: OrderRepository,
     private val couponRepository: CouponRepository,
     private val feedbackRepository: FeedbackRepository,
 ) : ViewModel()
 {
-    // State exposed to UI
+    private val _isAdmin = MutableStateFlow(false)
+    val isAdmin: StateFlow<Boolean> = _isAdmin
+
+    init
+    {
+        checkAdminStatus()
+    }
+
+    /**
+     * Verifies administrative privileges using Firebase custom claims.
+     */
+    fun checkAdminStatus()
+    {
+        viewModelScope.launch()
+        {
+            _isAdmin.value = authRepository.isAdmin()
+        }
+    }
+
+    // State exposed to UI - Restricted if not admin
     val users: StateFlow<List<UserEntity>> = adminRepository.getAllUsers()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -42,18 +64,22 @@ class AdminViewModel(
 
     /**
      * Toggles the active status of a user.
+     * Enforces admin claim verification before repository call.
      */
     fun toggleUserStatus(user: UserEntity)
     {
         viewModelScope.launch()
         {
-            if (user.status == UserStatus.ACTIVE)
+            if (authRepository.isAdmin())
             {
-                adminRepository.suspendUser(user.userId)
-            }
-            else
-            {
-                adminRepository.activateUser(user.userId)
+                if (user.status == UserStatus.ACTIVE)
+                {
+                    adminRepository.suspendUser(user.userId)
+                }
+                else
+                {
+                    adminRepository.activateUser(user.userId)
+                }
             }
         }
     }
@@ -65,7 +91,10 @@ class AdminViewModel(
     {
         viewModelScope.launch()
         {
-            adminRepository.deleteUser(user)
+            if (authRepository.isAdmin())
+            {
+                adminRepository.deleteUser(user)
+            }
         }
     }
 
@@ -87,7 +116,10 @@ class AdminViewModel(
     {
         viewModelScope.launch()
         {
-            adminRepository.issueCredits(userId, amount)
+            if (authRepository.isAdmin())
+            {
+                adminRepository.issueCredits(userId, amount)
+            }
         }
     }
 
@@ -98,7 +130,10 @@ class AdminViewModel(
     {
         viewModelScope.launch()
         {
-            couponRepository.createCoupon(code, discount)
+            if (authRepository.isAdmin())
+            {
+                couponRepository.createCoupon(code, discount)
+            }
         }
     }
 

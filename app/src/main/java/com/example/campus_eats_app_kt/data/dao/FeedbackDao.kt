@@ -20,7 +20,8 @@ interface FeedbackDao
 
     /**
      * Returns a chronological stream of all system feedback.
+     * Ordered by createdAt string (ISO 8601).
      */
-    @Query("SELECT * FROM feedback ORDER BY timestamp DESC")
+    @Query("SELECT * FROM feedback ORDER BY createdAt DESC")
     fun getAllFeedback(): Flow<List<FeedbackEntity>>
 }
