@@ -142,7 +142,7 @@ class AuthRepository(
             {
                 try
                 {
-                    // Security: This write will be rejected if UserRole.ADMIN is selected 
+                    // Security: This write will be rejected if UserRole.ADMINISTRATOR is selected 
                     // and the user lacks the 'admin' custom claim.
                     firebaseDatabase.getReference("users").child(campusUserId).setValue(user)
                         .await()
@@ -150,6 +150,86 @@ class AuthRepository(
                 catch (e: Exception)
                 {
                     Log.e(tag, "RTDB Registration Sync failed: ${e.message}")
+                }
+            }
+
+            userDao.insertUser(user)
+            user
+        }
+    }
+
+    /**
+     * Registers a new user via Google SSO.
+     * 
+     * Requirement: Google Single Sign-On integration.
+     * Generates a 16-character global identifier for the new profile.
+     */
+    suspend fun registerWithGoogle(
+        idToken: String,
+        role: UserRole,
+        shopName: String? = null,
+    ): Result<UserEntity> = coroutineScope()
+    {
+        Log.d(tag, "Initiating Google SSO registration")
+        return@coroutineScope kotlin.runCatching()
+        {
+            connectivityManager.ensureInternet()
+
+            // 1. Firebase Authentication with Google Credential
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            val authResult = firebaseAuth.signInWithCredential(credential).await()
+            val firebaseUser = authResult.user ?: throw Exception("Google Registration failed: User is null.")
+            val email = firebaseUser.email ?: throw Exception("Google Registration failed: Email not provided.")
+
+            // Check if user already exists in RTDB or local cache
+            val existingUser = try { resolveUserRecord(email) } catch (_: Exception) { null }
+            if (existingUser != null)
+            {
+                return@runCatching existingUser
+            }
+
+            // 2. Parallel Remote API Synchronization
+            val apiSyncDeferred = async()
+            {
+                try
+                {
+                    // We use a dummy password for the external API as we rely on SSO for main identity
+                    val response = apiService.registerUser(RegistrationRequest(email, "[GOOGLE_SSO_LINKED]"))
+                    if (response.isSuccessful) response.body()?.usercode else null
+                }
+                catch (_: Exception)
+                {
+                    null
+                }
+            }
+
+            val remoteUsercode = apiSyncDeferred.await()
+
+            // 3. Construct the User Entity with 16-character UID
+            val campusUserId = IdGenerator.generateUserId()
+            val user = UserEntity(
+                userId = campusUserId,
+                fullName = firebaseUser.displayName ?: "Google User",
+                username = email.substringBefore("@"),
+                email = email,
+                passwordHash = "[FIREBASE_SSO]",
+                role = role,
+                shopName = if (role == UserRole.VENDOR) shopName else null,
+                shopStatus = if (role == UserRole.VENDOR) ShopStatus.OPEN else null,
+                usercode = remoteUsercode,
+            )
+
+            // 4. Persistence
+            repositoryScope.launch()
+            {
+                try
+                {
+                    firebaseDatabase.getReference("users").child(campusUserId).setValue(user)
+                        .await()
+                }
+                catch (e: Exception)
+                {
+                    Log.e(tag, "RTDB Google Sync failed: ${e.message}")
                 }
             }
 

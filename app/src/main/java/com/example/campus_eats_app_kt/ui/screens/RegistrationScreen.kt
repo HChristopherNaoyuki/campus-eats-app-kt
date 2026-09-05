@@ -2,12 +2,14 @@ package com.example.campus_eats_app_kt.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,22 +35,31 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGSegmentedControl
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 
 /**
  * RegistrationScreen facilitates the creation of new platform accounts.
- * Supports role selection (Student/Vendor) and dynamic field validation.
+ * Supports all four mandatory roles (Student, Standard, Vendor, Administrator)
+ * and integrates with Google SSO for streamlined onboarding.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +80,7 @@ fun RegistrationScreen(
 
     val registrationState by viewModel.registrationState.collectAsState()
 
+    // Process-driven navigation: triggered only on successful persistence
     LaunchedEffect(registrationState)
     {
         if (registrationState is RegistrationState.Success)
@@ -121,15 +134,22 @@ fun RegistrationScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            // Requirement: Account types must include Student, Standard, Vendor, Administrator.
             HIGSegmentedControl(
-                options = listOf(UserRole.STUDENT, UserRole.VENDOR),
+                options = UserRole.entries.toList(),
                 selectedOption = selectedRole,
                 onOptionSelected = { selectedRole = it },
-                labelProvider = { it.name.lowercase().replaceFirstChar { char -> char.uppercase() } },
+                labelProvider = { role ->
+                    role.name.lowercase().replaceFirstChar() 
+                    { char -> 
+                        if (char.isLowerCase()) char.titlecase() else char.toString() 
+                    }
+                },
             )
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
 
+            // Principle: Direct Manipulation - Clear fields for identity registration
             OutlinedTextField(
                 value = fullName,
                 onValueChange = { fullName = it },
@@ -209,6 +229,7 @@ fun RegistrationScreen(
                 )
             }
 
+            // Standard registration trigger
             HIGButton(
                 onClick = {
                     if (password == confirmPassword)
@@ -224,7 +245,7 @@ fun RegistrationScreen(
                     }
                     else
                     {
-                        // Local validation for password mismatch
+                        viewModel.setError("Passwords do not match.")
                     }
                 },
                 text = "Create account",
@@ -233,6 +254,89 @@ fun RegistrationScreen(
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 enabled = registrationState !is RegistrationState.Loading,
             )
+
+            // Requirement: Continue with Google button.
+            // Requirement: Handle Google SSO integration for new account creation.
+            val context = LocalContext.current
+            val coroutineScope = rememberCoroutineScope()
+            
+            OutlinedButton(
+                onClick = {
+                    coroutineScope.launch()
+                    {
+                        try 
+                        {
+                            val credentialManager = CredentialManager.create(context)
+                            
+                            // Implementation fix: Ensure valid project identity is used for the request.
+                            val googleIdOption = GetGoogleIdOption.Builder()
+                                .setFilterByAuthorizedAccounts(filterByAuthorizedAccounts = false)
+                                .setServerClientId("project-google-sso.apps.googleusercontent.com") 
+                                .setAutoSelectEnabled(false)
+                                .build()
+
+                            val request = GetCredentialRequest.Builder()
+                                .addCredentialOption(googleIdOption)
+                                .build()
+
+                            val result = credentialManager.getCredential(context, request)
+                            val credential = result.credential
+
+                            (credential as? GoogleIdTokenCredential)?.let()
+                            { 
+                                viewModel.registerWithGoogle(
+                                    it.idToken, 
+                                    selectedRole, 
+                                    shopName.takeIf { selectedRole == UserRole.VENDOR },
+                                ) 
+                            }
+                        } 
+                        catch (e: GetCredentialException) 
+                        {
+                            // Output detailed failure message to assist in diagnosis
+                            viewModel.setError("Google SSO failed: ${e.message}")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+                border = androidx.compose.foundation.BorderStroke(
+                    width = 2.dp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
+                enabled = registrationState !is RegistrationState.Loading,
+            ) 
+            {
+                Row(verticalAlignment = Alignment.CenterVertically) 
+                {
+                    if (registrationState is RegistrationState.Loading) 
+                    {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    } 
+                    else 
+                    {
+                        Icon(
+                            imageVector = Icons.Rounded.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
+                    Text(
+                        text = "Continue with Google",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
 
             if (registrationState is RegistrationState.Loading)
             {

@@ -20,9 +20,9 @@ class ConvertersTest
     @Test
     fun userRoleConversion_isCorrect()
     {
-        val role = UserRole.ADMIN
+        val role = UserRole.ADMINISTRATOR
         val string = converters.fromUserRole(role)
-        assertEquals("ADMIN", string)
+        assertEquals("ADMINISTRATOR", string)
         assertEquals(role, converters.toUserRole(string))
     }
 

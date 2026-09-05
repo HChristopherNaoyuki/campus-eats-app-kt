@@ -88,9 +88,12 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.play.services.location)
     implementation(libs.retrofit)
-    implementation("androidx.credentials:credentials:1.3.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
+    
+    // Credential Manager and Google ID dependencies from version catalog
+    implementation(libs.credentialsCore)
+    implementation(libs.credentialsGoogle)
+    implementation(libs.googleidAuth)
+    
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
     testImplementation(libs.junit)

@@ -12,6 +12,7 @@
 # Firebase Authentication and Realtime Database
 -keepattributes *Annotation*
 -keepattributes Signature
+-keep class com.google.firebase.** { *; }
 
 # Room Persistence Library
 -keep class * extends androidx.room.RoomDatabase
@@ -33,3 +34,13 @@
 -keepclassmembers class ** {
     @kotlinx.serialization.SerialName *;
 }
+
+# Credential Manager and Google ID
+-keep class androidx.credentials.** { *; }
+-keep interface androidx.credentials.** { *; }
+-keep class com.google.android.libraries.identity.googleid.** { *; }
+-keep class com.google.android.gms.auth.api.identity.** { *; }
+
+# Preserve service loader for Credentials provider
+-keep class * extends androidx.credentials.CredentialProvider { *; }
+-keep class androidx.credentials.playservices.CredentialProviderPlayServicesImpl { *; }

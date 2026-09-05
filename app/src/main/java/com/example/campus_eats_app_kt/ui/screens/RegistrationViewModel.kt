@@ -32,7 +32,7 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
      * Attempts to register a new user in the system.
      * Validates input fields and handles repository interaction.
      * 
-     * Requirement: Selected role must be one of STUDENT, STANDARD, VENDOR, or ADMIN.
+     * Requirement: Selected role must be one of STUDENT, STANDARD, VENDOR, or ADMINISTRATOR.
      */
     fun register(
         fullName: String,
@@ -95,9 +95,49 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
     }
 
     /**
+     * Requirement: Google Single Sign-On.
+     * Facilitates user profile creation using Google identity credentials.
+     */
+    fun registerWithGoogle(idToken: String, role: UserRole, shopName: String? = null)
+    {
+        if ((role == UserRole.VENDOR) && shopName.isNullOrBlank())
+        {
+            _registrationState.value = RegistrationState.Error("Shop name is required for vendors")
+            return
+        }
+
+        viewModelScope.launch()
+        {
+            _registrationState.value = RegistrationState.Loading
+            try
+            {
+                val result = authRepository.registerWithGoogle(idToken, role, shopName)
+                result.onSuccess()
+                { user ->
+                    _registrationState.value = RegistrationState.Success(user)
+                }.onFailure()
+                { exception ->
+                    _registrationState.value = RegistrationState.Error(exception.message ?: "Google Registration failed")
+                }
+            }
+            catch (e: Exception)
+            {
+                _registrationState.value = RegistrationState.Error("Google SSO Registration error: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Manually sets an error state from the UI.
+     */
+    fun setError(message: String)
+    {
+        _registrationState.value = RegistrationState.Error(message)
+    }
+
+    /**
      * Resets the registration state to Idle.
      */
-    @Suppress("unused")
     fun resetState()
     {
         _registrationState.value = RegistrationState.Idle

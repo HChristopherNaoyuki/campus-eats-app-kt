@@ -134,7 +134,7 @@ fun HomeScreenTab(
         // Welcoming Header Card - Professional Minimalist Refinement
         item()
         {
-            if (role != UserRole.ADMIN)
+            if (role != UserRole.ADMINISTRATOR)
             {
                 Surface(
                     color = MaterialTheme.colorScheme.surface,
@@ -391,7 +391,7 @@ fun HomeScreenTab(
         }
 
         // Admin Dashboard remains similar or adjusted for HIG
-        if (role == UserRole.ADMIN)
+        if (role == UserRole.ADMINISTRATOR)
         {
             item()
             {
@@ -604,7 +604,7 @@ fun ServicesScreenTab(
                     )
                 }
 
-                UserRole.ADMIN ->
+                UserRole.ADMINISTRATOR ->
                 {
                     HIGServiceRow(
                         title = "User Directory",
@@ -799,7 +799,7 @@ fun ActivityScreenTab(
                     )
                 }
 
-                UserRole.ADMIN ->
+                UserRole.ADMINISTRATOR ->
                 {
                     HIGServiceRow(
                         title = "Global Receipts",
@@ -1533,7 +1533,7 @@ fun SettingsScreenTab(
                             }
                         }
 
-                        UserRole.ADMIN ->
+                        UserRole.ADMINISTRATOR ->
                         {
                             TextButton(
                                 onClick = {
@@ -1566,7 +1566,7 @@ fun SettingsScreenTab(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
-                    if (role == UserRole.ADMIN)
+                    if (role == UserRole.ADMINISTRATOR)
                     {
                         TextButton(
                             onClick = {
@@ -2216,7 +2216,7 @@ fun OrderDetailWindow(
         val coroutineScope = rememberCoroutineScope()
         var statusExpanded by remember { mutableStateOf(value = false) }
 
-        val canUpdateStatus = (role == UserRole.ADMIN) || ((role == UserRole.VENDOR) && (order.vendorId == userId))
+        val canUpdateStatus = (role == UserRole.ADMINISTRATOR) || ((role == UserRole.VENDOR) && (order.vendorId == userId))
 
         val items = remember(order)
         {

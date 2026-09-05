@@ -3,6 +3,7 @@ package com.example.campus_eats_app_kt.data.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 /**
  * UserRole defines the access levels for the application.
@@ -11,10 +12,14 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class UserRole
 {
+    @SerialName("STUDENT")
     STUDENT,
+    @SerialName("STANDARD")
     STANDARD,
+    @SerialName("VENDOR")
     VENDOR,
-    ADMIN
+    @SerialName("ADMIN")
+    ADMINISTRATOR
 }
 
 /**
