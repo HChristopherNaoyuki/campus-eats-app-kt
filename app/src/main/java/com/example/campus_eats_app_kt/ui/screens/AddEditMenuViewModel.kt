@@ -31,10 +31,12 @@ class AddEditMenuViewModel(
     {
         if (itemId != null)
         {
-            viewModelScope.launch {
+            viewModelScope.launch()
+            {
                 val item = repository.getMenuItemsByVendor(vendorId).firstOrNull()
                     ?.find { it.itemId == itemId }
-                item?.let {
+                item?.let()
+                {
                     name = it.name
                     description = it.description
                     price = it.price.toString()
@@ -56,7 +58,8 @@ class AddEditMenuViewModel(
             return
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch()
+        {
             val item = MenuItemEntity(
                 itemId = itemId ?: 0,
                 vendorId = vendorId,

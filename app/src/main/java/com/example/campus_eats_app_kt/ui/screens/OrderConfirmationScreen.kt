@@ -35,21 +35,23 @@ fun OrderConfirmationScreen(
     onReturnHome: () -> Unit,
 )
 {
-    Scaffold { innerPadding ->
+    Scaffold()
+    { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(DesignSystem.Spacing.screenPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
+            verticalArrangement = Arrangement.Center,
+        )
+        {
             // Visual success indicator
             Icon(
                 imageVector = Icons.Rounded.CheckCircle,
                 contentDescription = null,
                 modifier = Modifier.size(100.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.primary,
             )
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
@@ -57,7 +59,7 @@ fun OrderConfirmationScreen(
             Text(
                 text = "Order Placed!",
                 style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Black
+                fontWeight = FontWeight.Black,
             )
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
@@ -67,7 +69,7 @@ fun OrderConfirmationScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = DesignSystem.Spacing.large),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.outline
+                color = MaterialTheme.colorScheme.outline,
             )
 
             Spacer(modifier = Modifier.height(48.dp))
@@ -76,7 +78,7 @@ fun OrderConfirmationScreen(
             HIGButton(
                 onClick = onTrackOrder,
                 text = "Track Order Status",
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
@@ -87,12 +89,13 @@ fun OrderConfirmationScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                shape = MaterialTheme.shapes.large
-            ) {
+                shape = MaterialTheme.shapes.large,
+            )
+            {
                 Text(
                     text = "Return to Home",
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }

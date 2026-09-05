@@ -58,7 +58,7 @@ fun HIGTopAppBar(
                     fontWeight = FontWeight.Bold,
                     fontSize = DesignSystem.Typography.titleSize,
                     letterSpacing = (-0.5).sp,
-                )
+                ),
             )
         },
         navigationIcon = navigationIcon,
@@ -73,7 +73,6 @@ fun HIGTopAppBar(
 /**
  * HIGButton provides a consistent primary action style.
  * It features a 50dp height for optimal touch target accessibility.
- * Default color is ActionBlue for standard interactions.
  */
 @Composable
 fun HIGButton(
@@ -82,7 +81,7 @@ fun HIGButton(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary,
-    enabled: Boolean = true
+    enabled: Boolean = true,
 )
 {
     Button(
@@ -93,17 +92,17 @@ fun HIGButton(
             containerColor = containerColor,
             contentColor = contentColor,
             disabledContainerColor = containerColor.copy(alpha = 0.5f),
-            disabledContentColor = contentColor.copy(alpha = 0.5f)
+            disabledContentColor = contentColor.copy(alpha = 0.5f),
         ),
-        enabled = enabled
+        enabled = enabled,
     )
     {
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
-            )
+                letterSpacing = 0.5.sp,
+            ),
         )
     }
 }
@@ -118,7 +117,7 @@ fun <T> HIGSegmentedControl(
     selectedOption: T,
     onOptionSelected: (T) -> Unit,
     labelProvider: (T) -> String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 )
 {
     Surface(
@@ -126,14 +125,14 @@ fun <T> HIGSegmentedControl(
             .fillMaxWidth()
             .height(40.dp),
         shape = RoundedCornerShape(DesignSystem.CornerRadius.small),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
     )
     {
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(2.dp),
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
         )
         {
             options.forEach { option ->
@@ -149,9 +148,9 @@ fun <T> HIGSegmentedControl(
                         }
                         .then(
                             if (isSelected) Modifier.background(MaterialTheme.colorScheme.surface)
-                            else Modifier
+                            else Modifier,
                         ),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 )
                 {
                     Text(
@@ -159,7 +158,7 @@ fun <T> HIGSegmentedControl(
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                         color = if (isSelected) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.onSurfaceVariant
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -177,7 +176,7 @@ fun HIGCard(
     containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     onClick: (() -> Unit)? = null,
     contentPadding: PaddingValues = PaddingValues(DesignSystem.Spacing.medium),
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 )
 {
     if (onClick != null)
@@ -189,14 +188,14 @@ fun HIGCard(
             colors = CardDefaults.cardColors(containerColor = containerColor),
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 0.dp,
-                pressedElevation = 2.dp
+                pressedElevation = 2.dp,
             ),
             content = {
                 Box(modifier = Modifier.padding(contentPadding))
                 {
                     content()
                 }
-            }
+            },
         )
     }
     else
@@ -211,7 +210,7 @@ fun HIGCard(
                 {
                     content()
                 }
-            }
+            },
         )
     }
 }
@@ -226,12 +225,12 @@ fun HIGServiceRow(
     description: String,
     icon: ImageVector,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 )
 {
     HIGCard(
         modifier = modifier.padding(vertical = DesignSystem.Spacing.extraSmall),
-        onClick = onClick
+        onClick = onClick,
     )
     {
         Row(verticalAlignment = Alignment.CenterVertically)
@@ -239,7 +238,7 @@ fun HIGServiceRow(
             Surface(
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(52.dp)
+                modifier = Modifier.size(52.dp),
             )
             {
                 Box(contentAlignment = Alignment.Center)
@@ -248,7 +247,7 @@ fun HIGServiceRow(
                         imageVector = icon,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(28.dp),
                     )
                 }
             }
@@ -266,10 +265,9 @@ fun HIGServiceRow(
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.outline,
                 )
             }
         }
     }
 }
-

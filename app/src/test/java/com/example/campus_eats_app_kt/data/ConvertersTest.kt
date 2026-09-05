@@ -55,13 +55,13 @@ class ConvertersTest
 
     /**
      * Requirement: Feedback types must be lowercase for Firebase compatibility.
-     * Ensures the converter preserves the lowercase enum names.
+     * Ensures the converter preserves the lowercase strings in DB even if Kotlin uses uppercase Enums.
      */
     @Test
     fun feedbackTypeConversion_isCorrect()
     {
-        // Enum values are lowercase (complaint, compliment) to align with Firebase rules.
-        val type = FeedbackType.complaint
+        // Enum values are mapped to lowercase (complaint, compliment) in SQLite to align with Firebase rules.
+        val type = FeedbackType.COMPLAINT
         val string = converters.fromFeedbackType(type)
         assertEquals("complaint", string)
         assertEquals(type, converters.toFeedbackType(string))

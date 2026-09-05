@@ -75,7 +75,10 @@ class CartViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val userRole: StateFlow<UserRole> = authRepository.getUserFlow(userId)
-        .map { it?.role ?: UserRole.STANDARD }
+        .map()
+        { 
+            it?.role ?: UserRole.STANDARD 
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UserRole.STANDARD)
 
     fun addItem(item: CartItemEntity)

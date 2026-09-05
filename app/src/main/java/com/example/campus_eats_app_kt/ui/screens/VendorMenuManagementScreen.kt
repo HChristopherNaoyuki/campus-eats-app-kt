@@ -54,7 +54,8 @@ fun VendorMenuManagementScreen(
             HIGTopAppBar(
                 title = "Inventory",
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick)
+                    {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -66,24 +67,27 @@ fun VendorMenuManagementScreen(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = MaterialTheme.shapes.large,
-            ) {
+            )
+            {
                 Icon(Icons.Rounded.Add, contentDescription = "Add Item")
             }
         },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
+        containerColor = MaterialTheme.colorScheme.background,
+    )
+    { innerPadding ->
         if (menuItems.isEmpty())
         {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
+                contentAlignment = Alignment.Center,
+            )
+            {
                 Text(
                     text = "No items registered in your menu.",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.outline,
                 )
             }
         }
@@ -94,13 +98,18 @@ fun VendorMenuManagementScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
                 contentPadding = PaddingValues(DesignSystem.Spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-            ) {
-                items(menuItems) { item ->
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+            )
+            {
+                items(menuItems)
+                { item ->
                     InventoryManagementCard(
                         item = item,
-                        onEdit = { onEditItemClick(item.itemId) }
-                    ) { viewModel.deleteItem(item) }
+                        onEdit = { onEditItemClick(item.itemId) },
+                    )
+                    { 
+                        viewModel.deleteItem(item) 
+                    }
                 }
             }
         }
@@ -110,37 +119,42 @@ fun VendorMenuManagementScreen(
 @Composable
 fun InventoryManagementCard(item: MenuItemEntity, onEdit: () -> Unit, onDelete: () -> Unit)
 {
-    HIGCard(modifier = Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
+    HIGCard(modifier = Modifier.fillMaxWidth())
+    {
+        Row(verticalAlignment = Alignment.CenterVertically)
+        {
+            Column(modifier = Modifier.weight(1f))
+            {
                 val locale = LocalConfiguration.current.locales[0]
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = item.category.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Black
+                    fontWeight = FontWeight.Black,
                 )
                 Text(
                     text = "R${String.format(locale, "%.2f", item.price)} • Stock: ${item.stock}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.outline,
                 )
             }
 
-            IconButton(onClick = onEdit) {
+            IconButton(onClick = onEdit)
+            {
                 Icon(Icons.Rounded.Edit, contentDescription = "Edit")
             }
 
-            IconButton(onClick = onDelete) {
+            IconButton(onClick = onDelete)
+            {
                 Icon(
                     imageVector = Icons.Rounded.Delete,
                     contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.error
+                    tint = MaterialTheme.colorScheme.error,
                 )
             }
         }

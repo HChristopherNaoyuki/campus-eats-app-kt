@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -23,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -35,25 +35,25 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import kotlinx.coroutines.launch
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 
 /**
  * LoginScreen provides the UI for user authentication.
@@ -131,7 +131,7 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = DesignSystem.Spacing.medium)
+                    .padding(bottom = DesignSystem.Spacing.medium),
             )
 
             // Principle: Aesthetic Integrity - Purposeful inputs with clear icons
@@ -144,7 +144,7 @@ fun LoginScreen(
                 leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
             )
 
             Column(modifier = Modifier.fillMaxWidth())
@@ -161,19 +161,19 @@ fun LoginScreen(
                         {
                             Icon(
                                 imageVector = if (passwordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                                contentDescription = "Toggle password visibility"
+                                contentDescription = "Toggle password visibility",
                             )
                         }
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     singleLine = true,
-                    shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+                    shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                 )
 
                 // Contextual link for recovery
                 TextButton(
                     onClick = onForgotPasswordClick,
-                    modifier = Modifier.align(Alignment.End)
+                    modifier = Modifier.align(Alignment.End),
                 )
                 {
                     Text(
@@ -181,8 +181,8 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
-                        )
+                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                        ),
                     )
                 }
             }
@@ -197,7 +197,7 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(bottom = DesignSystem.Spacing.small),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                 )
             }
 
@@ -208,7 +208,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                enabled = loginState !is LoginState.Loading
+                enabled = loginState !is LoginState.Loading,
             )
 
             // Requirement: Google Single Sign-On.
@@ -218,11 +218,13 @@ fun LoginScreen(
             
             OutlinedButton(
                 onClick = {
-                    coroutineScope.launch {
-                        try {
+                    coroutineScope.launch()
+                    {
+                        try 
+                        {
                             val credentialManager = CredentialManager.create(context)
                             val googleIdOption = GetGoogleIdOption.Builder()
-                                .setFilterByAuthorizedAccounts(false)
+                                .setFilterByAuthorizedAccounts(filterByAuthorizedAccounts = false)
                                 .setServerClientId("project-google-sso.apps.googleusercontent.com") // Target Project SSO
                                 .build()
 
@@ -233,10 +235,13 @@ fun LoginScreen(
                             val result = credentialManager.getCredential(context, request)
                             val credential = result.credential
 
-                            if (credential is GoogleIdTokenCredential) {
-                                viewModel.signInWithGoogle(credential.idToken)
+                            (credential as? GoogleIdTokenCredential)?.let()
+                            { 
+                                viewModel.signInWithGoogle(it.idToken) 
                             }
-                        } catch (e: GetCredentialException) {
+                        } 
+                        catch (e: GetCredentialException) 
+                        {
                             viewModel.setError("Google SSO failed: ${e.message}")
                         }
                     }
@@ -247,23 +252,28 @@ fun LoginScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                 border = androidx.compose.foundation.BorderStroke(
                     width = 2.dp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 ),
-                enabled = loginState !is LoginState.Loading
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (loginState is LoginState.Loading) {
+                enabled = loginState !is LoginState.Loading,
+            ) 
+            {
+                Row(verticalAlignment = Alignment.CenterVertically) 
+                {
+                    if (loginState is LoginState.Loading) 
+                    {
                         CircularProgressIndicator(
                             modifier = Modifier.size(18.dp),
                             strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
-                    } else {
+                    } 
+                    else 
+                    {
                         Icon(
                             imageVector = Icons.Rounded.Person,
                             contentDescription = null,
                             modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                     Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
@@ -271,7 +281,7 @@ fun LoginScreen(
                         text = "Continue with Google",
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.ExtraBold,
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
                     )
                 }
             }
@@ -281,7 +291,7 @@ fun LoginScreen(
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 2.dp
+                    strokeWidth = 2.dp,
                 )
             }
 
@@ -289,22 +299,22 @@ fun LoginScreen(
 
             TextButton(
                 onClick = onRegisterClick,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
             {
                 Row()
                 {
                     Text(
                         text = "No account? ",
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = MaterialTheme.colorScheme.onBackground,
                     )
                     Text(
                         text = "Register",
                         color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
-                        )
+                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                        ),
                     )
                 }
             }

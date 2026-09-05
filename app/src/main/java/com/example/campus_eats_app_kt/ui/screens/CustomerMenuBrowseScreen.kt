@@ -59,7 +59,8 @@ fun CustomerMenuBrowseScreen(
             HIGTopAppBar(
                 title = "Menu Options",
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick)
+                    {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -75,20 +76,22 @@ fun CustomerMenuBrowseScreen(
                 },
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
+        containerColor = MaterialTheme.colorScheme.background,
+    )
+    { innerPadding ->
         if (menuItems.isEmpty())
         {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
+                contentAlignment = Alignment.Center,
+            )
+            {
                 Text(
                     text = "This vendor has no active listings.",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.outline,
                 )
             }
         }
@@ -101,10 +104,15 @@ fun CustomerMenuBrowseScreen(
                     .padding(innerPadding),
                 contentPadding = PaddingValues(DesignSystem.Spacing.medium),
                 horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-            ) {
-                items(menuItems) { item ->
-                    MenuItemGridCard(item = item) { viewModel.addToCart(item) }
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+            )
+            {
+                items(menuItems)
+                { item ->
+                    MenuItemGridCard(item = item)
+                    { 
+                        viewModel.addToCart(item) 
+                    }
                 }
             }
         }
@@ -116,9 +124,11 @@ fun MenuItemGridCard(item: MenuItemEntity, onAddToCart: () -> Unit)
 {
     HIGCard(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(0.dp)
-    ) {
-        Column {
+        contentPadding = PaddingValues(0.dp),
+    )
+    {
+        Column()
+        {
             // Visual identification with bleed-to-edge layout
             AsyncImage(
                 model = item.imageUrl ?: "https://via.placeholder.com/300?text=${item.name}",
@@ -126,22 +136,23 @@ fun MenuItemGridCard(item: MenuItemEntity, onAddToCart: () -> Unit)
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(130.dp),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
             )
 
-            Column(modifier = Modifier.padding(DesignSystem.Spacing.medium)) {
+            Column(modifier = Modifier.padding(DesignSystem.Spacing.medium))
+            {
                 val locale = LocalConfiguration.current.locales[0]
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1
+                    maxLines = 1,
                 )
                 Text(
                     text = "R${String.format(locale, "%.2f", item.price)}",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Black
+                    fontWeight = FontWeight.Black,
                 )
 
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
@@ -150,17 +161,18 @@ fun MenuItemGridCard(item: MenuItemEntity, onAddToCart: () -> Unit)
                     onClick = onAddToCart,
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium,
-                    contentPadding = PaddingValues(0.dp)
-                ) {
+                    contentPadding = PaddingValues(0.dp),
+                )
+                {
                     Icon(
                         imageVector = Icons.Rounded.AddShoppingCart,
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
                     Spacer(modifier = Modifier.width(DesignSystem.Spacing.extraSmall))
                     Text(
                         text = "Add",
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelLarge,
                     )
                 }
             }

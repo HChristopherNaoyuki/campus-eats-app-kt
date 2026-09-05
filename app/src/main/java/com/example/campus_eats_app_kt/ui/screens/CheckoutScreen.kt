@@ -1,8 +1,8 @@
 package com.example.campus_eats_app_kt.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,21 +10,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.AccountBalanceWallet
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.CreditCard
+import androidx.compose.material.icons.rounded.ConfirmationNumber
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,7 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,19 +56,26 @@ import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.CheckoutEngine
-import com.example.campus_eats_app_kt.util.CheckoutSummary
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.util.Locale
 
+sealed interface CheckoutState
+{
+    data object Idle : CheckoutState
+    data object Processing : CheckoutState
+    data class Success(val orderId: Long) : CheckoutState
+    data class Error(val message: String) : CheckoutState
+}
+
 /**
- * CheckoutViewModel coordinates the finalization of an order.
- * It combines cart items and user profile data to generate a definitive financial summary.
+ * CheckoutViewModel manages the final transaction flow.
+ * Handles payment method selection, order construction, and repository persistence.
  */
 class CheckoutViewModel(
     cartRepository: CartRepository,
@@ -77,18 +88,15 @@ class CheckoutViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val userRole: StateFlow<UserRole> = authRepository.getUserFlow(userId)
-        .map { it?.role ?: UserRole.STANDARD }
+        .map()
+        { 
+            it?.role ?: UserRole.STANDARD 
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UserRole.STANDARD)
 
-    val summary: StateFlow<CheckoutSummary?> = combine(cartItems, userRole) { items, role ->
-        if (items.isEmpty()) return@combine null
-        val subtotal = items.sumOf { it.price * it.quantity }
-        CheckoutEngine.calculateSummary(subtotal, role)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    private val _checkoutState = MutableStateFlow<CheckoutState>(CheckoutState.Idle)
+    val checkoutState: StateFlow<CheckoutState> = _checkoutState
 
-    /**
-     * Executes the order placement process.
-     */
     fun placeOrder(
         paymentMethod: PaymentMethod,
         pickupTime: String,
@@ -96,31 +104,35 @@ class CheckoutViewModel(
         onSuccess: (Long) -> Unit,
     )
     {
-        viewModelScope.launch {
-            val items = cartItems.value
-            val sum = summary.value
-            if (items.isNotEmpty() && (sum != null))
+        viewModelScope.launch()
+        {
+            _checkoutState.value = CheckoutState.Processing
+            try
             {
-                val vendorId = items.first().vendorId
+                val items = cartItems.value
+                val subtotal = items.sumOf { it.price * it.quantity }
+                val summary = CheckoutEngine.calculateSummary(subtotal, userRole.value)
+
                 val orderId = orderRepository.placeOrder(
                     userId = userId,
-                    vendorId = vendorId,
+                    vendorId = items.first().vendorId,
                     cartItems = items,
-                    totalAmount = sum.total.toDouble(),
+                    totalAmount = summary.total.toDouble(),
                     paymentMethod = paymentMethod,
                     pickupTime = pickupTime,
                     specialRequests = specialRequests,
                 )
+                _checkoutState.value = CheckoutState.Success(orderId)
                 onSuccess(orderId)
+            }
+            catch (e: Exception)
+            {
+                _checkoutState.value = CheckoutState.Error(e.message ?: "Failed to place order")
             }
         }
     }
 }
 
-/**
- * CheckoutScreen provides the final interface for users to select payment methods,
- * specify pickup times, and confirm their purchase.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckoutScreen(
@@ -130,25 +142,21 @@ fun CheckoutScreen(
 )
 {
     val cartItems by viewModel.cartItems.collectAsState()
-    val summary by viewModel.summary.collectAsState()
-
-    var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.DEBIT_CARD) }
-    var selectedPickupTime by remember { mutableStateOf("12:00") }
-    var specialRequests by remember { mutableStateOf("") }
-
+    val role by viewModel.userRole.collectAsState()
+    val checkoutState by viewModel.checkoutState.collectAsState()
     val locale = LocalConfiguration.current.locales[0]
 
-    // Hardcoded logic for valid pickup intervals (10:00 AM to 16:00 PM)
-    val pickupTimes = remember {
-        (10..15).flatMap { hour ->
-            listOf("00", "15", "30", "45").map { min -> "${hour.toString().padStart(2, '0')}:$min" }
-        } + "16:00"
-    }
+    var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.CAMPUS_WALLET) }
+    var selectedPickupTime by remember { mutableStateOf("As soon as possible") }
+    var specialRequests by remember { mutableStateOf("") }
+
+    val subtotal = cartItems.sumOf { it.price * it.quantity }
+    val sum = CheckoutEngine.calculateSummary(subtotal, role)
 
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Order summary",
+                title = "Checkout",
                 navigationIcon = {
                     IconButton(onClick = onBackClick)
                     {
@@ -158,14 +166,28 @@ fun CheckoutScreen(
             )
         },
         bottomBar = {
-            summary?.let { sum ->
-                Surface(
-                    tonalElevation = 8.dp,
-                    shadowElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.surface,
-                )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                tonalElevation = 8.dp,
+                color = MaterialTheme.colorScheme.surface,
+            )
+            {
+                Column(modifier = Modifier.padding(DesignSystem.Spacing.screenPadding))
                 {
-                    Column(modifier = Modifier.padding(DesignSystem.Spacing.screenPadding))
+                    if (checkoutState is CheckoutState.Error)
+                    {
+                        Text(
+                            text = (checkoutState as CheckoutState.Error).message,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                    }
+
+                    if (checkoutState is CheckoutState.Processing)
+                    {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    }
+                    else
                     {
                         Button(
                             onClick = {
@@ -204,242 +226,162 @@ fun CheckoutScreen(
         },
     )
     { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(DesignSystem.Spacing.large),
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(DesignSystem.Spacing.medium),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large),
         )
         {
-            // Items Section
-            item()
+            // Payment Method Section
+            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
             {
-                SectionHeader(title = "Items")
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
-                cartItems.forEach { item ->
-                    ItemSummaryRow(item = item, locale = locale)
-                }
-            }
-
-            // Pickup Time Section
-            item()
-            {
-                SectionHeader(title = "Pickup time")
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
+                Text(
+                    text = "Payment Method",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                 )
-                {
-                    items(pickupTimes)
-                    { time ->
-                        val isSelected = selectedPickupTime == time
-                        Surface(
-                            onClick = { selectedPickupTime = time },
-                            shape = MaterialTheme.shapes.medium,
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        {
-                            Text(
-                                text = time,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                    }
+                PaymentMethodCard(
+                    method = PaymentMethod.CAMPUS_WALLET,
+                    icon = Icons.Rounded.AccountBalanceWallet,
+                    selected = selectedPaymentMethod == PaymentMethod.CAMPUS_WALLET,
+                )
+                { 
+                    selectedPaymentMethod = PaymentMethod.CAMPUS_WALLET 
+                }
+                PaymentMethodCard(
+                    method = PaymentMethod.DEBIT_CARD,
+                    icon = Icons.Rounded.CreditCard,
+                    selected = selectedPaymentMethod == PaymentMethod.DEBIT_CARD,
+                )
+                { 
+                    selectedPaymentMethod = PaymentMethod.DEBIT_CARD 
+                }
+                PaymentMethodCard(
+                    method = PaymentMethod.COUPON,
+                    icon = Icons.Rounded.ConfirmationNumber,
+                    selected = selectedPaymentMethod == PaymentMethod.COUPON,
+                )
+                { 
+                    selectedPaymentMethod = PaymentMethod.COUPON 
                 }
             }
 
-            // Payment Section
-            item()
+            // Pickup Details
+            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
             {
-                SectionHeader(title = "Payment")
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
-                PaymentMethodSelector(
-                    selectedMethod = selectedPaymentMethod,
-                ) { selectedMethod -> selectedPaymentMethod = selectedMethod }
-            }
-
-            // User-provided fulfillment instructions
-            item()
-            {
-                SectionHeader(title = "Special Requests")
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
+                Text(
+                    text = "Pickup Details",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                OutlinedTextField(
+                    value = selectedPickupTime,
+                    onValueChange = { selectedPickupTime = it },
+                    label = { Text("Pickup Time") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                )
                 OutlinedTextField(
                     value = specialRequests,
                     onValueChange = { specialRequests = it },
-                    placeholder = { Text("Allergies, extra sauce, etc.") },
+                    label = { Text("Special Requests (Optional)") },
                     modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
+                    minLines = 2,
                     shape = MaterialTheme.shapes.medium,
                 )
             }
 
-            // Final financial breakdown
-            summary?.let { sum ->
-                item()
+            // Order Summary
+            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+            {
+                Text(
+                    text = "Order Summary",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                CalculationRow("Subtotal", sum.subtotal, locale)
+                CalculationRow("Fees & Taxes", sum.tax + sum.serviceFee, locale)
+                if (sum.studentDiscount > BigDecimal.ZERO)
                 {
-                    SectionHeader(title = "Totals")
-                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
-                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
-                    {
-                        SummaryRow("Subtotal", sum.subtotal, locale = locale)
-                        SummaryRow("Tax (20%)", sum.tax, locale = locale)
-                        SummaryRow("Service Fee", sum.serviceFee, locale = locale)
-
-                        if (sum.studentDiscount > BigDecimal.ZERO)
-                        {
-                            SummaryRow(
-                                label = "Student Discount (2.5%)",
-                                amount = sum.studentDiscount.negate(),
-                                color = MaterialTheme.colorScheme.primary,
-                                locale = locale,
-                            )
-                        }
-
-                        val rounding =
-                            sum.total.subtract(sum.subtotal.add(sum.tax).add(sum.serviceFee).subtract(sum.studentDiscount))
-                        if (rounding.abs() > BigDecimal("0.001"))
-                        {
-                            SummaryRow("Rounding Adjustment", rounding, locale = locale)
-                        }
-
-                        HorizontalDivider(modifier = Modifier.padding(vertical = DesignSystem.Spacing.small))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        )
-                        {
-                            Text(
-                                text = "Total",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.ExtraBold,
-                            )
-                            Text(
-                                text = "R${String.format(locale, "%.2f", sum.total.toDouble())}",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    }
+                    CalculationRow("Student Discount", sum.studentDiscount.negate(), locale)
+                }
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                )
+                {
+                    Text(
+                        text = "Total",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                    )
+                    Text(
+                        text = "R${String.format(locale, "%.2f", sum.total.toDouble())}",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                    )
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge)) }
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
         }
     }
 }
 
 @Composable
-fun ItemSummaryRow(item: CartItemEntity, locale: Locale)
-{
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = "${item.quantity}x ${item.name}",
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        Text(
-            text = "R${String.format(locale, "%.2f", item.price * item.quantity)}",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-        )
-    }
-}
-
-
-@Composable
-fun PaymentMethodSelector(
-    selectedMethod: PaymentMethod,
-    onMethodSelected: (PaymentMethod) -> Unit,
-)
-{
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
-        PaymentOption(
-            label = "Debit card",
-            selected = selectedMethod == PaymentMethod.DEBIT_CARD,
-        ) { onMethodSelected(PaymentMethod.DEBIT_CARD) }
-        PaymentOption(
-            label = "Campus Wallet",
-            selected = selectedMethod == PaymentMethod.CAMPUS_WALLET,
-        ) { onMethodSelected(PaymentMethod.CAMPUS_WALLET) }
-        PaymentOption(
-            label = "Coupons",
-            selected = selectedMethod == PaymentMethod.COUPON,
-        ) { onMethodSelected(PaymentMethod.COUPON) }
-    }
-}
-
-@Composable
-fun SectionHeader(title: String)
-{
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.ExtraBold,
-        color = MaterialTheme.colorScheme.outline,
-    )
-}
-
-@Composable
-fun SummaryRow(
-    label: String,
-    amount: BigDecimal,
-    locale: Locale,
-    color: Color = MaterialTheme.colorScheme.onSurface,
-)
-{
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = label, color = color)
-        Text(
-            text = if (amount >= BigDecimal.ZERO) "R${String.format(locale, "%.2f", amount.toDouble())}"
-            else "-R${String.format(locale, "%.2f", amount.negate().toDouble())}",
-            color = color,
-            fontWeight = FontWeight.SemiBold,
-        )
-    }
-}
-
-@Composable
-fun PaymentOption(
-    label: String,
+fun PaymentMethodCard(
+    method: PaymentMethod,
+    icon: ImageVector,
     selected: Boolean,
     onClick: () -> Unit,
 )
 {
-    Surface(
-        onClick = onClick,
-        shape = MaterialTheme.shapes.medium,
-        color = Color.Transparent,
-    ) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable()
+            { 
+                onClick() 
+            },
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        ),
+        border = if (selected) androidx.compose.foundation.BorderStroke(
+            2.dp,
+            MaterialTheme.colorScheme.primary,
+        ) else null,
+    )
+    {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = DesignSystem.Spacing.small),
+            modifier = Modifier.padding(DesignSystem.Spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
-        ) {
-            RadioButton(
-                selected = selected,
-                onClick = onClick,
-                colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary),
+        )
+        {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
+            Spacer(modifier = Modifier.width(DesignSystem.Spacing.medium))
             Text(
-                text = label,
+                text = method.name.replace("_", " ").lowercase()
+                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             )
+            Spacer(modifier = Modifier.weight(1f))
+            if (selected)
+            {
+                Icon(
+                    imageVector = Icons.Rounded.CheckCircle,
+                    contentDescription = "Selected",
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }

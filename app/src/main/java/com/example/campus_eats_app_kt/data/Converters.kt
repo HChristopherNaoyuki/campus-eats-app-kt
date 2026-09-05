@@ -66,25 +66,25 @@ class Converters
     @TypeConverter
     fun fromFeedbackType(type: FeedbackType): String
     {
-        return type.name
+        return type.name.lowercase()
     }
 
     @TypeConverter
     fun toFeedbackType(type: String): FeedbackType
     {
-        return FeedbackType.valueOf(type)
+        return FeedbackType.valueOf(type.uppercase())
     }
 
     @TypeConverter
     fun fromFeedbackStatus(status: FeedbackStatus): String
     {
-        return status.name
+        return status.name.lowercase()
     }
 
     @TypeConverter
     fun toFeedbackStatus(status: String): FeedbackStatus
     {
-        return FeedbackStatus.valueOf(status)
+        return FeedbackStatus.valueOf(status.uppercase())
     }
 
     @TypeConverter

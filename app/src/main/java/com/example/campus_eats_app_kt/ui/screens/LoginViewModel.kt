@@ -40,7 +40,8 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel()
             return
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch()
+        {
             _loginState.value = LoginState.Loading
 
             try
@@ -48,10 +49,12 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel()
                 // Call the repository to perform the login operation
                 val result = authRepository.login(email, password)
 
-                result.onSuccess { user ->
+                result.onSuccess()
+                { user ->
                     // On success, update the state with the authenticated user
                     _loginState.value = LoginState.Success(user)
-                }.onFailure { exception ->
+                }.onFailure()
+                { exception ->
                     // AuthRepository now provides localized, user-friendly messages
                     _loginState.value = LoginState.Error(exception.message ?: "Login failed")
                 }
@@ -70,14 +73,17 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel()
      */
     fun signInWithGoogle(idToken: String)
     {
-        viewModelScope.launch {
+        viewModelScope.launch()
+        {
             _loginState.value = LoginState.Loading
             try
             {
                 val result = authRepository.signInWithGoogle(idToken)
-                result.onSuccess { user ->
+                result.onSuccess()
+                { user ->
                     _loginState.value = LoginState.Success(user)
-                }.onFailure { exception ->
+                }.onFailure()
+                { exception ->
                     _loginState.value = LoginState.Error(exception.message ?: "Google Sign-In failed")
                 }
             }
@@ -86,14 +92,6 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel()
                 _loginState.value = LoginState.Error("Google SSO error: ${e.message}")
             }
         }
-    }
-
-    /**
-     * Resets the login state to Idle.
-     */
-    fun resetState()
-    {
-        _loginState.value = LoginState.Idle
     }
 
     /**

@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -94,7 +93,7 @@ fun MainScreen(
                     .fillMaxWidth()
                     .padding(
                         horizontal = DesignSystem.Spacing.tabBarHorizontalMargin,
-                        vertical = 8.dp
+                        vertical = 8.dp,
                     ),
                 shape = MaterialTheme.shapes.extraLarge,
                 color = MaterialTheme.colorScheme.surface,
@@ -173,10 +172,8 @@ fun MainScreen(
                     onNavigateToVendorMenu = onNavigateToVendorMenu,
                     onNavigateToMenuBrowse = onNavigateToMenuBrowse,
                     onNavigateToAddMenuItem = onNavigateToAddMenuItem,
+                    onReturnHome = { selectedTab = 0 },
                 )
-                {
-                    selectedTab = 0
-                }
 
                 2 -> ActivityScreenTab(
                     userId = userId,
@@ -184,10 +181,8 @@ fun MainScreen(
                     orderRepository = orderRepository,
                     cartRepository = cartRepository,
                     onNavigateToCheckout = onNavigateToCheckout,
+                    onReturnHome = { selectedTab = 0 },
                 )
-                {
-                    selectedTab = 0
-                }
 
                 3 -> ActivityScreenTab(
                     // Reports Tab reused same tab logic with different active view
@@ -196,10 +191,8 @@ fun MainScreen(
                     orderRepository = orderRepository,
                     cartRepository = cartRepository,
                     onNavigateToCheckout = onNavigateToCheckout,
+                    onReturnHome = { selectedTab = 0 },
                 )
-                {
-                    selectedTab = 0
-                }
 
                 4 -> SettingsScreenTab(
                     userId = userId,

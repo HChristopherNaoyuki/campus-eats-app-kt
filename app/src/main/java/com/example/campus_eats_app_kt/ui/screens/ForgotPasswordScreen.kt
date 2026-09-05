@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,8 +39,7 @@ import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
- * ForgotPasswordScreen provides account recovery. Users must provide their unique 
- * 16-character User ID as an offline authentication token to reset their password.
+ * ForgotPasswordScreen allows users to reset their security credentials.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +56,6 @@ fun ForgotPasswordScreen(
 
     val resetState by viewModel.resetState.collectAsState()
 
-    // Principle: Feedback - Immediate navigation upon successful database update
     LaunchedEffect(resetState)
     {
         if (resetState is ResetState.Success)
@@ -68,11 +67,14 @@ fun ForgotPasswordScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Reset password",
+                title = "Reset Credentials",
                 navigationIcon = {
                     IconButton(onClick = onBackClick)
                     {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = "Back",
+                        )
                     }
                 },
             )
@@ -93,43 +95,53 @@ fun ForgotPasswordScreen(
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
 
             Text(
-                text = "Enter your 10 character User ID to reset your password.",
+                text = "Credential Recovery",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Text(
+                text = "Enter your user identifier and a new secure key to regain access.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.outline,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                modifier = Modifier.padding(bottom = DesignSystem.Spacing.medium)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = DesignSystem.Spacing.medium),
             )
 
             OutlinedTextField(
                 value = userId,
                 onValueChange = { userId = it },
-                label = { Text("User ID") },
+                label = { Text("User Identifier (UID)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
-                placeholder = { Text("A8F3-KL21-ZX80-QWER") }
             )
 
             OutlinedTextField(
                 value = newPassword,
                 onValueChange = { newPassword = it },
-                label = { Text("New password") },
+                label = { Text("New Security Key") },
                 modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
             )
 
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
-                label = { Text("Confirm new password") },
+                label = { Text("Confirm New Key") },
                 modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium)
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -141,7 +153,6 @@ fun ForgotPasswordScreen(
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(bottom = DesignSystem.Spacing.small),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
 
@@ -156,7 +167,7 @@ fun ForgotPasswordScreen(
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                enabled = resetState !is ResetState.Loading
+                enabled = resetState !is ResetState.Loading,
             )
 
             if (resetState is ResetState.Loading)
@@ -164,7 +175,7 @@ fun ForgotPasswordScreen(
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 2.dp
+                    strokeWidth = 2.dp,
                 )
             }
 

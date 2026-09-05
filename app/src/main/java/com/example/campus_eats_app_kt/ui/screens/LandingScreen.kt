@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
-import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.CampusWhite
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.ui.theme.IconOrange
@@ -64,7 +63,7 @@ fun LandingScreen(
             Surface(
                 modifier = Modifier.size(100.dp),
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.large),
-                color = IconOrange
+                color = IconOrange,
             )
             {
                 Box(contentAlignment = Alignment.Center)
@@ -73,7 +72,7 @@ fun LandingScreen(
                         imageVector = Icons.Rounded.Fastfood,
                         contentDescription = null,
                         modifier = Modifier.size(60.dp),
-                        tint = CampusWhite
+                        tint = CampusWhite,
                     )
                 }
             }
@@ -85,17 +84,17 @@ fun LandingScreen(
                 style = MaterialTheme.typography.displayMedium.copy(
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onBackground,
-                    letterSpacing = (-1.5).sp
-                )
+                    letterSpacing = (-1.5).sp,
+                ),
             )
 
             Text(
                 text = "Order. Track. Pickup.",
                 style = MaterialTheme.typography.titleMedium.copy(
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 ),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
 
             Spacer(modifier = Modifier.weight(1.5f))
@@ -105,8 +104,7 @@ fun LandingScreen(
                 onClick = onRegisterClick,
                 text = "Register",
                 modifier = Modifier.fillMaxWidth(),
-                containerColor = CampusOrange,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                contentColor = MaterialTheme.colorScheme.onPrimary,
             )
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
@@ -119,20 +117,20 @@ fun LandingScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                 border = androidx.compose.foundation.BorderStroke(
                     width = 2.dp,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                    color = MaterialTheme.colorScheme.onBackground,
+                ),
             )
             {
                 Text(
                     text = "Login",
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.onBackground,
                 )
             }
 
             TextButton(
                 onClick = onForgotPasswordClick,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
             {
                 Text(
@@ -140,8 +138,8 @@ fun LandingScreen(
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
-                    )
+                        textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                    ),
                 )
             }
 
@@ -154,7 +152,8 @@ fun LandingScreen(
 @Composable
 fun LandingScreenPreview()
 {
-    CampusEatsAppTheme {
+    CampusEatsAppTheme()
+    {
         LandingScreen(onLoginClick = {}, onRegisterClick = {}, onForgotPasswordClick = {})
     }
 }

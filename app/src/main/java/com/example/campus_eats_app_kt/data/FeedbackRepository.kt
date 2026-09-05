@@ -43,7 +43,10 @@ class FeedbackRepository(
     @Suppress("unused")
     fun getComplaints(): Flow<List<FeedbackEntity>> =
         feedbackDao.getAllFeedback()
-            .map { list -> list.filter { it.type == FeedbackType.complaint } }
+            .map()
+            { list -> 
+                list.filter { it.type == FeedbackType.COMPLAINT } 
+            }
 
     /**
      * Filters feedback to return only compliments.
@@ -51,7 +54,10 @@ class FeedbackRepository(
     @Suppress("unused")
     fun getCompliments(): Flow<List<FeedbackEntity>> =
         feedbackDao.getAllFeedback()
-            .map { list -> list.filter { it.type == FeedbackType.compliment } }
+            .map()
+            { list -> 
+                list.filter { it.type == FeedbackType.COMPLIMENT } 
+            }
 
     /**
      * Persists a new feedback entry with all mandatory fields required by Firebase rules.
@@ -68,7 +74,7 @@ class FeedbackRepository(
             message = message,
             userName = user.fullName,
             userEmail = user.email,
-            status = FeedbackStatus.pending,
+            status = FeedbackStatus.PENDING,
             createdAt = now,
             updatedAt = now,
         )

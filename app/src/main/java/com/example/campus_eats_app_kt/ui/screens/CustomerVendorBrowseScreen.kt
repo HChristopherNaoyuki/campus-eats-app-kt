@@ -58,7 +58,8 @@ fun CustomerVendorBrowseScreen(
             HIGTopAppBar(
                 title = "Campus Dining",
                 navigationIcon = {
-                    IconButton(onClick = onReturnHome) {
+                    IconButton(onClick = onReturnHome)
+                    {
                         Icon(Icons.Rounded.Home, contentDescription = "Return Home")
                     }
                 },
@@ -71,26 +72,29 @@ fun CustomerVendorBrowseScreen(
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }
-                    IconButton(onClick = onLogout) {
+                    IconButton(onClick = onLogout)
+                    {
                         Icon(Icons.AutoMirrored.Rounded.Logout, contentDescription = "Logout")
                     }
                 },
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
+        containerColor = MaterialTheme.colorScheme.background,
+    )
+    { innerPadding ->
         if (vendors.isEmpty())
         {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
+                contentAlignment = Alignment.Center,
+            )
+            {
                 Text(
                     text = "No vendors are currently accepting orders.",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.outline,
                 )
             }
         }
@@ -101,10 +105,15 @@ fun CustomerVendorBrowseScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
                 contentPadding = PaddingValues(DesignSystem.Spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-            ) {
-                items(vendors) { vendor ->
-                    VendorSelectionCard(vendor = vendor) { onVendorClick(vendor.userId) }
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+            )
+            {
+                items(vendors)
+                { vendor ->
+                    VendorSelectionCard(vendor = vendor)
+                    { 
+                        onVendorClick(vendor.userId) 
+                    }
                 }
             }
         }
@@ -116,38 +125,43 @@ fun VendorSelectionCard(vendor: UserEntity, onClick: () -> Unit)
 {
     HIGCard(
         modifier = Modifier.fillMaxWidth(),
-        onClick = onClick
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        onClick = onClick,
+    )
+    {
+        Row(verticalAlignment = Alignment.CenterVertically)
+        {
             // Principle: Metaphor - Restaurant icon in a branded container
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(60.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
+                modifier = Modifier.size(60.dp),
+            )
+            {
+                Box(contentAlignment = Alignment.Center)
+                {
                     Icon(
                         imageVector = Icons.Rounded.Restaurant,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(32.dp),
                     )
                 }
             }
 
             Spacer(modifier = Modifier.width(DesignSystem.Spacing.medium))
 
-            Column {
+            Column()
+            {
                 Text(
                     text = vendor.shopName ?: vendor.fullName,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = "View full menu and availability",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
         }

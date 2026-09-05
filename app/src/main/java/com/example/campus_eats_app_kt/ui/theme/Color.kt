@@ -2,25 +2,23 @@ package com.example.campus_eats_app_kt.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Grayscale User Interface Palette
-// Requirement: The application interface must use grayscale for color-blind accessibility.
-// All colored constants are redefined as grayscale equivalents to maintain compatibility.
+/**
+ * Grayscale User Interface Palette
+ * Requirement: The application interface must use grayscale for color-blind accessibility.
+ * All colored constants are redefined as grayscale equivalents to maintain compatibility.
+ */
 
-val CampusOrange = Color(0xFF4A4A4A) // Redefined as Dark Gray
-val ActionBlue = Color(0xFF707070)   // Redefined as Medium Gray
 val CampusBlack = Color(0xFF000000)
 val CampusWhite = Color(0xFFFFFFFF)
 
-// APP ICON EXCEPTION: Iconic colors for the application icon only.
-val IconOrange = Color(0xFFFF5722)
-val IconRed = Color(0xFFD32F2F)
-val IconGreen = Color(0xFF388E3C)
+// Grayscale constants for compatibility
+val CampusOrange = Color(0xFF424242) // Redefined as Dark Gray
+val ActionBlue = Color(0xFF616161)   // Redefined as Medium Gray
 
-// Grayscale Tones for semantic mapping
-val Grayscale700 = Color(0xFF424242)
-val Grayscale500 = Color(0xFF9E9E9E)
-val Grayscale300 = Color(0xFFE0E0E0)
-val Grayscale100 = Color(0xFFF5F5F5)
+/**
+ * APP ICON EXCEPTION: Iconic colors for the application icon only.
+ */
+val IconOrange = Color(0xFFFF5722)
 
 val PrimaryLight = Color(0xFF212121) // High contrast black/dark gray
 val OnPrimaryLight = CampusWhite

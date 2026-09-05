@@ -44,12 +44,14 @@ fun AddEditMenuItemScreen(
             HIGTopAppBar(
                 title = if (viewModel.itemId == null) "New Offering" else "Edit Item",
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick)
+                    {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.saveItem(onBackClick) }) {
+                    IconButton(onClick = { viewModel.saveItem(onBackClick) })
+                    {
                         Icon(
                             Icons.Rounded.Save,
                             contentDescription = "Save",
@@ -60,20 +62,22 @@ fun AddEditMenuItemScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
-    ) { innerPadding ->
+    )
+    { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(DesignSystem.Spacing.screenPadding)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-        ) {
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        )
+        {
             // Contextual header
             Text(
                 text = "Item Details",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.ExtraBold,
             )
 
             // Primary definition fields
@@ -82,7 +86,7 @@ fun AddEditMenuItemScreen(
                 onValueChange = { viewModel.name = it },
                 label = { Text("Food Name") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium
+                shape = MaterialTheme.shapes.medium,
             )
 
             OutlinedTextField(
@@ -91,21 +95,22 @@ fun AddEditMenuItemScreen(
                 label = { Text("Description") },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
-                shape = MaterialTheme.shapes.medium
+                shape = MaterialTheme.shapes.medium,
             )
 
             // Quantifiable metrics grouped horizontally
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
-            ) {
+                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+            )
+            {
                 OutlinedTextField(
                     value = viewModel.price,
                     onValueChange = { viewModel.price = it },
                     label = { Text("Price (R)") },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    shape = MaterialTheme.shapes.medium
+                    shape = MaterialTheme.shapes.medium,
                 )
                 OutlinedTextField(
                     value = viewModel.stock,
@@ -113,7 +118,7 @@ fun AddEditMenuItemScreen(
                     label = { Text("Stock Level") },
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    shape = MaterialTheme.shapes.medium
+                    shape = MaterialTheme.shapes.medium,
                 )
             }
 
@@ -123,7 +128,7 @@ fun AddEditMenuItemScreen(
                 onValueChange = { viewModel.category = it },
                 label = { Text("Category (e.g., Beverages)") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium
+                shape = MaterialTheme.shapes.medium,
             )
 
             OutlinedTextField(
@@ -132,7 +137,7 @@ fun AddEditMenuItemScreen(
                 label = { Text("Image URL Link") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                placeholder = { Text("https://example.com/image.jpg") }
+                placeholder = { Text("https://example.com/image.jpg") },
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -141,7 +146,7 @@ fun AddEditMenuItemScreen(
             HIGButton(
                 onClick = { viewModel.saveItem(onBackClick) },
                 text = "Finalize Item",
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }

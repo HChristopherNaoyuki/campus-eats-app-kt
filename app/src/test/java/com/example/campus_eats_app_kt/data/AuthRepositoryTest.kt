@@ -66,7 +66,7 @@ class AuthRepositoryTest
             connectivityManager, 
             firebaseAuth, 
             firebaseDatabase,
-            testDispatcher
+            testDispatcher,
         )
     }
 
@@ -78,23 +78,6 @@ class AuthRepositoryTest
         every { task.isCanceled } returns false
         every { task.result } returns result
         every { task.exception } returns null
-        every { task.addOnCompleteListener(any()) } answers {
-            @Suppress("UNCHECKED_CAST")
-            val listener = invocation.args[0] as OnCompleteListener<T>
-            listener.onComplete(task)
-            task
-        }
-        return task
-    }
-
-    private fun <T> mockFailedTask(exception: Exception): Task<T>
-    {
-        val task = mockk<Task<T>>()
-        every { task.isComplete } returns true
-        every { task.isSuccessful } returns false
-        every { task.isCanceled } returns false
-        every { task.result } throws exception
-        every { task.exception } returns exception
         every { task.addOnCompleteListener(any()) } answers {
             @Suppress("UNCHECKED_CAST")
             val listener = invocation.args[0] as OnCompleteListener<T>
@@ -141,8 +124,8 @@ class AuthRepositoryTest
 
         // Then
         assertTrue(result.isSuccess)
-        coVerify { userDao.updateUser(match { it.fullName == "New Name" && it.username == "newusername" }) }
-        coVerify { ref.updateChildren(match { it["fullName"] == "New Name" && it["username"] == "newusername" }) }
+        coVerify { userDao.updateUser(match { (it.fullName == "New Name") && (it.username == "newusername") }) }
+        coVerify { ref.updateChildren(match { (it["fullName"] == "New Name") && (it["username"] == "newusername") }) }
     }
 
     @Test

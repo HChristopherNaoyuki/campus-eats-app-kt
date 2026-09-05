@@ -349,7 +349,8 @@ fun HomeScreenTab(
         {
             item()
             {
-                vendorStats?.let { stats ->
+                vendorStats?.let()
+                { stats ->
                     Column(
                         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
                     )
@@ -394,7 +395,8 @@ fun HomeScreenTab(
         {
             item()
             {
-                adminStats?.let { stats ->
+                adminStats?.let()
+                { stats ->
                     Column(
                         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
                     )
@@ -738,7 +740,6 @@ fun ActivityScreenTab(
 
     if (currentHubView == "Main")
     {
-        // ... (rest of Main remains same)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -1671,11 +1672,11 @@ fun SettingsScreenTab(
                         "Coupons" -> AdminGenerateCouponsWindow(viewModel = adminViewModel)
                         "Complaints" -> AdminFeedbackWindow(
                             viewModel = adminViewModel,
-                            type = FeedbackType.complaint,
+                            type = FeedbackType.COMPLAINT,
                         )
                         "Compliments" -> AdminFeedbackWindow(
                             viewModel = adminViewModel,
-                            type = FeedbackType.compliment,
+                            type = FeedbackType.COMPLIMENT,
                         )
                     }
                 }
@@ -2531,7 +2532,7 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
         }
 
         // Principle: Direct Manipulation - Fixed action button for clarity.
-        val isFormValid = targetId.isNotBlank() && (amount.toDoubleOrNull() ?: 0.0) > 0
+        val isFormValid = (targetId.isNotBlank()) && ((amount.toDoubleOrNull() ?: 0.0) > 0.0)
         HIGButton(
             onClick = {
                 val a = amount.toDoubleOrNull() ?: 0.0
@@ -2609,7 +2610,7 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
             }
         }
 
-        val isFormValid = code.isNotBlank() && (discount.toDoubleOrNull() ?: 0.0) > 0
+        val isFormValid = (code.isNotBlank()) && ((discount.toDoubleOrNull() ?: 0.0) > 0.0)
         HIGButton(
             onClick = {
                 val d = discount.toDoubleOrNull() ?: 0.0
@@ -2907,7 +2908,7 @@ fun StudentAddCardWindow(
             }
         }
 
-        val isFormValid = cardNumber.length == 16 && expiryDate.isNotBlank() && cvv.isNotBlank()
+        val isFormValid = (cardNumber.length == 16) && (expiryDate.isNotBlank()) && (cvv.isNotBlank())
         HIGButton(
             onClick = {
                 if (isFormValid)
@@ -3086,7 +3087,7 @@ fun UserFeedbackWindow(
 {
     var subj by remember { mutableStateOf("") }
     var msg by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf(FeedbackType.compliment) }
+    var type by remember { mutableStateOf(FeedbackType.COMPLIMENT) }
     val coroutineScope = rememberCoroutineScope()
     var successMsg by remember { mutableStateOf("") }
 
@@ -3108,9 +3109,9 @@ fun UserFeedbackWindow(
             Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
             {
                 FilterChip(
-                    selected = type == FeedbackType.compliment,
+                    selected = type == FeedbackType.COMPLIMENT,
                     onClick = {
-                        type = FeedbackType.compliment
+                        type = FeedbackType.COMPLIMENT
                         successMsg = ""
                     },
                     label = {
@@ -3119,9 +3120,9 @@ fun UserFeedbackWindow(
                     shape = MaterialTheme.shapes.medium,
                 )
                 FilterChip(
-                    selected = type == FeedbackType.complaint,
+                    selected = type == FeedbackType.COMPLAINT,
                     onClick = {
-                        type = FeedbackType.complaint
+                        type = FeedbackType.COMPLAINT
                         successMsg = ""
                     },
                     label = {

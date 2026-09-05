@@ -67,7 +67,8 @@ class StatsRepository(
                 allTimeEarnings = orders.asSequence().filter { it.status == OrderStatus.COMPLETED }
                     .sumOf { it.totalAmount },
                 menuItemCount = menuItems.size,
-                activeOrders = orders.count {
+                activeOrders = orders.count() 
+                {
                     (it.status != OrderStatus.COMPLETED) && (it.status != OrderStatus.CANCELLED)
                 },
                 todayRevenue = orders.asSequence().filter { (it.status == OrderStatus.COMPLETED) && (it.timestamp >= startOfDay) }

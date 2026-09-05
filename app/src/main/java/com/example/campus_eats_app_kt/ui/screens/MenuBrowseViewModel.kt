@@ -38,7 +38,8 @@ class MenuBrowseViewModel(
      */
     fun addToCart(item: MenuItemEntity)
     {
-        viewModelScope.launch {
+        viewModelScope.launch()
+        {
             cartRepository.addToCart(userId, item)
         }
     }

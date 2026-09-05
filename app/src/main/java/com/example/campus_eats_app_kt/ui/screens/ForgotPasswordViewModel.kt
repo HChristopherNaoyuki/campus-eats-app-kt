@@ -38,15 +38,18 @@ class ForgotPasswordViewModel(private val authRepository: AuthRepository) : View
             return
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch()
+        {
             _resetState.value = ResetState.Loading
 
             try
             {
                 val result = authRepository.resetPassword(userId, newPassword)
-                result.onSuccess {
+                result.onSuccess()
+                {
                     _resetState.value = ResetState.Success
-                }.onFailure {
+                }.onFailure()
+                {
                     _resetState.value = ResetState.Error(it.message ?: "Reset failed")
                 }
             }

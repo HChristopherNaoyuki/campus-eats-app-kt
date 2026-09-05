@@ -194,7 +194,7 @@ class MenuRepository(
                         itemPrice = item.price,
                         itemDescription = item.description,
                         imageUrl = item.imageUrl,
-                    )
+                    ),
                 )
             }
             catch (_: Exception)

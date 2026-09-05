@@ -34,7 +34,8 @@ class VendorMenuViewModel(
      */
     fun deleteItem(item: MenuItemEntity)
     {
-        viewModelScope.launch {
+        viewModelScope.launch()
+        {
             repository.deleteMenuItem(item)
         }
     }

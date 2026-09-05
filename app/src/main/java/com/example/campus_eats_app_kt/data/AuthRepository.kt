@@ -351,7 +351,8 @@ class AuthRepository(
                     Log.e(tag, "Remote password sync failed: ${e.message}")
                 }
             }
-        }.onFailure { e ->
+        }.onFailure()
+        { e ->
             throw Exception(FirebaseExceptionHandler.parse(e))
         }
     }

@@ -56,7 +56,10 @@ class AdminViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val vendors: StateFlow<List<UserEntity>> = users
-        .map { userList -> userList.filter { user -> user.role == UserRole.VENDOR } }
+        .map()
+        { userList -> 
+            userList.filter { user -> user.role == UserRole.VENDOR } 
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val orders: StateFlow<List<OrderEntity>> = orderRepository.getAllOrders()
@@ -141,5 +144,8 @@ class AdminViewModel(
      * Retrieves feedback filtered by type.
      */
     fun getFeedbackByType(type: FeedbackType) =
-        feedbackRepository.getAllFeedback().map { list -> list.filter { it.type == type } }
+        feedbackRepository.getAllFeedback().map()
+        { list -> 
+            list.filter { it.type == type } 
+        }
 }

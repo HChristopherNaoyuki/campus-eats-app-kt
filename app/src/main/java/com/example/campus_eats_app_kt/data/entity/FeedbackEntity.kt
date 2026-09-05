@@ -3,27 +3,32 @@ package com.example.campus_eats_app_kt.data.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 /**
  * FeedbackType defines the nature of user feedback.
- * Values are lowercase to match Firebase Realtime Database security rules.
+ * Values are mapped to lowercase to match Firebase Realtime Database security rules.
  */
 @Serializable
 enum class FeedbackType
 {
-    complaint,
-    compliment
+    @SerialName("complaint")
+    COMPLAINT,
+    @SerialName("compliment")
+    COMPLIMENT
 }
 
 /**
  * FeedbackStatus defines the processing state of a feedback entry.
- * Values are lowercase to match Firebase Realtime Database security rules.
+ * Values are mapped to lowercase to match Firebase Realtime Database security rules.
  */
 @Serializable
 enum class FeedbackStatus
 {
-    pending,
-    resolved
+    @SerialName("pending")
+    PENDING,
+    @SerialName("resolved")
+    RESOLVED
 }
 
 /**
@@ -41,7 +46,7 @@ data class FeedbackEntity(
     val message: String,
     val userName: String,
     val userEmail: String,
-    val status: FeedbackStatus = FeedbackStatus.pending,
+    val status: FeedbackStatus = FeedbackStatus.PENDING,
     val createdAt: String, // ISO 8601 or non-empty string
     val updatedAt: String, // ISO 8601 or non-empty string
 )
