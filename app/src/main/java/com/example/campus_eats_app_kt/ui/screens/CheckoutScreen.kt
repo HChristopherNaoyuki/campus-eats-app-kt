@@ -182,7 +182,7 @@ fun CheckoutScreen(
                             shape = MaterialTheme.shapes.large,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = CampusOrange,
-                                contentColor = Color.White,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
                             ),
                         )
                         {

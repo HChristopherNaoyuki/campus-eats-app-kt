@@ -15,6 +15,11 @@ object DesignSystem
 
         val screenPadding = 20.dp
         val itemSpacing = 12.dp
+
+        // Requirement: 3.7 mm horizontal spacing from left/right edges.
+        // Formula: mm * (160 / 25.4) = dp.
+        // 3.7 * 6.2992 = 23.307 dp (rounded to 23.3 dp).
+        val tabBarHorizontalMargin = 23.3.dp
     }
 
     object Typography

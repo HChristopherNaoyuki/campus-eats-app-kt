@@ -230,7 +230,7 @@ fun CartScreen(
                                     .weight(1f)
                                     .height(50.dp),
                                 containerColor = CampusOrange,
-                                contentColor = Color.White,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
                             )
                         }
                     }

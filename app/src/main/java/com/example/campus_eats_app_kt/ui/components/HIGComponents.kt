@@ -36,7 +36,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.campus_eats_app_kt.ui.theme.ActionBlue
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
@@ -81,8 +80,8 @@ fun HIGButton(
     onClick: () -> Unit,
     text: String,
     modifier: Modifier = Modifier,
-    containerColor: Color = ActionBlue,
-    contentColor: Color = Color.White,
+    containerColor: Color = MaterialTheme.colorScheme.primary,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary,
     enabled: Boolean = true
 )
 {

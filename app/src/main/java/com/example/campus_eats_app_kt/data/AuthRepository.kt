@@ -13,6 +13,7 @@ import com.example.campus_eats_app_kt.util.ValidationEngine
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GetTokenResult
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -181,29 +182,59 @@ class AuthRepository(
             }
 
             // 2. Resolve Application User Record
-            var user = userDao.getUserByEmail(email)
-
-            // 3. Cross-Device Restoration Logic
-            if (user == null)
-            {
-                Log.i(tag, "Local profile missing. Restoring from Firebase Realtime Database...")
-                val snapshot = firebaseDatabase.getReference("users")
-                    .orderByChild("email")
-                    .equalTo(email)
-                    .get()
-                    .await()
-
-                user = snapshot.children.firstOrNull()?.getValue(UserEntity::class.java)
-                
-                if (user != null)
-                {
-                    Log.d(tag, "Profile restored for User ID: ${user.userId}")
-                    userDao.insertUser(user)
-                }
-            }
-
-            user ?: throw Exception("Profile record not found in system.")
+            resolveUserRecord(email)
         }
+    }
+
+    /**
+     * Authenticates a user with a Google ID Token.
+     * 
+     * Requirement: Google Single Sign-On.
+     * Uses Firebase's GoogleAuthProvider to complete the exchange.
+     */
+    suspend fun signInWithGoogle(idToken: String): Result<UserEntity>
+    {
+        Log.d(tag, "Initiating Google SSO exchange")
+        return kotlin.runCatching()
+        {
+            connectivityManager.ensureInternet()
+
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            val authResult = firebaseAuth.signInWithCredential(credential).await()
+            val firebaseUser = authResult.user ?: throw Exception("Google SSO failed: User is null.")
+            val email = firebaseUser.email ?: throw Exception("Google SSO failed: Email not provided.")
+
+            resolveUserRecord(email)
+        }
+    }
+
+    /**
+     * Helper to resolve the application user record from RTDB or Cache.
+     */
+    private suspend fun resolveUserRecord(email: String): UserEntity
+    {
+        var user = userDao.getUserByEmail(email)
+
+        // Cross-Device Restoration Logic
+        if (user == null)
+        {
+            Log.i(tag, "Local profile missing. Restoring from Firebase Realtime Database...")
+            val snapshot = firebaseDatabase.getReference("users")
+                .orderByChild("email")
+                .equalTo(email)
+                .get()
+                .await()
+
+            user = snapshot.children.firstOrNull()?.getValue(UserEntity::class.java)
+            
+            if (user != null)
+            {
+                Log.d(tag, "Profile restored for User ID: ${user.userId}")
+                userDao.insertUser(user)
+            }
+        }
+
+        return user ?: throw Exception("Profile record not found in system.")
     }
 
     /**

@@ -65,11 +65,42 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel()
     }
 
     /**
+     * Requirement: Google Single Sign-On.
+     * Initiates authentication using a Google ID token.
+     */
+    fun signInWithGoogle(idToken: String)
+    {
+        viewModelScope.launch {
+            _loginState.value = LoginState.Loading
+            try
+            {
+                val result = authRepository.signInWithGoogle(idToken)
+                result.onSuccess { user ->
+                    _loginState.value = LoginState.Success(user)
+                }.onFailure { exception ->
+                    _loginState.value = LoginState.Error(exception.message ?: "Google Sign-In failed")
+                }
+            }
+            catch (e: Exception)
+            {
+                _loginState.value = LoginState.Error("Google SSO error: ${e.message}")
+            }
+        }
+    }
+
+    /**
      * Resets the login state to Idle.
      */
-    @Suppress("unused")
     fun resetState()
     {
         _loginState.value = LoginState.Idle
+    }
+
+    /**
+     * Manually sets an error state.
+     */
+    fun setError(message: String)
+    {
+        _loginState.value = LoginState.Error(message)
     }
 }

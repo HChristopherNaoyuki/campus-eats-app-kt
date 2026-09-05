@@ -1,6 +1,7 @@
 package com.example.campus_eats_app_kt.ui.screens
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Analytics
@@ -13,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,7 +22,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.campus_eats_app_kt.data.AuthRepository
 import com.example.campus_eats_app_kt.data.CartRepository
@@ -32,6 +36,7 @@ import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
+import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
  * MainScreen is the primary navigation hub after authentication.
@@ -82,47 +87,63 @@ fun MainScreen(
             HIGTopAppBar(title = title)
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
+            // Requirement: Dynamic Tab Bars with a horizontal margin of 3.7 mm (~23.3 dp).
+            // This ensures responsive layout across different screen densities.
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = DesignSystem.Spacing.tabBarHorizontalMargin,
+                        vertical = 8.dp
+                    ),
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp,
+                shadowElevation = 4.dp,
             )
             {
-                // Home Tab
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Rounded.Home, contentDescription = "Home") },
-                    label = { Text("Home") },
+                NavigationBar(
+                    containerColor = Color.Transparent, // Managed by Surface for custom shape/margin
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    tonalElevation = 0.dp,
                 )
-                // Browse Tab
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Rounded.Search, contentDescription = "Browse") },
-                    label = { Text("Browse") },
-                )
-                // Orders Tab
-                NavigationBarItem(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Rounded.History, contentDescription = "Orders") },
-                    label = { Text("Orders") },
-                )
-                // Reports Tab
-                NavigationBarItem(
-                    selected = selectedTab == 3,
-                    onClick = { selectedTab = 3 },
-                    icon = { Icon(Icons.Rounded.Analytics, contentDescription = "Reports") },
-                    label = { Text("Reports") },
-                )
-                // Settings Tab
-                NavigationBarItem(
-                    selected = selectedTab == 4,
-                    onClick = { selectedTab = 4 },
-                    icon = { Icon(Icons.Rounded.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") },
-                )
+                {
+                    // Home Tab
+                    NavigationBarItem(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        icon = { Icon(Icons.Rounded.Home, contentDescription = "Home") },
+                        label = { Text("Home") },
+                    )
+                    // Browse Tab
+                    NavigationBarItem(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        icon = { Icon(Icons.Rounded.Search, contentDescription = "Browse") },
+                        label = { Text("Browse") },
+                    )
+                    // Orders Tab
+                    NavigationBarItem(
+                        selected = selectedTab == 2,
+                        onClick = { selectedTab = 2 },
+                        icon = { Icon(Icons.Rounded.History, contentDescription = "Orders") },
+                        label = { Text("Orders") },
+                    )
+                    // Reports Tab
+                    NavigationBarItem(
+                        selected = selectedTab == 3,
+                        onClick = { selectedTab = 3 },
+                        icon = { Icon(Icons.Rounded.Analytics, contentDescription = "Reports") },
+                        label = { Text("Reports") },
+                    )
+                    // Settings Tab
+                    NavigationBarItem(
+                        selected = selectedTab == 4,
+                        onClick = { selectedTab = 4 },
+                        icon = { Icon(Icons.Rounded.Settings, contentDescription = "Settings") },
+                        label = { Text("Settings") },
+                    )
+                }
             }
         },
     )

@@ -137,11 +137,11 @@ fun HomeScreenTab(
             if (role != UserRole.ADMIN)
             {
                 Surface(
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.surface,
                     shape = MaterialTheme.shapes.extraLarge,
                     border = androidx.compose.foundation.BorderStroke(
                         1.dp,
-                        CampusOrange.copy(alpha = 0.2f),
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
                     ),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -168,13 +168,13 @@ fun HomeScreenTab(
                                 Text(
                                     text = "$greeting,",
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = Color.Black.copy(alpha = 0.6f),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                 )
                                 Text(
                                     text = user?.fullName?.split(" ")?.firstOrNull() ?: "User",
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.Black,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                             }
                             Row(verticalAlignment = Alignment.CenterVertically)
@@ -182,7 +182,7 @@ fun HomeScreenTab(
                                 Icon(
                                     imageVector = Icons.Rounded.Notifications,
                                     contentDescription = null,
-                                    tint = CampusOrange,
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(28.dp),
                                 )
                                 Spacer(modifier = Modifier.width(DesignSystem.Spacing.medium))
@@ -217,7 +217,10 @@ fun HomeScreenTab(
                                 {
                                     Surface(
                                         shape = CircleShape,
-                                        color = if (user?.shopStatus == ShopStatus.OPEN) Color.Green else Color.Red,
+                                        color = if (user?.shopStatus == ShopStatus.OPEN) 
+                                            MaterialTheme.colorScheme.primary 
+                                        else 
+                                            MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
                                         modifier = Modifier.size(8.dp),
                                     )
                                     {
@@ -225,8 +228,12 @@ fun HomeScreenTab(
                                     Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
                                     Text(
                                         text = if (user?.shopStatus == ShopStatus.OPEN) "Open" else "Closed",
-                                        color = Color.Black.copy(alpha = 0.8f),
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = if (user?.shopStatus == ShopStatus.OPEN) 
+                                            FontWeight.ExtraBold 
+                                        else 
+                                            FontWeight.Normal,
                                     )
                                 }
                                 Switch(
@@ -2312,11 +2319,18 @@ fun OrderDetailWindow(
                         text = "Status: ${order.status.name}",
                         color = when (order.status)
                         {
-                            OrderStatus.CANCELLED -> Color.Red
-                            OrderStatus.COMPLETED -> Color.Green
+                            OrderStatus.CANCELLED -> MaterialTheme.colorScheme.outline
+                            OrderStatus.COMPLETED -> MaterialTheme.colorScheme.primary
                             else -> MaterialTheme.colorScheme.primary
                         },
-                        fontWeight = FontWeight.Black,
+                        fontWeight = if (order.status == OrderStatus.COMPLETED) 
+                            FontWeight.Black 
+                        else 
+                            FontWeight.Bold,
+                        textDecoration = if (order.status == OrderStatus.CANCELLED) 
+                            androidx.compose.ui.text.style.TextDecoration.LineThrough 
+                        else 
+                            null,
                     )
                 }
             }

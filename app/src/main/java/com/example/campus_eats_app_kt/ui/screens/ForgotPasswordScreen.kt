@@ -29,14 +29,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
-import com.example.campus_eats_app_kt.ui.theme.ActionBlue
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
@@ -156,8 +154,8 @@ fun ForgotPasswordScreen(
                 },
                 text = "Confirm reset",
                 modifier = Modifier.fillMaxWidth(),
-                containerColor = ActionBlue,
-                contentColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 enabled = resetState !is ResetState.Loading
             )
 
@@ -165,7 +163,7 @@ fun ForgotPasswordScreen(
             {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = ActionBlue,
+                    color = MaterialTheme.colorScheme.primary,
                     strokeWidth = 2.dp
                 )
             }

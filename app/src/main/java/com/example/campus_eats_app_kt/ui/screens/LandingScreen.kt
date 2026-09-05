@@ -21,17 +21,17 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.campus_eats_app_kt.ui.components.HIGButton
-import com.example.campus_eats_app_kt.ui.theme.ActionBlue
 import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 import com.example.campus_eats_app_kt.ui.theme.CampusOrange
+import com.example.campus_eats_app_kt.ui.theme.CampusWhite
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
+import com.example.campus_eats_app_kt.ui.theme.IconOrange
 
 /**
  * LandingScreen serves as the welcome page for the application.
@@ -48,7 +48,7 @@ fun LandingScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .padding(DesignSystem.Spacing.screenPadding),
     )
     {
@@ -60,10 +60,11 @@ fun LandingScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             // App Icon in orange rounded square for brand highlight
+            // Requirement: App icon retains its original appearance.
             Surface(
                 modifier = Modifier.size(100.dp),
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.large),
-                color = CampusOrange
+                color = IconOrange
             )
             {
                 Box(contentAlignment = Alignment.Center)
@@ -72,7 +73,7 @@ fun LandingScreen(
                         imageVector = Icons.Rounded.Fastfood,
                         contentDescription = null,
                         modifier = Modifier.size(60.dp),
-                        tint = Color.White
+                        tint = CampusWhite
                     )
                 }
             }
@@ -83,7 +84,7 @@ fun LandingScreen(
                 text = "Campus Eats",
                 style = MaterialTheme.typography.displayMedium.copy(
                     fontWeight = FontWeight.Black,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onBackground,
                     letterSpacing = (-1.5).sp
                 )
             )
@@ -91,7 +92,7 @@ fun LandingScreen(
             Text(
                 text = "Order. Track. Pickup.",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    color = Color.Black.copy(alpha = 0.6f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     fontWeight = FontWeight.Bold
                 ),
                 textAlign = TextAlign.Center
@@ -105,7 +106,7 @@ fun LandingScreen(
                 text = "Register",
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = CampusOrange,
-                contentColor = Color.White
+                contentColor = MaterialTheme.colorScheme.onPrimary
             )
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
@@ -118,14 +119,14 @@ fun LandingScreen(
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                 border = androidx.compose.foundation.BorderStroke(
                     width = 2.dp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             )
             {
                 Text(
                     text = "Login",
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
 
@@ -136,8 +137,11 @@ fun LandingScreen(
             {
                 Text(
                     text = "Forgot Password?",
-                    color = ActionBlue,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                    )
                 )
             }
 

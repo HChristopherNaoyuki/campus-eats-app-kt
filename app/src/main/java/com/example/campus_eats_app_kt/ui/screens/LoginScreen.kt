@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
@@ -22,6 +23,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,15 +38,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
-import com.example.campus_eats_app_kt.ui.theme.ActionBlue
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
@@ -169,8 +178,11 @@ fun LoginScreen(
                 {
                     Text(
                         text = "Forgot Password?",
-                        color = ActionBlue,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                        )
                     )
                 }
             }
@@ -194,16 +206,81 @@ fun LoginScreen(
                 onClick = { viewModel.login(email, password) },
                 text = "Login",
                 modifier = Modifier.fillMaxWidth(),
-                containerColor = ActionBlue,
-                contentColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 enabled = loginState !is LoginState.Loading
             )
+
+            // Requirement: Google Single Sign-On.
+            // A clearly visible authentication button for Google SSO.
+            val context = LocalContext.current
+            val coroutineScope = rememberCoroutineScope()
+            
+            OutlinedButton(
+                onClick = {
+                    coroutineScope.launch {
+                        try {
+                            val credentialManager = CredentialManager.create(context)
+                            val googleIdOption = GetGoogleIdOption.Builder()
+                                .setFilterByAuthorizedAccounts(false)
+                                .setServerClientId("project-google-sso.apps.googleusercontent.com") // Target Project SSO
+                                .build()
+
+                            val request = GetCredentialRequest.Builder()
+                                .addCredentialOption(googleIdOption)
+                                .build()
+
+                            val result = credentialManager.getCredential(context, request)
+                            val credential = result.credential
+
+                            if (credential is GoogleIdTokenCredential) {
+                                viewModel.signInWithGoogle(credential.idToken)
+                            }
+                        } catch (e: GetCredentialException) {
+                            viewModel.setError("Google SSO failed: ${e.message}")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+                border = androidx.compose.foundation.BorderStroke(
+                    width = 2.dp,
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                enabled = loginState !is LoginState.Loading
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (loginState is LoginState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
+                    Text(
+                        text = "Continue with Google",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
 
             if (loginState is LoginState.Loading)
             {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = ActionBlue,
+                    color = MaterialTheme.colorScheme.primary,
                     strokeWidth = 2.dp
                 )
             }
@@ -223,8 +300,11 @@ fun LoginScreen(
                     )
                     Text(
                         text = "Register",
-                        color = ActionBlue,
-                        fontWeight = FontWeight.Bold
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                        )
                     )
                 }
             }
