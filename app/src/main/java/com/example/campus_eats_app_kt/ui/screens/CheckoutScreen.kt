@@ -56,6 +56,7 @@ import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.CheckoutEngine
+import androidx.compose.ui.platform.LocalConfiguration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -63,7 +64,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
-import java.util.Locale
 
 sealed interface CheckoutState
 {
@@ -367,9 +367,13 @@ fun PaymentMethodCard(
                 tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(modifier = Modifier.width(DesignSystem.Spacing.medium))
+            val locale = LocalConfiguration.current.locales[0]
             Text(
                 text = method.name.replace("_", " ").lowercase()
-                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
+                    .replaceFirstChar() 
+                    { 
+                        if (it.isLowerCase()) it.titlecase(locale) else it.toString() 
+                    },
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             )

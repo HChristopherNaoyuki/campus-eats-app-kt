@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
@@ -234,13 +235,14 @@ fun LoginScreen(
                                 .build()
 
                             val result = credentialManager.getCredential(context, request)
-                            val credential = result.credential
-
-                            (credential as? GoogleIdTokenCredential)?.let()
-                            { 
-                                viewModel.signInWithGoogle(it.idToken) 
-                            }
+                            val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
+                            
+                            viewModel.signInWithGoogle(credential.idToken) 
                         } 
+                        catch (e: NoCredentialException)
+                        {
+                            viewModel.setError(LanguageManager.getString("No accounts found.", "Geen rekeninge gevind nie."))
+                        }
                         catch (e: GetCredentialException) 
                         {
                             viewModel.setError("Google SSO failed: ${e.message}")

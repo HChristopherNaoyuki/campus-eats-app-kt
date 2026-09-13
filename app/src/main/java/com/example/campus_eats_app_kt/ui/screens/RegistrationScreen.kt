@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGSegmentedControl
@@ -281,17 +282,18 @@ fun RegistrationScreen(
                                 .build()
 
                             val result = credentialManager.getCredential(context, request)
-                            val credential = result.credential
+                            val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
 
-                            (credential as? GoogleIdTokenCredential)?.let()
-                            { 
-                                viewModel.registerWithGoogle(
-                                    it.idToken, 
-                                    selectedRole, 
-                                    shopName.takeIf { selectedRole == UserRole.VENDOR },
-                                ) 
-                            }
+                            viewModel.registerWithGoogle(
+                                credential.idToken, 
+                                selectedRole, 
+                                shopName.takeIf { selectedRole == UserRole.VENDOR },
+                            ) 
                         } 
+                        catch (e: NoCredentialException)
+                        {
+                            viewModel.setError(LanguageManager.getString("No accounts found.", "Geen rekeninge gevind nie."))
+                        }
                         catch (e: GetCredentialException) 
                         {
                             // Output detailed failure message to assist in diagnosis
