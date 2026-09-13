@@ -56,10 +56,11 @@ import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.CheckoutEngine
-import androidx.compose.ui.platform.LocalConfiguration
+import com.example.campus_eats_app_kt.util.CheckoutSummary
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -96,6 +97,12 @@ class CheckoutViewModel(
 
     private val _checkoutState = MutableStateFlow<CheckoutState>(CheckoutState.Idle)
     val checkoutState: StateFlow<CheckoutState> = _checkoutState
+
+    val summary: StateFlow<CheckoutSummary?> = combine(cartItems, userRole)
+    { items, role ->
+        val subtotal = items.sumOf { it.price * it.quantity }
+        CheckoutEngine.calculateSummary(subtotal, role)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     fun placeOrder(
         paymentMethod: PaymentMethod,

@@ -16,20 +16,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import java.math.BigDecimal
 import org.junit.Before
 import org.junit.Test
+import java.math.BigDecimal
 
-/**
- * CheckoutViewModelTest verifies the order finalization logic.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CheckoutViewModelTest
 {
@@ -37,17 +34,18 @@ class CheckoutViewModelTest
     private lateinit var orderRepository: OrderRepository
     private lateinit var authRepository: AuthRepository
     private lateinit var viewModel: CheckoutViewModel
-    private val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher: TestDispatcher = UnconfinedTestDispatcher()
 
-    private val userId = "USER-001"
+    private val userId = "U123"
     private val testUser = UserEntity(
         userId = userId,
-        fullName = "Test",
-        username = "test",
-        email = "t@t.com",
-        passwordHash = "p",
+        fullName = "Test User",
+        username = "testuser",
+        email = "test@test.com",
+        passwordHash = "pass",
         role = UserRole.STUDENT,
         status = UserStatus.ACTIVE,
+        walletBalance = 1000.0,
     )
 
     @Before
@@ -71,25 +69,31 @@ class CheckoutViewModelTest
     }
 
     /**
-     * Requirement: Test summary calculation for student role
+     * Requirement: Test summary calculation with tax, service fee, and student discount.
      */
     @Test
     fun summary_calculatesCorrectlyForStudent() = runTest {
         // Given
         val items = listOf(CartItemEntity(1, userId, 101, "V1", "Item", 100.0, 1))
         every { cartRepository.getCart(userId) } returns flowOf(items)
+        every { authRepository.getUserFlow(userId) } returns flowOf(testUser)
 
         // When
         val vm = CheckoutViewModel(cartRepository, orderRepository, authRepository, userId)
 
         // Then
         vm.summary.test {
+            // Wait for non-null emission
             var summary = awaitItem()
-            // Skip initial null if it appears
-            if (summary == null) summary = awaitItem()
+            while (summary == null)
+            {
+                summary = awaitItem()
+            }
             
-            assertNotNull(summary)
-            assertEquals(130.0, (summary?.total ?: BigDecimal.ZERO).toDouble(), 0.001)
+            // Subtotal: 100.0, Tax: 20.0, Service Fee: 10.0, Student Discount: 2.5
+            // Total: 100 + 20 + 10 - 2.5 = 127.5
+            // Rounding up to next R5: 130.0
+            assertEquals(130.0, summary.total.toDouble(), 0.001)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -102,10 +106,11 @@ class CheckoutViewModelTest
         // Given
         val items = listOf(CartItemEntity(1, userId, 101, "V1", "Item", 100.0, 1))
         every { cartRepository.getCart(userId) } returns flowOf(items)
+        every { authRepository.getUserFlow(userId) } returns flowOf(testUser)
         val vm = CheckoutViewModel(cartRepository, orderRepository, authRepository, userId)
 
         // Start collection to trigger WhileSubscribed
-        backgroundScope.launch { vm.summary.collect {} }
+        val collectJob = backgroundScope.launch { vm.summary.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         // When
@@ -124,5 +129,6 @@ class CheckoutViewModelTest
                 specialRequests = "None",
             )
         }
+        collectJob.cancel()
     }
 }

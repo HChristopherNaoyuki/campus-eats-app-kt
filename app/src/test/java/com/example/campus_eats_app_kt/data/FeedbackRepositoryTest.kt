@@ -72,7 +72,7 @@ class FeedbackRepositoryTest
         val userId = "U1"
         val subject = "App Crashed"
         val message = "The app closes when I select a vendor."
-        val type = FeedbackType.complaint
+        val type = FeedbackType.COMPLAINT
 
         repository.submitFeedback(userId, subject, message, type)
 
@@ -82,7 +82,7 @@ class FeedbackRepositoryTest
                     (it.userId == userId) && 
                     (it.userName == testUser.fullName) &&
                     (it.userEmail == testUser.email) &&
-                    (it.status == FeedbackStatus.pending) &&
+                    (it.status == FeedbackStatus.PENDING) &&
                     (it.createdAt.isNotEmpty()) &&
                     (it.type == type)
                 },
