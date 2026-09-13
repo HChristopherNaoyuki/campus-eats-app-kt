@@ -59,6 +59,7 @@ import com.example.campus_eats_app_kt.ui.screens.VendorBrowseViewModel
 import com.example.campus_eats_app_kt.ui.screens.VendorMenuManagementScreen
 import com.example.campus_eats_app_kt.ui.screens.VendorMenuViewModel
 import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
+import com.example.campus_eats_app_kt.util.DatabaseSeeder
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.example.campus_eats_app_kt.util.NetworkConnectivityObserver
 import com.google.firebase.auth.FirebaseAuth
@@ -132,6 +133,11 @@ class MainActivity : ComponentActivity()
 
         setContent() 
         {
+            LaunchedEffect(Unit)
+            {
+                DatabaseSeeder.seed(applicationContext)
+            }
+
             val networkStatus by connectivityObserver.observe()
                 .collectAsState(initial = NetworkConnectivityObserver.Status.Available)
 

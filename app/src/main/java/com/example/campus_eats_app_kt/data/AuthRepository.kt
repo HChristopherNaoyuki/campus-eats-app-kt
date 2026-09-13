@@ -7,6 +7,7 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
 import com.example.campus_eats_app_kt.data.network.RegistrationRequest
+import com.example.campus_eats_app_kt.util.DatabaseSeeder
 import com.example.campus_eats_app_kt.util.IdGenerator
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.example.campus_eats_app_kt.util.ValidationEngine
@@ -249,15 +250,26 @@ class AuthRepository(
         Log.d(tag, "Login attempt for: $email")
         return kotlin.runCatching()
         {
-            connectivityManager.ensureInternet()
+            // First check if user exists locally with a valid encrypted SHA-256 password hash
+            val localUser = userDao.getUserByEmail(email)
+            if (localUser != null && localUser.passwordHash == DatabaseSeeder.encryptPassword(password))
+            {
+                return@runCatching localUser
+            }
 
-            // 1. Firebase Authentication (Auth Identity)
             try
             {
+                connectivityManager.ensureInternet()
+                // 1. Firebase Authentication (Auth Identity)
                 firebaseAuth.signInWithEmailAndPassword(email, password).await()
             }
             catch (e: Exception)
             {
+                // Fallback if password matches locally but firebase fails or is not synced
+                if (localUser != null && localUser.passwordHash == DatabaseSeeder.encryptPassword(password))
+                {
+                    return@runCatching localUser
+                }
                 throw Exception(FirebaseExceptionHandler.parse(e))
             }
 

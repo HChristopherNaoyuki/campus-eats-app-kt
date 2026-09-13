@@ -36,10 +36,12 @@ import com.example.campus_eats_app_kt.data.StatsRepository
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
+import com.example.campus_eats_app_kt.util.LanguageManager
 
 /**
  * MainScreen is the primary navigation hub after authentication.
  * It manages the bottom navigation bar and displays the corresponding role-based tabs.
+ * This version supports dynamic language toggling between English and Afrikaans.
  */
 @Composable
 fun MainScreen(
@@ -77,17 +79,16 @@ fun MainScreen(
         topBar = {
             val title = when (selectedTab)
             {
-                0 -> "Home"
-                1 -> "Browse"
-                2 -> "Orders"
-                3 -> "Reports"
-                else -> "Settings"
+                0 -> LanguageManager.getString("Home", "Tuis")
+                1 -> LanguageManager.getString("Browse", "Snuffel")
+                2 -> LanguageManager.getString("Orders", "Bestellings")
+                3 -> LanguageManager.getString("Reports", "Verslae")
+                else -> LanguageManager.getString("Settings", "Instellings")
             }
             HIGTopAppBar(title = title)
         },
         bottomBar = {
             // Requirement: Dynamic Tab Bars with a horizontal margin of 3.7 mm (~23.3 dp).
-            // This ensures responsive layout across different screen densities.
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -102,7 +103,7 @@ fun MainScreen(
             )
             {
                 NavigationBar(
-                    containerColor = Color.Transparent, // Managed by Surface for custom shape/margin
+                    containerColor = Color.Transparent,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                     tonalElevation = 0.dp,
                 )
@@ -112,35 +113,35 @@ fun MainScreen(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
                         icon = { Icon(Icons.Rounded.Home, contentDescription = "Home") },
-                        label = { Text("Home") },
+                        label = { Text(LanguageManager.getString("Home", "Tuis")) },
                     )
                     // Browse Tab
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
                         icon = { Icon(Icons.Rounded.Search, contentDescription = "Browse") },
-                        label = { Text("Browse") },
+                        label = { Text(LanguageManager.getString("Browse", "Snuffel")) },
                     )
                     // Orders Tab
                     NavigationBarItem(
                         selected = selectedTab == 2,
                         onClick = { selectedTab = 2 },
                         icon = { Icon(Icons.Rounded.History, contentDescription = "Orders") },
-                        label = { Text("Orders") },
+                        label = { Text(LanguageManager.getString("Orders", "Bestellings")) },
                     )
                     // Reports Tab
                     NavigationBarItem(
                         selected = selectedTab == 3,
                         onClick = { selectedTab = 3 },
                         icon = { Icon(Icons.Rounded.Analytics, contentDescription = "Reports") },
-                        label = { Text("Reports") },
+                        label = { Text(LanguageManager.getString("Reports", "Verslae")) },
                     )
                     // Settings Tab
                     NavigationBarItem(
                         selected = selectedTab == 4,
                         onClick = { selectedTab = 4 },
                         icon = { Icon(Icons.Rounded.Settings, contentDescription = "Settings") },
-                        label = { Text("Settings") },
+                        label = { Text(LanguageManager.getString("Settings", "Instellings")) },
                     )
                 }
             }
@@ -185,7 +186,6 @@ fun MainScreen(
                 )
 
                 3 -> ActivityScreenTab(
-                    // Reports Tab reused same tab logic with different active view
                     userId = userId,
                     role = role,
                     orderRepository = orderRepository,

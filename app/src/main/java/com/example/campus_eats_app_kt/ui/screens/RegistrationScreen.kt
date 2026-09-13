@@ -1,5 +1,6 @@
 package com.example.campus_eats_app_kt.ui.screens
 
+import com.example.campus_eats_app_kt.util.LanguageManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -330,7 +331,7 @@ fun RegistrationScreen(
                     }
                     Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
                     Text(
-                        text = "Continue with Google",
+                        text = LanguageManager.getString("Continue with Google", "Gaan voort met Google"),
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.bodyLarge,

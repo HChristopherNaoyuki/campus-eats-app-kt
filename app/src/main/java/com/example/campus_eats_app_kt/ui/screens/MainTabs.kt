@@ -1,6 +1,7 @@
 package com.example.campus_eats_app_kt.ui.screens
 
 import android.widget.Toast
+import com.example.campus_eats_app_kt.util.LanguageManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -1376,7 +1377,40 @@ fun SettingsScreenTab(
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large),
         )
         {
-            // Principle: Aesthetic Integrity - Removed redundant heading.
+            // Language Selection Group
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+                {
+                    Text(
+                        text = LanguageManager.getString("Language Settings", "Taalinstellings"),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+                    )
+                    {
+                        FilterChip(
+                            selected = LanguageManager.currentLanguage.value == "English",
+                            onClick = {
+                                LanguageManager.currentLanguage.value = "English"
+                            },
+                            label = { Text("English") }
+                        )
+                        
+                        FilterChip(
+                            selected = LanguageManager.currentLanguage.value == "Afrikaans",
+                            onClick = {
+                                LanguageManager.currentLanguage.value = "Afrikaans"
+                            },
+                            label = { Text("Afrikaans") }
+                        )
+                    }
+                }
+            }
 
             // Account Group
             HIGCard(modifier = Modifier.fillMaxWidth())
@@ -1400,7 +1434,7 @@ fun SettingsScreenTab(
                 Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
                 {
                     Text(
-                        text = "Profile Identity",
+                        text = LanguageManager.getString("Profile Identity", "Profielidentiteit"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
@@ -1410,7 +1444,7 @@ fun SettingsScreenTab(
                             newFullName = it
                         },
                         label = {
-                            Text(text = "Full Name")
+                            Text(text = LanguageManager.getString("Full Name", "Volle Naam"))
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.medium,
@@ -1421,7 +1455,7 @@ fun SettingsScreenTab(
                             newUsername = it
                         },
                         label = {
-                            Text(text = "Username")
+                            Text(text = LanguageManager.getString("Username", "Gebruikersnaam"))
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.medium,
@@ -1432,7 +1466,7 @@ fun SettingsScreenTab(
                             newPassword = it
                         },
                         label = {
-                            Text(text = "New Security Key")
+                            Text(text = LanguageManager.getString("New Security Key", "Nuwe Sekuriteitsleutel"))
                         },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
@@ -1463,7 +1497,7 @@ fun SettingsScreenTab(
                         shape = MaterialTheme.shapes.medium,
                     )
                     {
-                        Text(text = "Update Credentials")
+                        Text(text = LanguageManager.getString("Update Credentials", "Werk Bewysbriewe Op"))
                     }
                 }
             }
@@ -1474,7 +1508,7 @@ fun SettingsScreenTab(
                 Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
                 {
                     Text(
-                        text = "Financial Controls",
+                        text = LanguageManager.getString("Financial Controls", "Finansiële Kontroles"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
@@ -1483,7 +1517,7 @@ fun SettingsScreenTab(
                         UserRole.STUDENT, UserRole.STANDARD ->
                         {
                             Text(
-                                text = "Balance: R${
+                                text = "${LanguageManager.getString("Balance", "Balans")}: R${
                                     String.format(
                                         locale,
                                         "%.2f",
@@ -1499,7 +1533,7 @@ fun SettingsScreenTab(
                                 },
                             )
                             {
-                                Text(text = "Link Debit Card")
+                                Text(text = LanguageManager.getString("Link Debit Card", "Koppel Debietkaart"))
                             }
                             TextButton(
                                 onClick = {
@@ -1507,7 +1541,7 @@ fun SettingsScreenTab(
                                 },
                             )
                             {
-                                Text(text = "Redeem Coupon")
+                                Text(text = LanguageManager.getString("Redeem Coupon", "Los Koepon In"))
                             }
                         }
 
@@ -1516,11 +1550,11 @@ fun SettingsScreenTab(
                             Text(
                                 text = if (user?.bankAccountInfo != null)
                                 {
-                                    "Payout Enabled"
+                                    LanguageManager.getString("Payout Enabled", "Uitbetaling Geaktiveer")
                                 }
                                 else
                                 {
-                                    "Payout Not Configured"
+                                    LanguageManager.getString("Payout Not Configured", "Uitbetaling Nie Opgestel Nie")
                                 },
                             )
                             TextButton(
@@ -1529,7 +1563,7 @@ fun SettingsScreenTab(
                                 },
                             )
                             {
-                                Text(text = "Update Bank Details")
+                                Text(text = LanguageManager.getString("Update Bank Details", "Werk Bankbesonderhede Op"))
                             }
                         }
 
@@ -1541,7 +1575,7 @@ fun SettingsScreenTab(
                                 },
                             )
                             {
-                                Text(text = "Issue System Credits")
+                                Text(text = LanguageManager.getString("Issue System Credits", "Uitreik Stelselkrediete"))
                             }
                             TextButton(
                                 onClick = {
@@ -1549,7 +1583,7 @@ fun SettingsScreenTab(
                                 },
                             )
                             {
-                                Text(text = "Generate Coupons")
+                                Text(text = LanguageManager.getString("Generate Coupons", "Genereer Koepons"))
                             }
                         }
                     }
@@ -1562,7 +1596,7 @@ fun SettingsScreenTab(
                 Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
                 {
                     Text(
-                        text = "System Support",
+                        text = LanguageManager.getString("System Support", "Stelselondersteuning"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
@@ -1574,7 +1608,7 @@ fun SettingsScreenTab(
                             },
                         )
                         {
-                            Text(text = "Review Complaints")
+                            Text(text = LanguageManager.getString("Review Complaints", "Hersien Klagtes"))
                         }
                         TextButton(
                             onClick = {
@@ -1582,7 +1616,7 @@ fun SettingsScreenTab(
                             },
                         )
                         {
-                            Text(text = "Review Compliments")
+                            Text(text = LanguageManager.getString("Review Compliments", "Hersien Komplimente"))
                         }
                     }
                     else
@@ -1595,7 +1629,7 @@ fun SettingsScreenTab(
                             shape = MaterialTheme.shapes.medium,
                         )
                         {
-                            Text(text = "Submit Feedback")
+                            Text(text = LanguageManager.getString("Submit Feedback", "Dien Terugvoer In"))
                         }
                     }
                 }
@@ -1616,7 +1650,7 @@ fun SettingsScreenTab(
                 )
                 Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
                 Text(
-                    text = "Logout Session",
+                    text = LanguageManager.getString("Logout Session", "Teken Uit Stelsel"),
                     fontWeight = FontWeight.Bold,
                 )
             }
