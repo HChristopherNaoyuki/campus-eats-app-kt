@@ -23,15 +23,20 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,6 +49,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.campus_eats_app_kt.data.AuthRepository
@@ -65,6 +71,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import java.util.Locale
 
 sealed interface CheckoutState
 {
@@ -154,8 +161,64 @@ fun CheckoutScreen(
     val locale = LocalConfiguration.current.locales[0]
 
     var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.CAMPUS_WALLET) }
-    var selectedPickupTime by remember { mutableStateOf("As soon as possible") }
+    var selectedPickupTime by remember { mutableStateOf("12:00") }
     var specialRequests by remember { mutableStateOf("") }
+    var showTimePicker by remember { mutableStateOf(false) }
+    val timePickerState = rememberTimePickerState(initialHour = 12, initialMinute = 0)
+
+    if (showTimePicker)
+    {
+        Dialog(
+            onDismissRequest = { showTimePicker = false },
+        )
+        {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = 6.dp,
+                modifier = Modifier.padding(DesignSystem.Spacing.large),
+            )
+            {
+                Column(
+                    modifier = Modifier.padding(DesignSystem.Spacing.large),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large),
+                )
+                {
+                    Text(
+                        text = "Select Pickup Time",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    TimePicker(state = timePickerState)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                    )
+                    {
+                        TextButton(onClick = { showTimePicker = false })
+                        {
+                            Text("Cancel")
+                        }
+                        TextButton(
+                            onClick = {
+                                selectedPickupTime = String.format(
+                                    locale,
+                                    "%02d:%02d",
+                                    timePickerState.hour,
+                                    timePickerState.minute,
+                                )
+                                showTimePicker = false
+                            },
+                        )
+                        {
+                            Text("Confirm")
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     val subtotal = cartItems.sumOf { it.price * it.quantity }
     val sum = CheckoutEngine.calculateSummary(subtotal, role)
@@ -286,9 +349,18 @@ fun CheckoutScreen(
                 )
                 OutlinedTextField(
                     value = selectedPickupTime,
-                    onValueChange = { selectedPickupTime = it },
+                    onValueChange = { },
                     label = { Text("Pickup Time") },
-                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showTimePicker = true },
+                    enabled = false,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                    ),
                     shape = MaterialTheme.shapes.medium,
                 )
                 OutlinedTextField(

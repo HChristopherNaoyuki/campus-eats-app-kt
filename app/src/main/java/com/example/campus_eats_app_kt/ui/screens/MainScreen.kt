@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Search
@@ -40,8 +39,8 @@ import com.example.campus_eats_app_kt.util.LanguageManager
 
 /**
  * MainScreen is the primary navigation hub after authentication.
- * It manages the bottom navigation bar and displays the corresponding role-based tabs.
- * This version supports dynamic language toggling between English and Afrikaans.
+ * It manages the bottom navigation bar and displays exactly 4 buttons for all roles:
+ * Home, Browse, Orders, and Settings.
  */
 @Composable
 fun MainScreen(
@@ -82,13 +81,12 @@ fun MainScreen(
                 0 -> LanguageManager.getString("Home", "Tuis")
                 1 -> LanguageManager.getString("Browse", "Snuffel")
                 2 -> LanguageManager.getString("Orders", "Bestellings")
-                3 -> LanguageManager.getString("Reports", "Verslae")
                 else -> LanguageManager.getString("Settings", "Instellings")
             }
             HIGTopAppBar(title = title)
         },
         bottomBar = {
-            // Requirement: Dynamic Tab Bars with a horizontal margin of 3.7 mm (~23.3 dp).
+            // Requirement: Dynamic Tab Bars with exactly 4 buttons.
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -129,17 +127,10 @@ fun MainScreen(
                         icon = { Icon(Icons.Rounded.History, contentDescription = "Orders") },
                         label = { Text(LanguageManager.getString("Orders", "Bestellings")) },
                     )
-                    // Reports Tab
+                    // Settings Tab
                     NavigationBarItem(
                         selected = selectedTab == 3,
                         onClick = { selectedTab = 3 },
-                        icon = { Icon(Icons.Rounded.Analytics, contentDescription = "Reports") },
-                        label = { Text(LanguageManager.getString("Reports", "Verslae")) },
-                    )
-                    // Settings Tab
-                    NavigationBarItem(
-                        selected = selectedTab == 4,
-                        onClick = { selectedTab = 4 },
                         icon = { Icon(Icons.Rounded.Settings, contentDescription = "Settings") },
                         label = { Text(LanguageManager.getString("Settings", "Instellings")) },
                     )
@@ -181,20 +172,12 @@ fun MainScreen(
                     role = role,
                     orderRepository = orderRepository,
                     cartRepository = cartRepository,
+                    menuRepository = menuRepository,
                     onNavigateToCheckout = onNavigateToCheckout,
                     onReturnHome = { selectedTab = 0 },
                 )
 
-                3 -> ActivityScreenTab(
-                    userId = userId,
-                    role = role,
-                    orderRepository = orderRepository,
-                    cartRepository = cartRepository,
-                    onNavigateToCheckout = onNavigateToCheckout,
-                    onReturnHome = { selectedTab = 0 },
-                )
-
-                4 -> SettingsScreenTab(
+                3 -> SettingsScreenTab(
                     userId = userId,
                     role = userRole,
                     authRepository = authRepository,

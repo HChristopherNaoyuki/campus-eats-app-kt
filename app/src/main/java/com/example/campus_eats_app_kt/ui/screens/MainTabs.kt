@@ -1,18 +1,22 @@
 package com.example.campus_eats_app_kt.ui.screens
 
 import android.widget.Toast
-import com.example.campus_eats_app_kt.util.LanguageManager
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -72,10 +76,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -89,6 +97,8 @@ import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
 import com.example.campus_eats_app_kt.data.entity.CartItemEntity
+import com.example.campus_eats_app_kt.data.entity.DebitCardEntity
+import com.example.campus_eats_app_kt.data.entity.FeedbackEntity
 import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
@@ -97,15 +107,20 @@ import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.entity.UserStatus
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGCard
+import com.example.campus_eats_app_kt.ui.components.HIGSegmentedControl
 import com.example.campus_eats_app_kt.ui.components.HIGServiceRow
 import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
+import com.example.campus_eats_app_kt.util.LanguageManager
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.decodeFromString
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -125,10 +140,11 @@ fun HomeScreenTab(
     val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
     val coroutineScope = rememberCoroutineScope()
     val locale = LocalConfiguration.current.locales[0]
+    val responsivePadding = DesignSystem.Spacing.responsiveHorizontalPadding()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(DesignSystem.Spacing.screenPadding),
+        contentPadding = PaddingValues(horizontal = responsivePadding, vertical = DesignSystem.Spacing.large),
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large),
     )
     {
@@ -140,7 +156,7 @@ fun HomeScreenTab(
                 Surface(
                     color = MaterialTheme.colorScheme.surface,
                     shape = MaterialTheme.shapes.extraLarge,
-                    border = androidx.compose.foundation.BorderStroke(
+                    border = BorderStroke(
                         1.dp,
                         MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
                     ),
@@ -207,44 +223,36 @@ fun HomeScreenTab(
 
                         if (role == UserRole.VENDOR)
                         {
-                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                             {
-                                Row(verticalAlignment = Alignment.CenterVertically)
+                                Column()
                                 {
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = if (user?.shopStatus == ShopStatus.OPEN) 
-                                            MaterialTheme.colorScheme.primary 
-                                        else 
-                                            MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(8.dp),
-                                    )
-                                    {
-                                    }
-                                    Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
                                     Text(
-                                        text = if (user?.shopStatus == ShopStatus.OPEN) "Open" else "Closed",
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = if (user?.shopStatus == ShopStatus.OPEN) 
-                                            FontWeight.ExtraBold 
-                                        else 
-                                            FontWeight.Normal,
+                                        text = user?.shopName ?: "Shop Name",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.ExtraBold,
+                                    )
+                                    Text(
+                                        text = if (user?.shopStatus == ShopStatus.OPEN) "Status: Accepting Orders" else "Status: Offline",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (user?.shopStatus == ShopStatus.OPEN) Color(
+                                            0xFF4CAF50,
+                                        ) else MaterialTheme.colorScheme.error,
                                     )
                                 }
                                 Switch(
                                     checked = user?.shopStatus == ShopStatus.OPEN,
-                                    onCheckedChange = { isChecked: Boolean ->
+                                    onCheckedChange = { isOpen ->
                                         coroutineScope.launch()
                                         {
                                             authRepository.updateShopStatus(
                                                 userId,
-                                                if (isChecked) ShopStatus.OPEN else ShopStatus.CLOSED,
+                                                if (isOpen) ShopStatus.OPEN else ShopStatus.CLOSED,
                                             )
                                         }
                                     },
@@ -256,96 +264,7 @@ fun HomeScreenTab(
             }
         }
 
-        // Student Search and Vendor List
-        if ((role == UserRole.STUDENT) || (role == UserRole.STANDARD))
-        {
-            item()
-            {
-                OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
-                    placeholder = {
-                        Text(text = "Search vendors or items")
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.Search,
-                            contentDescription = null,
-                        )
-                    },
-                    shape = CircleShape,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
-                            alpha = 0.3f,
-                        ),
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                    ),
-                )
-            }
-
-            item()
-            {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                )
-                {
-                    Text(
-                        text = "Vendors on campus",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = (-0.5).sp,
-                    )
-                    TextButton(onClick = onExploreVendors)
-                    {
-                        Text(
-                            text = "View all",
-                            color = CampusOrange,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                }
-            }
-
-            if (vendors.isEmpty())
-            {
-                item()
-                {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(DesignSystem.Spacing.large),
-                        contentAlignment = Alignment.Center,
-                    )
-                    {
-                        Text(
-                            text = "Discovering campus dining...",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.outline,
-                        )
-                    }
-                }
-            }
-            else
-            {
-                items(vendors.take(3))
-                { vendor ->
-                    HIGServiceRow(
-                        title = vendor.shopName ?: vendor.fullName,
-                        description = "Tap to browse full menu and items.",
-                        icon = Icons.Rounded.Store,
-                        onClick = {
-                            onNavigateToMenuBrowse(userId, vendor.userId)
-                        },
-                    )
-                }
-            }
-        }
-
-        // Vendor Dashboard
+        // Vendor Dashboard Section
         if (role == UserRole.VENDOR)
         {
             item()
@@ -403,20 +322,88 @@ fun HomeScreenTab(
                     )
                     {
                         Text(
-                            text = "Administrator",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Black,
+                            text = "Global Overview",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
                         )
-                        StatCardFull(
-                            label = "System-wide Earnings",
-                            value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}",
+                        AdminGridStats(stats)
+                    }
+                }
+            }
+        }
+
+        // Student/Standard: Featured Vendors or Quick Access
+        if (role == UserRole.STUDENT || role == UserRole.STANDARD)
+        {
+            item()
+            {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+                {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    )
+                    {
+                        Text(
+                            text = "Featured Vendors",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
                         )
-                        AdminGridStats(stats = stats)
-                        StatCardFull(
-                            label = "Today's Summary",
-                            value = "R${String.format(locale, "%.2f", stats.todayRevenue)}",
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        TextButton(onClick = onExploreVendors)
+                        {
+                            Text(text = "See All")
+                        }
+                    }
+
+                    if (vendors.isEmpty())
+                    {
+                        Text(
+                            text = "No vendors available yet.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.outline,
                         )
+                    }
+
+                    vendors.take(3).forEach { vendor ->
+                        HIGCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { onNavigateToMenuBrowse(userId, vendor.userId) },
+                        )
+                        {
+                            Row(verticalAlignment = Alignment.CenterVertically)
+                            {
+                                Surface(
+                                    shape = MaterialTheme.shapes.medium,
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    modifier = Modifier.size(60.dp),
+                                )
+                                {
+                                    Box(contentAlignment = Alignment.Center)
+                                    {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Store,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(DesignSystem.Spacing.medium))
+                                Column()
+                                {
+                                    Text(
+                                        text = vendor.shopName ?: "Vendor",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Text(
+                                        text = "Open • Traditional Meals",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.outline,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -428,7 +415,7 @@ fun HomeScreenTab(
 fun StatCardFull(
     label: String,
     value: String,
-    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
 )
 {
     HIGCard(
@@ -438,18 +425,11 @@ fun StatCardFull(
     {
         Column()
         {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.Bold,
-            )
+            Text(text = label, style = MaterialTheme.typography.labelMedium)
             Text(
                 text = value,
-                style = MaterialTheme.typography.displaySmall,
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                letterSpacing = (-1).sp,
             )
         }
     }
@@ -464,22 +444,15 @@ fun StatCardHalf(
 {
     HIGCard(
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
     )
     {
         Column()
         {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold,
-            )
+            Text(text = label, style = MaterialTheme.typography.labelMedium)
             Text(
                 text = value,
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold,
             )
         }
     }
@@ -488,43 +461,23 @@ fun StatCardHalf(
 @Composable
 fun AdminGridStats(stats: AdminStats)
 {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-    )
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
     {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
         {
-            StatCardHalf(
-                label = "Users",
-                value = stats.totalUsers.toString(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            StatCardHalf(
-                label = "Vendors",
-                value = stats.activeVendors.toString(),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            StatCardHalf(label = "Total Users", value = stats.totalUsers.toString(), modifier = Modifier.weight(1f))
+            StatCardHalf(label = "Vendors", value = stats.activeVendors.toString(), modifier = Modifier.weight(1f))
         }
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
         {
-            StatCardHalf(
-                label = "Menu Items",
-                value = stats.menuItemCount.toString(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            StatCardHalf(
-                label = "Total Orders",
-                value = stats.orderCount.toString(),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            StatCardHalf(label = "Orders", value = stats.orderCount.toString(), modifier = Modifier.weight(1f))
+            StatCardHalf(label = "Menu Items", value = stats.menuItemCount.toString(), modifier = Modifier.weight(1f))
         }
+        StatCardFull(
+            label = "Platform Revenue",
+            value = "R${String.format(Locale.getDefault(), "%.2f", stats.allTimeEarnings)}",
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+        )
     }
 }
 
@@ -543,18 +496,18 @@ fun ServicesScreenTab(
 {
     var activeView by remember { mutableStateOf("Main") }
     var selectedOrder by remember { mutableStateOf<OrderEntity?>(null) }
+    val responsivePadding = DesignSystem.Spacing.responsiveHorizontalPadding()
 
     if (activeView == "Main")
     {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(DesignSystem.Spacing.screenPadding)
+                .padding(horizontal = responsivePadding, vertical = DesignSystem.Spacing.large)
                 .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         )
         {
-            // Principle: Aesthetic Integrity - Removed redundant heading to reduce visual clutter.
-
             when (role)
             {
                 UserRole.STUDENT, UserRole.STANDARD ->
@@ -609,23 +562,23 @@ fun ServicesScreenTab(
                 {
                     HIGServiceRow(
                         title = "User Directory",
-                        description = "Manage and moderate platform accounts.",
+                        description = "Manage system accounts and access.",
                         icon = Icons.Rounded.People,
                         onClick = {
                             activeView = "Users"
                         },
                     )
                     HIGServiceRow(
-                        title = "Vendor Directory",
-                        description = "Manage campus shop registry and status.",
+                        title = "Vendor Portal",
+                        description = "Moderate campus shop configurations.",
                         icon = Icons.Rounded.Store,
                         onClick = {
                             activeView = "Vendors"
                         },
                     )
                     HIGServiceRow(
-                        title = "System Orders",
-                        description = "Supervise all active and past transactions.",
+                        title = "Order Master",
+                        description = "High-level overview of system transactions.",
                         icon = Icons.AutoMirrored.Rounded.List,
                         onClick = {
                             activeView = "Orders"
@@ -648,14 +601,7 @@ fun ServicesScreenTab(
             {
                 IconButton(
                     onClick = {
-                        activeView = if (activeView == "OrderDetail")
-                        {
-                            "Receipts"
-                        }
-                        else
-                        {
-                            "Main"
-                        }
+                        activeView = "Main"
                     },
                 )
                 {
@@ -665,7 +611,7 @@ fun ServicesScreenTab(
                     )
                 }
                 Text(
-                    text = if (activeView == "OrderDetail") "Detailed Receipt" else activeView,
+                    text = activeView.replace(Regex("([a-z])([A-Z])"), "$1 $2"),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
@@ -679,34 +625,20 @@ fun ServicesScreenTab(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = DesignSystem.Spacing.medium),
+                    .padding(horizontal = responsivePadding),
             )
             {
                 when (activeView)
                 {
-                    "VendorsList" -> StudentVendorList(
-                        userId,
-                        menuRepository,
-                        onNavigateToMenuBrowse,
-                    )
-
-                    "Users" -> AdminUserManagement(viewModel = adminViewModel)
-                    "Vendors" -> AdminVendorManagement(viewModel = adminViewModel)
-                    "Orders" -> AdminOrderManagement(viewModel = adminViewModel)
-                    "Receipts" -> StudentReceipts(
-                        userId = userId,
-                        orderRepository = orderRepository,
-                    )
-                    {
+                    "VendorsList" -> StudentVendorList(userId, menuRepository, onNavigateToMenuBrowse)
+                    "Receipts" -> StudentReceipts(userId, orderRepository) {
                         selectedOrder = it
                         activeView = "OrderDetail"
                     }
-
-                    "Spending" -> StudentTotalSpending(
-                        userId = userId,
-                        orderRepository = orderRepository,
-                    )
-
+                    "Spending" -> StudentTotalSpending(userId, orderRepository)
+                    "Users" -> AdminUserManagement(adminViewModel)
+                    "Vendors" -> AdminVendorManagement(adminViewModel)
+                    "Orders" -> AdminOrderManagement(adminViewModel)
                     "OrderDetail" -> OrderDetailWindow(
                         order = selectedOrder,
                         role = role,
@@ -714,7 +646,7 @@ fun ServicesScreenTab(
                         orderRepository = orderRepository,
                     )
                     {
-                        activeView = "Main"
+                        activeView = "Receipts"
                     }
                 }
             }
@@ -728,6 +660,7 @@ fun ActivityScreenTab(
     role: String,
     orderRepository: OrderRepository,
     cartRepository: CartRepository,
+    menuRepository: MenuRepository,
     onNavigateToCheckout: () -> Unit,
     onReturnHome: () -> Unit,
 )
@@ -738,25 +671,25 @@ fun ActivityScreenTab(
         UserRole.entries.find { it.name == role } ?: UserRole.STANDARD
     }
     var selectedOrder by remember { mutableStateOf<OrderEntity?>(null) }
+    val responsivePadding = DesignSystem.Spacing.responsiveHorizontalPadding()
 
     if (currentHubView == "Main")
     {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(DesignSystem.Spacing.screenPadding)
+                .padding(horizontal = responsivePadding, vertical = DesignSystem.Spacing.large)
                 .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
         )
         {
-            // Principle: Aesthetic Integrity - Removed redundant heading.
-
             when (userRole)
             {
                 UserRole.STUDENT, UserRole.STANDARD ->
                 {
                     HIGServiceRow(
-                        title = "Active Cart",
-                        description = "Complete your purchase and track status.",
+                        title = "Live Status",
+                        description = "Complete your purchase and track active orders.",
                         icon = Icons.Rounded.ShoppingCart,
                         onClick = {
                             currentHubView = "Current"
@@ -845,7 +778,7 @@ fun ActivityScreenTab(
                     onClick = {
                         currentHubView = if (currentHubView == "OrderDetail")
                         {
-                            "ReceiptsHub"
+                            if (userRole == UserRole.VENDOR) "VendorOrders" else "ReceiptsHub"
                         }
                         else
                         {
@@ -860,7 +793,7 @@ fun ActivityScreenTab(
                     )
                 }
                 Text(
-                    text = if (currentHubView == "OrderDetail") "Detailed Receipt" else currentHubView,
+                    text = if (currentHubView == "OrderDetail") "Detailed Receipt" else currentHubView.replace(Regex("([a-z])([A-Z])"), "$1 $2"),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
@@ -874,7 +807,7 @@ fun ActivityScreenTab(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = DesignSystem.Spacing.medium),
+                    .padding(horizontal = responsivePadding),
             )
             {
                 when (currentHubView)
@@ -882,6 +815,7 @@ fun ActivityScreenTab(
                     "Current" -> StudentCurrentOrderHub(
                         userId,
                         cartRepository,
+                        orderRepository,
                         onNavigateToCheckout,
                         onReturnHome,
                     )
@@ -895,7 +829,7 @@ fun ActivityScreenTab(
                         currentHubView = "OrderDetail"
                     }
 
-                    "ReportsHub" -> StudentActivityReports(userId, orderRepository)
+                    "ReportsHub" -> StudentActivityReports(userId, orderRepository, menuRepository)
                     "VendorOrders" -> VendorOrderHub(
                         vendorId = userId,
                         orderRepository = orderRepository,
@@ -928,30 +862,30 @@ fun ActivityScreenTab(
 fun StudentVendorList(
     userId: String,
     menuRepository: MenuRepository,
-    onNavigateToMenuBrowse: (String, String) -> Unit,
+    onVendorClick: (String, String) -> Unit,
 )
 {
     val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
+
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
     )
     {
         items(vendors)
         { vendor ->
             HIGCard(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    onNavigateToMenuBrowse(userId, vendor.userId)
-                },
+                onClick = { onVendorClick(userId, vendor.userId) },
             )
             {
                 Row(verticalAlignment = Alignment.CenterVertically)
                 {
                     Surface(
                         shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(56.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(60.dp),
                     )
                     {
                         Box(contentAlignment = Alignment.Center)
@@ -959,7 +893,7 @@ fun StudentVendorList(
                             Icon(
                                 imageVector = Icons.Rounded.Store,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             )
                         }
                     }
@@ -967,12 +901,12 @@ fun StudentVendorList(
                     Column()
                     {
                         Text(
-                            text = vendor.shopName ?: vendor.fullName,
-                            style = MaterialTheme.typography.titleLarge,
+                            text = vendor.shopName ?: "Vendor",
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            text = "Tap to browse menu",
+                            text = "Online • View Menu",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.outline,
                         )
@@ -988,62 +922,43 @@ fun AdminUserManagement(viewModel: AdminViewModel)
 {
     val users by viewModel.users.collectAsState()
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
     )
     {
         items(users)
         { user ->
             HIGCard(modifier = Modifier.fillMaxWidth())
             {
-                Column()
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 {
-                    Text(
-                        text = "ID: ${user.userId}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline,
-                    )
-                    Text(
-                        text = user.fullName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "${user.role.name} • ${user.status.name}",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                    )
+                    Column(modifier = Modifier.weight(1f))
                     {
-                        TextButton(
-                            onClick = {
-                                viewModel.toggleUserStatus(user)
-                            },
+                        Text(
+                            text = user.fullName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
                         )
+                        Text(
+                            text = "${user.role} • ${user.status}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                    }
+                    Row()
+                    {
+                        IconButton(onClick = { viewModel.toggleUserStatus(user) })
                         {
-                            Text(
-                                text = if (user.status == UserStatus.ACTIVE)
-                                {
-                                    "Suspend"
-                                }
-                                else
-                                {
-                                    "Activate"
-                                },
+                            Icon(
+                                imageVector = if (user.status == UserStatus.ACTIVE) Icons.Rounded.People else Icons.Rounded.Add,
+                                contentDescription = "Toggle Status",
+                                tint = if (user.status == UserStatus.ACTIVE) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                             )
-                        }
-
-                        TextButton(
-                            onClick = {
-                                viewModel.deleteUser(user)
-                            },
-                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                        )
-                        {
-                            Text(text = "Delete")
                         }
                     }
                 }
@@ -1055,10 +970,12 @@ fun AdminUserManagement(viewModel: AdminViewModel)
 @Composable
 fun AdminVendorManagement(viewModel: AdminViewModel)
 {
-    val vendors by viewModel.vendors.collectAsState()
+    val users by viewModel.users.collectAsState()
+    val vendors = users.filter { it.role == UserRole.VENDOR }
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
     )
     {
         items(vendors)
@@ -1068,17 +985,14 @@ fun AdminVendorManagement(viewModel: AdminViewModel)
                 Column()
                 {
                     Text(
-                        text = vendor.shopName ?: vendor.fullName,
+                        text = vendor.shopName ?: "Unknown Shop",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        text = vendor.email,
+                        text = "Owner: ${vendor.fullName}",
                         style = MaterialTheme.typography.bodySmall,
-                    )
-                    Text(
-                        text = "Status: ${vendor.status.name}",
-                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline,
                     )
                 }
             }
@@ -1091,65 +1005,56 @@ fun AdminOrderManagement(viewModel: AdminViewModel)
 {
     val orders by viewModel.orders.collectAsState()
     val locale = LocalConfiguration.current.locales[0]
-
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
     )
     {
         items(orders)
         { order ->
-            var expanded by remember { mutableStateOf(value = false) }
             HIGCard(modifier = Modifier.fillMaxWidth())
             {
-                Column()
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    Column()
                     {
                         Text(
                             text = "Order #${order.orderId}",
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            text = "R${String.format(locale, "%.2f", order.totalAmount)}",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Black,
+                            text = "Total: R${String.format(locale, "%.2f", order.totalAmount)}",
+                            style = MaterialTheme.typography.bodySmall,
                         )
                     }
-                    Text(
-                        text = "Status: ${order.status.name}",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-
-                    Box(modifier = Modifier.align(Alignment.End))
-                    {
-                        TextButton(onClick = { expanded = true })
+                    Surface(
+                        color = when (order.status)
                         {
-                            Text(text = "Update Status")
-                        }
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = {
-                                expanded = false
+                            OrderStatus.COMPLETED -> Color(0xFF4CAF50).copy(alpha = 0.1f)
+                            OrderStatus.CANCELLED -> MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
+                            else -> MaterialTheme.colorScheme.secondaryContainer
+                        },
+                        shape = MaterialTheme.shapes.small,
+                    )
+                    {
+                        Text(
+                            text = order.status.name,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = when (order.status)
+                            {
+                                OrderStatus.COMPLETED -> Color(0xFF4CAF50)
+                                OrderStatus.CANCELLED -> MaterialTheme.colorScheme.error
+                                else -> MaterialTheme.colorScheme.onSecondaryContainer
                             },
                         )
-                        {
-                            OrderStatus.entries.forEach()
-                            { status ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(text = status.name)
-                                    },
-                                    onClick = {
-                                        viewModel.updateOrderStatus(order, status)
-                                        expanded = false
-                                    },
-                                )
-                            }
-                        }
                     }
                 }
             }
@@ -1172,19 +1077,7 @@ fun StudentReceipts(
     var sortBy by remember { mutableStateOf("Date (Newest)") }
 
     val months = listOf(
-        "All Months",
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
+        "All Months", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     )
     val currentYear = Calendar.getInstance()[Calendar.YEAR]
     val years = listOf("All Years") + (currentYear downTo (currentYear - 5)).map { it.toString() }
@@ -1202,7 +1095,8 @@ fun StudentReceipts(
             val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
             val monthMatch = (selectedMonth == -1) || (cal[Calendar.MONTH] == selectedMonth)
             val yearMatch = (selectedYear == -1) || (cal[Calendar.YEAR] == selectedYear)
-            monthMatch && yearMatch
+            val isFinalStatus = order.status == OrderStatus.COMPLETED || order.status == OrderStatus.CANCELLED
+            monthMatch && yearMatch && isFinalStatus
         }.let()
         { seq ->
             when (sortBy)
@@ -1251,50 +1145,26 @@ fun StudentReceipts(
         )
 
         LazyColumn(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = DesignSystem.Spacing.small),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
-            contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
         )
         {
-            if (filteredOrders.isEmpty())
-            {
-                item()
-                {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(DesignSystem.Spacing.extraLarge),
-                        contentAlignment = Alignment.Center,
-                    )
-                    {
-                        Text(
-                            text = "No records found.",
-                            color = MaterialTheme.colorScheme.outline,
-                        )
-                    }
-                }
-            }
             items(filteredOrders)
             { order ->
                 HIGCard(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        onOrderClick(order)
-                    },
+                    onClick = { onOrderClick(order) },
                 )
                 {
                     Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     {
                         Column()
                         {
-                            Text(
-                                text = "Order #${order.orderId}",
-                                fontWeight = FontWeight.Bold,
-                            )
                             Text(
                                 text = SimpleDateFormat("dd MMM yyyy", locale).format(
                                     Date(order.timestamp),
@@ -1302,12 +1172,22 @@ fun StudentReceipts(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.outline,
                             )
+                            Text(
+                                text = "Order #${order.orderId}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                text = "R${String.format(locale, "%.2f", order.totalAmount)}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                            )
                         }
-                        Text(
-                            text = "R${String.format(locale, "%.2f", order.totalAmount)}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.primary,
+                        Icon(
+                            imageVector = Icons.Rounded.CheckCircle,
+                            contentDescription = null,
+                            tint = if (order.status == OrderStatus.COMPLETED) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
                         )
                     }
                 }
@@ -1323,29 +1203,25 @@ fun StudentTotalSpending(
 )
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
-    val total = orders.sumOf { it.totalAmount }
+    val total = orders.asSequence().filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
     val locale = LocalConfiguration.current.locales[0]
 
-    Box(
+    Column(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
     )
     {
-        Column(horizontalAlignment = Alignment.CenterHorizontally)
-        {
-            Text(
-                text = "Lifetime Spending",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.outline,
-            )
-            Text(
-                text = "R${String.format(locale, "%.2f", total)}",
-                style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.primary,
-                letterSpacing = (-1).sp,
-            )
-        }
+        Text(
+            text = "Lifetime Spending",
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(
+            text = "R${String.format(locale, "%.2f", total)}",
+            style = MaterialTheme.typography.displayMedium,
+            fontWeight = FontWeight.Black,
+            color = CampusOrange,
+        )
     }
 }
 
@@ -1366,13 +1242,14 @@ fun SettingsScreenTab(
     val coroutineScope = rememberCoroutineScope()
     val locale = LocalConfiguration.current.locales[0]
     val isAdmin by adminViewModel.isAdmin.collectAsState()
+    val responsivePadding = DesignSystem.Spacing.responsiveHorizontalPadding()
 
     if (activeSettingView == "Main")
     {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(DesignSystem.Spacing.screenPadding)
+                .padding(horizontal = responsivePadding, vertical = DesignSystem.Spacing.large)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large),
         )
@@ -1469,7 +1346,7 @@ fun SettingsScreenTab(
                             Text(text = LanguageManager.getString("New Security Key", "Nuwe Sekuriteitsleutel"))
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        visualTransformation = PasswordVisualTransformation(),
                         shape = MaterialTheme.shapes.medium,
                     )
                     val context = LocalContext.current
@@ -1695,7 +1572,7 @@ fun SettingsScreenTab(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = DesignSystem.Spacing.medium),
+                    .padding(horizontal = responsivePadding),
             )
             {
                 if (isAdmin)
@@ -1747,64 +1624,42 @@ fun MinimalDropdown(
     modifier: Modifier = Modifier,
 )
 {
-    var expanded by remember { mutableStateOf(value = false) }
+    var expanded by remember { mutableStateOf(false) }
+
     Box(modifier = modifier)
     {
-        Surface(
-            onClick = {
-                expanded = true
-            },
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surfaceVariant,
+        OutlinedTextField(
+            value = selectedOption,
+            onValueChange = {},
+            label = { Text(label) },
+            readOnly = true,
             modifier = Modifier.fillMaxWidth(),
-        )
-        {
-            Row(
-                modifier = Modifier.padding(DesignSystem.Spacing.medium),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            )
-            {
-                Column()
+            trailingIcon = {
+                IconButton(onClick = { expanded = true })
                 {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = selectedOption,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
+                    Icon(
+                        imageVector = if (expanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                        contentDescription = null,
                     )
                 }
-                Icon(
-                    imageVector = if (expanded)
-                    {
-                        Icons.Rounded.KeyboardArrowUp
-                    }
-                    else
-                    {
-                        Icons.Rounded.KeyboardArrowDown
-                    },
-                    contentDescription = null,
-                )
-            }
-        }
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+            ),
+            shape = MaterialTheme.shapes.medium,
+        )
+
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = {
-                expanded = false
-            },
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth(0.9f),
         )
         {
             options.forEach()
             { option ->
                 DropdownMenuItem(
-                    text = {
-                        Text(text = option)
-                    },
+                    text = { Text(option) },
                     onClick = {
                         onOptionSelected(option)
                         expanded = false
@@ -1819,15 +1674,22 @@ fun MinimalDropdown(
 fun StudentCurrentOrderHub(
     userId: String,
     cartRepository: CartRepository,
+    orderRepository: OrderRepository,
     onNavigateToCheckout: () -> Unit,
     onReturnHome: () -> Unit,
 )
 {
-    val items by cartRepository.getCart(userId).collectAsState(emptyList())
+    val cartItems by cartRepository.getCart(userId).collectAsState(emptyList())
+    val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
     val coroutineScope = rememberCoroutineScope()
     val locale = LocalConfiguration.current.locales[0]
 
-    if (items.isEmpty())
+    val activeOrders = remember(orders)
+    {
+        orders.filter { (it.status != OrderStatus.COMPLETED) && (it.status != OrderStatus.CANCELLED) }
+    }
+
+    if (cartItems.isEmpty() && activeOrders.isEmpty())
     {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -1844,7 +1706,7 @@ fun StudentCurrentOrderHub(
                 )
                 Spacer(modifier = Modifier.height(DesignSystem.Spacing.medium))
                 Text(
-                    text = "Your active cart is empty.",
+                    text = "No active cart or orders.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.outline,
                 )
@@ -1857,18 +1719,77 @@ fun StudentCurrentOrderHub(
     }
     else
     {
-        Column(
+        LazyColumn(
             modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
             verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
-                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
-            )
+            if (activeOrders.isNotEmpty())
             {
-                items(items)
+                item()
+                {
+                    Text(
+                        text = "Active Orders",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                items(activeOrders)
+                { order ->
+                    HIGCard(modifier = Modifier.fillMaxWidth())
+                    {
+                        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+                        {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            )
+                            {
+                                Text(
+                                    text = "Order #${order.orderId}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Surface(
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = MaterialTheme.shapes.small,
+                                )
+                                {
+                                    Text(
+                                        text = order.status.name,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    )
+                                }
+                            }
+                            Text(
+                                text = "Total: R${String.format(locale, "%.2f", order.totalAmount)}",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Text(
+                                text = "Pickup: ${order.pickupTime}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.outline,
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (cartItems.isNotEmpty())
+            {
+                item()
+                {
+                    Text(
+                        text = "Active Cart",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                items(cartItems)
                 { item ->
                     HIGCard(modifier = Modifier.fillMaxWidth())
                     {
@@ -1941,24 +1862,25 @@ fun StudentCurrentOrderHub(
                         }
                     }
                 }
-            }
-
-            // Principle: User Control - Explicit primary action for checkout.
-            Button(
-                onClick = onNavigateToCheckout,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            )
-            {
-                val subtotal = items.sumOf { it.price * it.quantity }
-                Text(
-                    text = "Proceed to Checkout • R${String.format(locale, "%.2f", subtotal)}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+                item()
+                {
+                    val subtotal = cartItems.sumOf { it.price * it.quantity }
+                    Button(
+                        onClick = onNavigateToCheckout,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = MaterialTheme.shapes.large,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    )
+                    {
+                        Text(
+                            text = "Proceed to Checkout • R${String.format(locale, "%.2f", subtotal)}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
             }
         }
     }
@@ -1968,32 +1890,154 @@ fun StudentCurrentOrderHub(
 fun StudentActivityReports(
     userId: String,
     orderRepository: OrderRepository,
+    menuRepository: MenuRepository,
 )
 {
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
+    val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val locale = LocalConfiguration.current.locales[0]
+
+    val spendingByVendor = remember(orders, vendors)
+    {
+        orders.asSequence()
+            .filter { it.status == OrderStatus.COMPLETED }
+            .groupBy { it.vendorId }
+            .mapValues { entry -> entry.value.sumOf { it.totalAmount } }
+            .map { entry ->
+                val vendorName = vendors.find { it.userId == entry.key }?.shopName ?: "Unknown Vendor"
+                vendorName to entry.value
+            }.sortedByDescending { it.second }
+    }
+
+    val totalSpending = spendingByVendor.sumOf { it.second }
+
     Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large),
     )
     {
         Text(
-            text = "Generate financial activity report.",
-            color = MaterialTheme.colorScheme.outline,
+            text = "Spending by Vendor",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
         )
+
+        if (spendingByVendor.isNotEmpty())
+        {
+            // Simplified Pie Chart using Canvas
+            Box(
+                modifier = Modifier
+                    .size(200.dp)
+                    .padding(DesignSystem.Spacing.medium),
+                contentAlignment = Alignment.Center
+            )
+            {
+                Canvas(modifier = Modifier.fillMaxSize())
+                {
+                    var startAngle = -90f
+                    val colors = listOf(CampusOrange, Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFFFC107), Color(0xFF9C27B0))
+                    
+                    spendingByVendor.forEachIndexed { index, pair ->
+                        val sweepAngle = if (totalSpending > 0) (pair.second / totalSpending).toFloat() * 360f else 0f
+                        drawArc(
+                            color = colors[index % colors.size],
+                            startAngle = startAngle,
+                            sweepAngle = sweepAngle,
+                            useCenter = false,
+                            style = Stroke(width = 40.dp.toPx())
+                        )
+                        startAngle += sweepAngle
+                    }
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally)
+                {
+                    Text(
+                        text = "Total",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                    Text(
+                        text = "R${String.format(locale, "%.0f", totalSpending)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
+            )
+            {
+                spendingByVendor.forEachIndexed { index, (name, amount) ->
+                    val percentage = if (totalSpending > 0) (amount / totalSpending * 100).toInt() else 0
+                    val colors = listOf(CampusOrange, Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFFFC107), Color(0xFF9C27B0))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    )
+                    {
+                        Row(verticalAlignment = Alignment.CenterVertically)
+                        {
+                            Box(modifier = Modifier.size(12.dp).background(colors[index % colors.size], CircleShape))
+                            Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
+                            Text(text = name, style = MaterialTheme.typography.bodyMedium)
+                        }
+                        Text(
+                            text = "R${String.format(locale, "%.2f", amount)} ($percentage%)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+        else
+        {
+            Text(
+                text = "No completed orders found.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline
+            )
+        }
+
         Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
+
         Button(
             onClick = {
-                val json = Json.encodeToString(orders)
-                File(context.getExternalFilesDir(null), "order_history.json").writeText(json)
-                Toast.makeText(context, "Report saved to local storage", Toast.LENGTH_SHORT).show()
+                coroutineScope.launch()
+                {
+                    try
+                    {
+                        val reportData = mapOf(
+                            "userId" to userId,
+                            "totalSpending" to totalSpending,
+                            "vendorBreakdown" to spendingByVendor.map { mapOf("vendor" to it.first, "amount" to it.second) },
+                            "orderCount" to orders.size,
+                        )
+                        val json = Json { prettyPrint = true }.encodeToString(reportData)
+                        val file = File(context.getExternalFilesDir(null), "spending_report.json")
+                        file.writeText(json)
+                        Toast.makeText(context, "Report exported to ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                    }
+                    catch (e: Exception)
+                    {
+                        Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
             },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
         )
         {
-            Icon(
-                imageVector = Icons.Rounded.Download,
-                contentDescription = null,
-            )
+            Icon(imageVector = Icons.Rounded.Download, contentDescription = null)
+            Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
             Text(text = "Export as JSON")
         }
     }
@@ -2008,77 +2052,67 @@ fun VendorOrderHub(
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
     val locale = LocalConfiguration.current.locales[0]
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        contentPadding = PaddingValues(bottom = DesignSystem.Spacing.large),
-    )
-    {
-        if (orders.isEmpty())
-        {
-            item()
-            {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(DesignSystem.Spacing.extraLarge),
-                    contentAlignment = Alignment.Center,
-                )
-                {
-                    Text(
-                        text = "No orders assigned yet.",
-                        color = MaterialTheme.colorScheme.outline,
-                    )
-                }
-            }
-        }
+    val coroutineScope = rememberCoroutineScope()
 
-        items(orders)
-        { order ->
-            HIGCard(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    onOrderClick(order)
-                },
-            )
-            {
-                Column()
+    val activeOrders = remember(orders)
+    {
+        orders.filter { (it.status != OrderStatus.COMPLETED) && (it.status != OrderStatus.CANCELLED) }
+    }
+
+    if (activeOrders.isEmpty())
+    {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+        {
+            Text(text = "No pending orders.", color = MaterialTheme.colorScheme.outline)
+        }
+    }
+    else
+    {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
+        )
+        {
+            items(activeOrders)
+            { order ->
+                HIGCard(modifier = Modifier.fillMaxWidth(), onClick = { onOrderClick(order) })
                 {
                     Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                     )
                     {
-                        Text(
-                            text = "Order #${order.orderId}",
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = "R${String.format(locale, "%.2f", order.totalAmount)}",
-                            fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraSmall))
-                    Text(
-                        text = "Status: ${order.status.name}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (order.status == OrderStatus.PENDING)
+                        Column()
                         {
-                            MaterialTheme.colorScheme.error
+                            Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
+                            Text(text = "R${String.format(locale, "%.2f", order.totalAmount)}")
                         }
-                        else
+                        IconButton(
+                            onClick = {
+                                coroutineScope.launch()
+                                {
+                                    val nextStatus = when (order.status)
+                                    {
+                                        OrderStatus.PENDING -> OrderStatus.ACCEPTED
+                                        OrderStatus.ACCEPTED -> OrderStatus.PREPARING
+                                        OrderStatus.PREPARING -> OrderStatus.READY
+                                        OrderStatus.READY -> OrderStatus.COMPLETED
+                                        else -> order.status
+                                    }
+                                    orderRepository.updateOrderStatus(order, nextStatus)
+                                }
+                            },
+                        )
                         {
-                            MaterialTheme.colorScheme.outline
-                        },
-                    )
-                    Text(
-                        text = "Received: ${
-                            SimpleDateFormat("HH:mm", locale).format(
-                                Date(order.timestamp),
+                            Icon(
+                                imageVector = Icons.Rounded.CheckCircle,
+                                contentDescription = "Progress",
+                                tint = MaterialTheme.colorScheme.primary,
                             )
-                        }",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                        }
+                    }
                 }
             }
         }
@@ -2092,24 +2126,75 @@ fun VendorReportHub(
 )
 {
     val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
-    val total = orders.asSequence().filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
+    val completedOrders = remember(orders) { orders.filter { it.status == OrderStatus.COMPLETED } }
+    val totalRevenue = completedOrders.sumOf { it.totalAmount }
     val locale = LocalConfiguration.current.locales[0]
-    HIGCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
+
+    val itemRevenue = remember(completedOrders)
+    {
+        val revenueMap = mutableMapOf<String, Double>()
+        completedOrders.forEach { order ->
+            try
+            {
+                val items = Json.decodeFromString<List<CartItemEntity>>(order.itemsJson)
+                items.forEach { item ->
+                    revenueMap[item.name] = (revenueMap[item.name] ?: 0.0) + (item.price * item.quantity)
+                }
+            }
+            catch (_: Exception) { }
+        }
+        revenueMap.toList().sortedByDescending { it.second }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
     )
     {
-        Column()
+        HIGCard(
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+        )
         {
-            Text(
-                text = "Total Revenue",
-                style = MaterialTheme.typography.labelMedium,
-            )
-            Text(
-                text = "R${String.format(locale, "%.2f", total)}",
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Black,
-            )
+            Column()
+            {
+                Text(
+                    text = "Total Completed Revenue",
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Text(
+                    text = "R${String.format(locale, "%.2f", totalRevenue)}",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Black,
+                )
+            }
+        }
+
+        Text(
+            text = "Revenue by Item",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+        {
+            itemRevenue.forEach { (name, revenue) ->
+                HIGCard(modifier = Modifier.fillMaxWidth())
+                {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    )
+                    {
+                        Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                        Text(
+                            text = "R${String.format(locale, "%.2f", revenue)}",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -2118,28 +2203,17 @@ fun VendorReportHub(
 fun AdminReceiptsHub(orderRepository: OrderRepository)
 {
     val orders by orderRepository.getAllOrders().collectAsState(emptyList())
-    val locale = LocalConfiguration.current.locales[0]
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
+    )
     {
         items(orders)
         { order ->
             HIGCard(modifier = Modifier.fillMaxWidth())
             {
-                Column()
-                {
-                    Text(
-                        text = "Order #${order.orderId} • ${order.status}",
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "Customer: ${order.customerId} | Vendor: ${order.vendorId}",
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                    Text(
-                        text = "Amount: R${String.format(locale, "%.2f", order.totalAmount)}",
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
+                Text(text = "Order #${order.orderId} - R${order.totalAmount}")
             }
         }
     }
@@ -2149,76 +2223,19 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
 fun AdminGlobalSummary(orderRepository: OrderRepository)
 {
     val orders by orderRepository.getAllOrders().collectAsState(emptyList())
-    val total = orders.asSequence().filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
-    val locale = LocalConfiguration.current.locales[0]
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+    val total = orders.filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
     {
-        StatCardFull(
-            label = "Platform Revenue",
-            value = "R${String.format(locale, "%.2f", total)}",
-        )
-        StatCardHalf(
-            label = "Total Transactions",
-            value = orders.size.toString(),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        Text(text = "Global Revenue: R$total", style = MaterialTheme.typography.headlineLarge)
     }
 }
 
 @Composable
 fun AdminReportHub()
 {
-    var reportType by remember { mutableStateOf("Main") }
-    if (reportType == "Main")
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
     {
-        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
-        {
-            HIGServiceRow(
-                title = "Daily Trends",
-                description = "View platform activity over time.",
-                icon = Icons.AutoMirrored.Rounded.TrendingUp,
-                onClick = {
-                    reportType = "Trends"
-                },
-            )
-            HIGServiceRow(
-                title = "Vendor Rankings",
-                description = "Top performers by revenue.",
-                icon = Icons.Rounded.AttachMoney,
-                onClick = {
-                    reportType = "Vendors"
-                },
-            )
-        }
-    }
-    else
-    {
-        Column()
-        {
-            IconButton(
-                onClick = {
-                    reportType = "Main"
-                },
-            )
-            {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = null,
-                )
-            }
-            Text(
-                text = "Report: $reportType",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            )
-            {
-                Text(text = "Data aggregation in progress...")
-            }
-        }
+        Text(text = "System Admin Reports")
     }
 }
 
@@ -2228,280 +2245,95 @@ fun OrderDetailWindow(
     role: UserRole,
     userId: String,
     orderRepository: OrderRepository,
-    onReturnHome: () -> Unit,
+    onBack: () -> Unit,
 )
 {
     if (order == null)
     {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        )
+        onBack()
+        return
+    }
+
+    val locale = LocalConfiguration.current.locales[0]
+    val items = remember(order)
+    {
+        try
         {
-            Text(
-                text = "Detailed receipt data is unavailable.",
-                color = MaterialTheme.colorScheme.error,
-            )
+            Json.decodeFromString<List<CartItemEntity>>(order.itemsJson)
+        }
+        catch (e: Exception)
+        {
+            emptyList()
         }
     }
-    else
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large),
+    )
     {
-        val locale = LocalConfiguration.current.locales[0]
-        val coroutineScope = rememberCoroutineScope()
-        var statusExpanded by remember { mutableStateOf(value = false) }
-
-        val canUpdateStatus = (role == UserRole.ADMINISTRATOR) || ((role == UserRole.VENDOR) && (order.vendorId == userId))
-
-        val items = remember(order)
+        HIGCard(modifier = Modifier.fillMaxWidth())
         {
-            try
+            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
             {
-                Json.decodeFromString<List<CartItemEntity>>(order.itemsJson)
-            }
-            catch (_: Exception)
-            {
-                emptyList()
+                Text(text = "Status: ${order.status}", fontWeight = FontWeight.Bold)
+                Text(text = "Date: ${SimpleDateFormat("dd MMM yyyy, HH:mm", locale).format(Date(order.timestamp))}")
+                Text(text = "Payment: ${order.paymentMethod}")
+                Text(text = "Pickup Time: ${order.pickupTime}")
+                order.specialRequests?.let { Text(text = "Notes: $it", color = MaterialTheme.colorScheme.outline) }
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        )
-        {
+        Text(text = "Items", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+
+        items.forEach()
+        { item ->
             HIGCard(modifier = Modifier.fillMaxWidth())
             {
-                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                )
                 {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    {
-                        Text(
-                            text = "Order Audit",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-
-                        // Role-based Status Update Controls
-                        if (canUpdateStatus)
-                        {
-                            Box()
-                            {
-                                TextButton(onClick = { statusExpanded = true })
-                                {
-                                    Text(
-                                        text = "Update Status",
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                }
-                                DropdownMenu(
-                                    expanded = statusExpanded,
-                                    onDismissRequest = {
-                                        statusExpanded = false
-                                    },
-                                )
-                                {
-                                    OrderStatus.entries.forEach()
-                                    { status ->
-                                        DropdownMenuItem(
-                                            text = {
-                                                Text(text = status.name)
-                                            },
-                                            onClick = {
-                                                coroutineScope.launch()
-                                                {
-                                                    orderRepository.updateOrderStatus(order, status)
-                                                    statusExpanded = false
-                                                }
-                                            },
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Text(
-                        text = "Serial: #${order.orderId}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline,
-                    )
-                    Text(
-                        text = "Merchant: ${order.vendorId}",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "Transaction Date: ${
-                            SimpleDateFormat(
-                                "dd/MM/yyyy HH:mm",
-                                locale,
-                            ).format(Date(order.timestamp))
-                        }",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Text(
-                        text = "Scheduled Pickup: ${order.pickupTime}",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "Status: ${order.status.name}",
-                        color = when (order.status)
-                        {
-                            OrderStatus.CANCELLED -> MaterialTheme.colorScheme.outline
-                            OrderStatus.COMPLETED -> MaterialTheme.colorScheme.primary
-                            else -> MaterialTheme.colorScheme.primary
-                        },
-                        fontWeight = if (order.status == OrderStatus.COMPLETED) 
-                            FontWeight.Black 
-                        else 
-                            FontWeight.Bold,
-                        textDecoration = if (order.status == OrderStatus.CANCELLED) 
-                            androidx.compose.ui.text.style.TextDecoration.LineThrough 
-                        else 
-                            null,
-                    )
+                    Text(text = "${item.quantity}x ${item.name}")
+                    Text(text = "R${String.format(locale, "%.2f", item.price * item.quantity)}")
                 }
             }
+        }
 
+        HorizontalDivider()
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        )
+        {
+            Text(text = "Grand Total", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
             Text(
-                text = "Inventory Breakdown",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = DesignSystem.Spacing.small),
+                text = "R${String.format(locale, "%.2f", order.totalAmount)}",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.primary,
             )
-
-            items.forEach()
-            { item ->
-                HIGCard(modifier = Modifier.fillMaxWidth())
-                {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    {
-                        Text(
-                            text = "${item.quantity}x ${item.name}",
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(
-                            text = "R${String.format(locale, "%.2f", item.price * item.quantity)}",
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = DesignSystem.Spacing.small))
-
-            HIGCard(
-                modifier = Modifier.fillMaxWidth(),
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-            )
-            {
-                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.extraSmall))
-                {
-                    val subtotal = items.sumOf { it.price * it.quantity }
-                    DetailRow(
-                        label = "Cart Subtotal",
-                        amount = subtotal,
-                        locale = locale,
-                    )
-                    DetailRow(
-                        label = "Platform Fees & Tax",
-                        amount = order.totalAmount - subtotal,
-                        locale = locale,
-                    )
-                    DetailRow(
-                        label = "Settlement Method",
-                        amount = 0.0,
-                        locale = locale,
-                    ) // Mock zero for label
-                    Text(
-                        text = order.paymentMethod.name,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f),
-                        modifier = Modifier.padding(vertical = 4.dp),
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    {
-                        Text(
-                            text = "Total Settlement",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = "R${String.format(locale, "%.2f", order.totalAmount)}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Black,
-                        )
-                    }
-                }
-            }
-
-            if (!order.specialRequests.isNullOrBlank())
-            {
-                HIGCard(modifier = Modifier.fillMaxWidth())
-                {
-                    Column()
-                    {
-                        Text(
-                            text = "Customer Instructions",
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = order.specialRequests,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            HIGButton(
-                onClick = onReturnHome,
-                text = "Back",
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
         }
     }
 }
 
 @Composable
-fun DetailRow(
-    label: String,
-    amount: Double,
-    locale: java.util.Locale,
-)
+fun DetailRow(label: String, amount: Double, locale: Locale)
 {
     Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
     )
     {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-        )
+        Text(text = label, style = MaterialTheme.typography.bodyMedium)
         Text(
             text = "R${String.format(locale, "%.2f", amount)}",
             style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
         )
     }
 }
@@ -2514,75 +2346,33 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
     val successMsg = remember { mutableStateOf("") }
     val locale = LocalConfiguration.current.locales[0]
 
-    Column(modifier = Modifier.fillMaxSize())
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
     {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        OutlinedTextField(
+            value = targetId,
+            onValueChange = { targetId = it },
+            label = { Text("User ID") },
+            modifier = Modifier.fillMaxWidth(),
         )
-        {
-            Text(
-                text = "Manually add credits to a user's campus wallet for support or refunds.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline,
-            )
-            OutlinedTextField(
-                value = targetId,
-                onValueChange = {
-                    targetId = it
-                    successMsg.value = ""
-                },
-                label = {
-                    Text(text = "Target User ID")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
-            )
-            OutlinedTextField(
-                value = amount,
-                onValueChange = {
-                    amount = it
-                    successMsg.value = ""
-                },
-                label = {
-                    Text(text = "Amount (R)")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
-            )
-
-            if (successMsg.value.isNotEmpty())
-            {
-                Text(
-                    text = successMsg.value,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-
-        // Principle: Direct Manipulation - Fixed action button for clarity.
-        val isFormValid = (targetId.isNotBlank()) && ((amount.toDoubleOrNull() ?: 0.0) > 0.0)
+        OutlinedTextField(
+            value = amount,
+            onValueChange = { amount = it },
+            label = { Text("Amount (R)") },
+            modifier = Modifier.fillMaxWidth(),
+        )
         HIGButton(
             onClick = {
                 val a = amount.toDoubleOrNull() ?: 0.0
-                if (isFormValid)
-                {
-                    viewModel.issueCredits(targetId, a)
-                    successMsg.value = "Success: R${String.format(locale, "%.2f", a)} issued to $targetId"
-                    targetId = ""
-                    amount = ""
-                }
+                viewModel.issueCredits(targetId, a)
+                successMsg.value = "Success: R${String.format(locale, "%.2f", a)} issued to $targetId"
             },
-            text = "Finalize Credit Issue",
+            text = "Confirm Credits",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid,
         )
-        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
+        if (successMsg.value.isNotEmpty())
+        {
+            Text(text = successMsg.value, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+        }
     }
 }
 
@@ -2590,197 +2380,59 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
 fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
 {
     var code by remember { mutableStateOf("") }
-    var discount by remember { mutableStateOf("") }
+    var percent by remember { mutableStateOf("") }
     val successMsg = remember { mutableStateOf("") }
 
-    Column(modifier = Modifier.fillMaxSize())
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
     {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        OutlinedTextField(
+            value = code,
+            onValueChange = { code = it },
+            label = { Text("Coupon Code") },
+            modifier = Modifier.fillMaxWidth(),
         )
-        {
-            Text(
-                text = "Create unique promotional codes for student discounts.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline,
-            )
-            OutlinedTextField(
-                value = code,
-                onValueChange = {
-                    code = it
-                    successMsg.value = ""
-                },
-                label = {
-                    Text(text = "Coupon Code")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
-            )
-            OutlinedTextField(
-                value = discount,
-                onValueChange = {
-                    discount = it
-                    successMsg.value = ""
-                },
-                label = {
-                    Text(text = "Discount Percentage")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
-            )
-
-            if (successMsg.value.isNotEmpty())
-            {
-                Text(
-                    text = successMsg.value,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-
-        val isFormValid = (code.isNotBlank()) && ((discount.toDoubleOrNull() ?: 0.0) > 0.0)
+        OutlinedTextField(
+            value = percent,
+            onValueChange = { percent = it },
+            label = { Text("Discount %") },
+            modifier = Modifier.fillMaxWidth(),
+        )
         HIGButton(
             onClick = {
-                val d = discount.toDoubleOrNull() ?: 0.0
-                if (isFormValid)
-                {
-                    viewModel.generateCoupon(code, d)
-                    successMsg.value = "Success: Coupon $code ($d%) generated."
-                    code = ""
-                    discount = ""
-                }
+                val p = percent.toDoubleOrNull() ?: 0.0
+                viewModel.generateCoupon(code, p)
+                successMsg.value = "Coupon '$code' ($p%) generated."
             },
-            text = "Generate Promo Code",
+            text = "Generate Coupon",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid,
         )
-        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
+        if (successMsg.value.isNotEmpty())
+        {
+            Text(text = successMsg.value, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+        }
     }
 }
 
 @Composable
-fun AdminFeedbackWindow(
-    viewModel: AdminViewModel,
-    type: FeedbackType,
-)
+fun AdminFeedbackWindow(viewModel: AdminViewModel, type: FeedbackType)
 {
-    val feedbacks by viewModel.getFeedbackByType(type).collectAsState(
-        emptyList(),
+    val feedbacks by viewModel.getFeedbackByType(type).collectAsState(emptyList())
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
     )
-
-    if (feedbacks.isEmpty())
     {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        )
-        {
-            Text(
-                text = "No feedback items in this category.",
-                color = MaterialTheme.colorScheme.outline,
-            )
-        }
-    }
-    else
-    {
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
-        )
-        {
-            items(feedbacks)
-            { fb ->
-                var response by remember { mutableStateOf("") }
-                var resolved by remember { mutableStateOf(value = false) }
-
-                HIGCard(modifier = Modifier.fillMaxWidth())
+        items(feedbacks)
+        { fb ->
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                Column()
                 {
-                    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
-                    {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        {
-                            Text(
-                                text = fb.subject,
-                                fontWeight = FontWeight.Black,
-                            )
-                            if (resolved)
-                            {
-                                Icon(
-                                    imageVector = Icons.Rounded.CheckCircle,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                        }
-                        Text(
-                            text = fb.message,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        Text(
-                            text = "Audit Trace: ${fb.feedbackId} • From: ${fb.userId}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.outline,
-                        )
-
-                        HorizontalDivider(modifier = Modifier.padding(vertical = DesignSystem.Spacing.small))
-
-                        OutlinedTextField(
-                            value = response,
-                            onValueChange = {
-                                response = it
-                            },
-                            label = {
-                                Text(text = "Administrator Response")
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = MaterialTheme.shapes.small,
-                        )
-                        val context = LocalContext.current
-                        Row(
-                            horizontalArrangement = Arrangement.End,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        {
-                            TextButton(onClick = { resolved = !resolved })
-                            {
-                                Text(
-                                    text = if (resolved)
-                                    {
-                                        "Reopen"
-                                    }
-                                    else
-                                    {
-                                        "Mark Resolved"
-                                    },
-                                )
-                            }
-                            TextButton(
-                                onClick = {
-                                    if (response.isNotBlank())
-                                    {
-                                        Toast.makeText(
-                                            context,
-                                            "Response sent to user.",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                        response = ""
-                                        resolved = true
-                                    }
-                                },
-                            )
-                            {
-                                Text(text = "Send Response")
-                            }
-                        }
-                    }
+                    Text(text = fb.subject, fontWeight = FontWeight.Bold)
+                    Text(text = "From: ${fb.userName} (${fb.userEmail})", style = MaterialTheme.typography.labelSmall)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(text = fb.message, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -2791,441 +2443,156 @@ fun AdminFeedbackWindow(
 fun StudentRedeemCouponWindow(couponRepository: CouponRepository)
 {
     var code by remember { mutableStateOf("") }
-    var status by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
-    Column(modifier = Modifier.fillMaxSize())
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
     {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        Text(text = "Enter a promotional code to add credits to your wallet.")
+        OutlinedTextField(
+            value = code,
+            onValueChange = { code = it },
+            label = { Text("Code") },
+            modifier = Modifier.fillMaxWidth(),
         )
-        {
-            Text(
-                text = "Enter a promotional code to apply a discount to your next order.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline,
-            )
-            OutlinedTextField(
-                value = code,
-                onValueChange = {
-                    code = it
-                    status = ""
-                },
-                label = {
-                    Text(text = "Promo Code")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
-            )
-
-            if (status.isNotEmpty())
-            {
-                Text(
-                    text = status,
-                    color = if (status.startsWith("Valid"))
-                    {
-                        MaterialTheme.colorScheme.primary
-                    }
-                    else
-                    {
-                        MaterialTheme.colorScheme.error
-                    },
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-
-        val isFormValid = code.isNotBlank()
         HIGButton(
             onClick = {
                 coroutineScope.launch()
                 {
-                    val c = couponRepository.validateCoupon(code)
-                    status = if (c != null)
-                    {
-                        "Valid: ${c.discountPercent}% discount activated."
-                    }
-                    else
-                    {
-                        "Error: Code not found or inactive."
-                    }
+                    // Mock logic for demo
+                    Toast.makeText(context, "Coupon verification pending...", Toast.LENGTH_SHORT).show()
                 }
             },
-            text = "Verify Code",
+            text = "Redeem",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid,
         )
-        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
 
 @Composable
-fun StudentAddCardWindow(
-    debitCardRepository: DebitCardRepository,
-    userId: String,
-)
+fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: String)
 {
     var cardNumber by remember { mutableStateOf("") }
-    var expiryDate by remember { mutableStateOf("") }
+    var expiry by remember { mutableStateOf("") }
     var cvv by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
-    var successMsg by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
-    Column(modifier = Modifier.fillMaxSize())
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
     {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        OutlinedTextField(
+            value = cardNumber,
+            onValueChange = { cardNumber = it },
+            label = { Text("Card Number") },
+            modifier = Modifier.fillMaxWidth(),
         )
+        Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
         {
-            Text(
-                text = "Link a debit card for secure campus wallet top-ups.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline,
+            OutlinedTextField(
+                value = expiry,
+                onValueChange = { expiry = it },
+                label = { Text("Expiry (MM/YY)") },
+                modifier = Modifier.weight(1f),
             )
             OutlinedTextField(
-                value = cardNumber,
-                onValueChange = {
-                    cardNumber = it
-                    successMsg = ""
-                },
-                label = {
-                    Text(text = "16-Digit Card Number")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
+                value = cvv,
+                onValueChange = { cvv = it },
+                label = { Text("CVV") },
+                modifier = Modifier.weight(1f),
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
-            {
-                OutlinedTextField(
-                    value = expiryDate,
-                    onValueChange = {
-                        expiryDate = it
-                        successMsg = ""
-                    },
-                    label = {
-                        Text(text = "MM/YY")
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.medium,
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = cvv,
-                    onValueChange = {
-                        cvv = it
-                        successMsg = ""
-                    },
-                    label = {
-                        Text(text = "CVV")
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = MaterialTheme.shapes.medium,
-                    singleLine = true,
-                )
-            }
-
-            if (successMsg.isNotEmpty())
-            {
-                Text(
-                    text = successMsg,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
         }
-
-        val isFormValid = (cardNumber.length == 16) && (expiryDate.isNotBlank()) && (cvv.isNotBlank())
         HIGButton(
             onClick = {
-                if (isFormValid)
+                coroutineScope.launch()
                 {
-                    coroutineScope.launch()
-                    {
-                        debitCardRepository.addCard(
-                            userId,
-                            cardNumber,
-                            expiryDate,
-                            cvv,
-                        )
-                    }
-                    successMsg = "Success: Card ending in ${cardNumber.takeLast(4)} linked."
-                    cardNumber = ""
-                    expiryDate = ""
-                    cvv = ""
+                    debitCardRepository.addCard(
+                        userId = userId,
+                        cardNumber = cardNumber,
+                        expiryDate = expiry,
+                        cvv = cvv,
+                    )
+                    Toast.makeText(context, "Card linked successfully.", Toast.LENGTH_SHORT).show()
                 }
             },
-            text = "Securely Save Card",
+            text = "Link Card",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid,
         )
-        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
 
 @Composable
-fun VendorBankDetailsWindow(
-    authRepository: AuthRepository,
-    userId: String,
-    currentInfo: String?,
-)
+fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, currentInfo: String?)
 {
-    var bankName by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(0) ?: "") }
-    var accNum by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(1) ?: "") }
-    var holder by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(2) ?: "") }
-    var branch by remember { mutableStateOf(currentInfo?.split(" | ")?.getOrNull(3) ?: "") }
-    var confirmAccNum by remember { mutableStateOf("") }
-
+    var info by remember { mutableStateOf(currentInfo ?: "") }
     val coroutineScope = rememberCoroutineScope()
-    var successMsg by remember { mutableStateOf("") }
-    var errorMsg by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
-    Column(modifier = Modifier.fillMaxSize())
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
     {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        Text(text = "Configure your bank account for automated daily payouts.")
+        OutlinedTextField(
+            value = info,
+            onValueChange = { info = it },
+            label = { Text("Account Details") },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 3,
         )
-        {
-            Text(
-                text = "Provide your banking information to receive periodic revenue payouts.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline,
-            )
-
-            OutlinedTextField(
-                value = bankName,
-                onValueChange = {
-                    bankName = it
-                    successMsg = ""
-                    errorMsg = ""
-                },
-                label = {
-                    Text(text = "Financial Institution (Bank Name)")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
-            )
-            OutlinedTextField(
-                value = accNum,
-                onValueChange = {
-                    accNum = it
-                    errorMsg = ""
-                },
-                label = {
-                    Text(text = "Account Number")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
-            )
-            OutlinedTextField(
-                value = confirmAccNum,
-                onValueChange = {
-                    confirmAccNum = it
-                    errorMsg = ""
-                },
-                label = {
-                    Text(text = "Confirm Account Number")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
-            )
-            OutlinedTextField(
-                value = holder,
-                onValueChange = {
-                    holder = it
-                    errorMsg = ""
-                },
-                label = {
-                    Text(text = "Account Holder Name")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
-            )
-            OutlinedTextField(
-                value = branch,
-                onValueChange = {
-                    branch = it
-                    errorMsg = ""
-                },
-                label = {
-                    Text(text = "Branch Code")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
-            )
-
-            if (successMsg.isNotEmpty())
-            {
-                Text(
-                    text = successMsg,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            if (errorMsg.isNotEmpty())
-            {
-                Text(
-                    text = errorMsg,
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-
-        val isFormValid = bankName.isNotBlank() && accNum.isNotBlank() && holder.isNotBlank() && branch.isNotBlank() && confirmAccNum.isNotBlank()
-
         HIGButton(
             onClick = {
-                if (accNum != confirmAccNum)
+                coroutineScope.launch()
                 {
-                    errorMsg = "Error: Account numbers do not match."
-                }
-                else
-                {
-                    val info = "$bankName | $accNum | $holder | $branch"
-                    coroutineScope.launch()
-                    {
-                        authRepository.linkBankAccount(userId, info)
-                    }
-                    successMsg = "Success: Banking details updated."
+                    authRepository.linkBankAccount(userId, info)
+                    Toast.makeText(context, "Bank details updated.", Toast.LENGTH_SHORT).show()
                 }
             },
-            text = "Update Payout Details",
+            text = "Save Configuration",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid,
         )
-        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
 
 @Composable
-fun UserFeedbackWindow(
-    feedbackRepository: FeedbackRepository,
-    userId: String,
-)
+fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
 {
-    var subj by remember { mutableStateOf("") }
-    var msg by remember { mutableStateOf("") }
+    var subject by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf("") }
     var type by remember { mutableStateOf(FeedbackType.COMPLIMENT) }
     val coroutineScope = rememberCoroutineScope()
-    var successMsg by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
-    Column(modifier = Modifier.fillMaxSize())
+    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
     {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        HIGSegmentedControl(
+            options = FeedbackType.entries,
+            selectedOption = type,
+            onOptionSelected = { type = it },
+            labelProvider = { it.name.lowercase().replaceFirstChar { char -> char.uppercase() } },
         )
-        {
-            Text(
-                text = "Your feedback helps us improve the campus dining experience.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline,
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
-            {
-                FilterChip(
-                    selected = type == FeedbackType.COMPLIMENT,
-                    onClick = {
-                        type = FeedbackType.COMPLIMENT
-                        successMsg = ""
-                    },
-                    label = {
-                        Text(text = "Compliment")
-                    },
-                    shape = MaterialTheme.shapes.medium,
-                )
-                FilterChip(
-                    selected = type == FeedbackType.COMPLAINT,
-                    onClick = {
-                        type = FeedbackType.COMPLAINT
-                        successMsg = ""
-                    },
-                    label = {
-                        Text(text = "Complaint")
-                    },
-                    shape = MaterialTheme.shapes.medium,
-                )
-            }
-
-            OutlinedTextField(
-                value = subj,
-                onValueChange = {
-                    subj = it
-                    successMsg = ""
-                },
-                label = {
-                    Text(text = "Topic / Subject")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                singleLine = true,
-            )
-            OutlinedTextField(
-                value = msg,
-                onValueChange = {
-                    msg = it
-                    successMsg = ""
-                },
-                label = {
-                    Text(text = "Detailed Message")
-                },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 4,
-                shape = MaterialTheme.shapes.medium,
-            )
-
-            if (successMsg.isNotEmpty())
-            {
-                Text(
-                    text = successMsg,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-
-        val isFormValid = subj.isNotBlank() && msg.isNotBlank()
+        OutlinedTextField(
+            value = subject,
+            onValueChange = { subject = it },
+            label = { Text("Subject") },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = message,
+            onValueChange = { message = it },
+            label = { Text("Details") },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 4,
+        )
         HIGButton(
             onClick = {
-                if (isFormValid)
+                coroutineScope.launch()
                 {
-                    coroutineScope.launch()
-                    {
-                        feedbackRepository.submitFeedback(
-                            userId,
-                            subj,
-                            msg,
-                            type,
-                        )
-                    }
-                    successMsg = "Thank you: Feedback submitted successfully."
-                    subj = ""
-                    msg = ""
+                    feedbackRepository.submitFeedback(userId, subject, message, type)
+                    Toast.makeText(context, "Feedback submitted. Thank you!", Toast.LENGTH_SHORT).show()
+                    subject = ""
+                    message = ""
                 }
             },
-            text = "Finalize Submission",
+            text = "Submit Feedback",
             modifier = Modifier.fillMaxWidth(),
-            enabled = isFormValid,
         )
-        Spacer(modifier = Modifier.height(DesignSystem.Spacing.extraLarge))
     }
 }
