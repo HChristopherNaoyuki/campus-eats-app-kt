@@ -164,7 +164,11 @@ fun CheckoutScreen(
     var selectedPickupTime by remember { mutableStateOf("12:00") }
     var specialRequests by remember { mutableStateOf("") }
     var showTimePicker by remember { mutableStateOf(false) }
-    val timePickerState = rememberTimePickerState(initialHour = 12, initialMinute = 0)
+    val timePickerState = rememberTimePickerState(
+        initialHour = 12,
+        initialMinute = 0,
+        is24Hour = true
+    )
 
     if (showTimePicker)
     {

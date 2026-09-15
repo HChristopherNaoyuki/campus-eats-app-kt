@@ -28,6 +28,7 @@ object DesignSystem
          * Calculates responsive horizontal spacing based on screen width.
          * Used for bars and content rows to ensure optimal layout across devices.
          */
+        @Suppress("ConfigurationScreenWidthHeight")
         @Composable
         fun responsiveHorizontalPadding(): Dp
         {

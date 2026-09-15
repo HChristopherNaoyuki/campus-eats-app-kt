@@ -1,5 +1,6 @@
 package com.example.campus_eats_app_kt.ui.screens
 
+import android.graphics.Paint
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -473,9 +474,10 @@ fun AdminGridStats(stats: AdminStats)
             StatCardHalf(label = "Orders", value = stats.orderCount.toString(), modifier = Modifier.weight(1f))
             StatCardHalf(label = "Menu Items", value = stats.menuItemCount.toString(), modifier = Modifier.weight(1f))
         }
+        val locale = LocalConfiguration.current.locales[0]
         StatCardFull(
             label = "Platform Revenue",
-            value = "R${String.format(Locale.getDefault(), "%.2f", stats.allTimeEarnings)}",
+            value = "R${String.format(locale, "%.2f", stats.allTimeEarnings)}",
             containerColor = MaterialTheme.colorScheme.primaryContainer,
         )
     }
@@ -816,6 +818,7 @@ fun ActivityScreenTab(
                         userId,
                         cartRepository,
                         orderRepository,
+                        menuRepository,
                         onNavigateToCheckout,
                         onReturnHome,
                     )
@@ -1675,12 +1678,14 @@ fun StudentCurrentOrderHub(
     userId: String,
     cartRepository: CartRepository,
     orderRepository: OrderRepository,
+    menuRepository: MenuRepository,
     onNavigateToCheckout: () -> Unit,
     onReturnHome: () -> Unit,
 )
 {
     val cartItems by cartRepository.getCart(userId).collectAsState(emptyList())
     val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
+    val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
     val coroutineScope = rememberCoroutineScope()
     val locale = LocalConfiguration.current.locales[0]
 
@@ -1739,6 +1744,7 @@ fun StudentCurrentOrderHub(
                 { order ->
                     HIGCard(modifier = Modifier.fillMaxWidth())
                     {
+                        val vendorName = vendors.find { it.userId == order.vendorId }?.shopName ?: "Vendor #${order.vendorId}"
                         Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
                         {
                             Row(
@@ -1747,7 +1753,7 @@ fun StudentCurrentOrderHub(
                             )
                             {
                                 Text(
-                                    text = "Order #${order.orderId}",
+                                    text = vendorName,
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                 )
@@ -1765,6 +1771,11 @@ fun StudentCurrentOrderHub(
                                     )
                                 }
                             }
+                            Text(
+                                text = "Order ID: #${order.orderId}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.outline,
+                            )
                             Text(
                                 text = "Total: R${String.format(locale, "%.2f", order.totalAmount)}",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -1951,6 +1962,27 @@ fun StudentActivityReports(
                             useCenter = false,
                             style = Stroke(width = 40.dp.toPx())
                         )
+                        
+                        // Requirement: Display the corresponding numeric spending value on the chart.
+                        if (sweepAngle > 30) {
+                            val angleInRadians = Math.toRadians((startAngle + sweepAngle / 2).toDouble())
+                            val textRadius = (size.minDimension / 2) - 10.dp.toPx()
+                            val x = (size.width / 2) + (Math.cos(angleInRadians) * textRadius).toFloat()
+                            val y = (size.height / 2) + (Math.sin(angleInRadians) * textRadius).toFloat()
+                            
+                            drawContext.canvas.nativeCanvas.drawText(
+                                "R${pair.second.toInt()}",
+                                x,
+                                y,
+                                Paint().apply {
+                                    color = android.graphics.Color.WHITE
+                                    textSize = 12.sp.toPx()
+                                    textAlign = Paint.Align.CENTER
+                                    isFakeBoldText = true
+                                }
+                            )
+                        }
+
                         startAngle += sweepAngle
                     }
                 }
