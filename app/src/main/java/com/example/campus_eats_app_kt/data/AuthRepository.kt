@@ -184,10 +184,7 @@ class AuthRepository(
 
             // Check if user already exists in RTDB or local cache
             val existingUser = try { resolveUserRecord(email) } catch (_: Exception) { null }
-            if (existingUser != null)
-            {
-                return@runCatching existingUser
-            }
+            existingUser?.let { return@runCatching it }
 
             // 2. Parallel Remote API Synchronization
             val apiSyncDeferred = async()
@@ -252,7 +249,7 @@ class AuthRepository(
         {
             // First check if user exists locally with a valid encrypted SHA-256 password hash
             val localUser = userDao.getUserByEmail(email)
-            if (localUser != null && localUser.passwordHash == DatabaseSeeder.encryptPassword(password))
+            if ((localUser != null) && (localUser.passwordHash == DatabaseSeeder.encryptPassword(password)))
             {
                 return@runCatching localUser
             }
@@ -266,7 +263,7 @@ class AuthRepository(
             catch (e: Exception)
             {
                 // Fallback if password matches locally but firebase fails or is not synced
-                if (localUser != null && localUser.passwordHash == DatabaseSeeder.encryptPassword(password))
+                if ((localUser != null) && (localUser.passwordHash == DatabaseSeeder.encryptPassword(password)))
                 {
                     return@runCatching localUser
                 }

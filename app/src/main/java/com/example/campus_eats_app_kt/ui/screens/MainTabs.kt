@@ -11,13 +11,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -30,12 +28,10 @@ import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.automirrored.rounded.ListAlt
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
-import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.Assessment
-import androidx.compose.material.icons.rounded.AttachMoney
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Download
@@ -47,7 +43,6 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.Receipt
 import androidx.compose.material.icons.rounded.RemoveShoppingCart
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material.icons.rounded.Store
 import androidx.compose.material3.Button
@@ -77,7 +72,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
@@ -98,8 +92,6 @@ import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
 import com.example.campus_eats_app_kt.data.entity.CartItemEntity
-import com.example.campus_eats_app_kt.data.entity.DebitCardEntity
-import com.example.campus_eats_app_kt.data.entity.FeedbackEntity
 import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
@@ -114,14 +106,15 @@ import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.LanguageManager
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.decodeFromString
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
+import kotlin.math.cos
+import kotlin.math.sin
+
+private val prettyJson = Json { prettyPrint = true }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -334,7 +327,7 @@ fun HomeScreenTab(
         }
 
         // Student/Standard: Featured Vendors or Quick Access
-        if (role == UserRole.STUDENT || role == UserRole.STANDARD)
+        if ((role == UserRole.STUDENT) || (role == UserRole.STANDARD))
         {
             item()
             {
@@ -507,7 +500,7 @@ fun ServicesScreenTab(
                 .fillMaxSize()
                 .padding(horizontal = responsivePadding, vertical = DesignSystem.Spacing.large)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             when (role)
@@ -682,7 +675,7 @@ fun ActivityScreenTab(
                 .fillMaxSize()
                 .padding(horizontal = responsivePadding, vertical = DesignSystem.Spacing.large)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
         )
         {
             when (userRole)
@@ -1098,7 +1091,7 @@ fun StudentReceipts(
             val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
             val monthMatch = (selectedMonth == -1) || (cal[Calendar.MONTH] == selectedMonth)
             val yearMatch = (selectedYear == -1) || (cal[Calendar.YEAR] == selectedYear)
-            val isFinalStatus = order.status == OrderStatus.COMPLETED || order.status == OrderStatus.CANCELLED
+            val isFinalStatus = (order.status == OrderStatus.COMPLETED) || (order.status == OrderStatus.CANCELLED)
             monthMatch && yearMatch && isFinalStatus
         }.let()
         { seq ->
@@ -1270,7 +1263,7 @@ fun SettingsScreenTab(
                     
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium)
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
                     )
                     {
                         FilterChip(
@@ -1278,7 +1271,7 @@ fun SettingsScreenTab(
                             onClick = {
                                 LanguageManager.currentLanguage.value = "English"
                             },
-                            label = { Text("English") }
+                            label = { Text("English") },
                         )
                         
                         FilterChip(
@@ -1286,7 +1279,7 @@ fun SettingsScreenTab(
                             onClick = {
                                 LanguageManager.currentLanguage.value = "Afrikaans"
                             },
-                            label = { Text("Afrikaans") }
+                            label = { Text("Afrikaans") },
                         )
                     }
                 }
@@ -1627,7 +1620,7 @@ fun MinimalDropdown(
     modifier: Modifier = Modifier,
 )
 {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(value = false) }
 
     Box(modifier = modifier)
     {
@@ -1916,10 +1909,12 @@ fun StudentActivityReports(
             .filter { it.status == OrderStatus.COMPLETED }
             .groupBy { it.vendorId }
             .mapValues { entry -> entry.value.sumOf { it.totalAmount } }
+            .asSequence()
             .map { entry ->
                 val vendorName = vendors.find { it.userId == entry.key }?.shopName ?: "Unknown Vendor"
                 vendorName to entry.value
             }.sortedByDescending { it.second }
+            .toList()
     }
 
     val totalSpending = spendingByVendor.sumOf { it.second }
@@ -1945,7 +1940,7 @@ fun StudentActivityReports(
                 modifier = Modifier
                     .size(200.dp)
                     .padding(DesignSystem.Spacing.medium),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             )
             {
                 Canvas(modifier = Modifier.fillMaxSize())
@@ -1960,15 +1955,15 @@ fun StudentActivityReports(
                             startAngle = startAngle,
                             sweepAngle = sweepAngle,
                             useCenter = false,
-                            style = Stroke(width = 40.dp.toPx())
+                            style = Stroke(width = 40.dp.toPx()),
                         )
                         
                         // Requirement: Display the corresponding numeric spending value on the chart.
                         if (sweepAngle > 30) {
-                            val angleInRadians = Math.toRadians((startAngle + sweepAngle / 2).toDouble())
+                            val angleInRadians = Math.toRadians((startAngle + (sweepAngle / 2)).toDouble())
                             val textRadius = (size.minDimension / 2) - 10.dp.toPx()
-                            val x = (size.width / 2) + (Math.cos(angleInRadians) * textRadius).toFloat()
-                            val y = (size.height / 2) + (Math.sin(angleInRadians) * textRadius).toFloat()
+                            val x = (size.width / 2) + (cos(angleInRadians) * textRadius).toFloat()
+                            val y = (size.height / 2) + (sin(angleInRadians) * textRadius).toFloat()
                             
                             drawContext.canvas.nativeCanvas.drawText(
                                 "R${pair.second.toInt()}",
@@ -1979,7 +1974,7 @@ fun StudentActivityReports(
                                     textSize = 12.sp.toPx()
                                     textAlign = Paint.Align.CENTER
                                     isFakeBoldText = true
-                                }
+                                },
                             )
                         }
 
@@ -1991,28 +1986,28 @@ fun StudentActivityReports(
                     Text(
                         text = "Total",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.outline,
                     )
                     Text(
                         text = "R${String.format(locale, "%.0f", totalSpending)}",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black
+                        fontWeight = FontWeight.Black,
                     )
                 }
             }
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
             )
             {
                 spendingByVendor.forEachIndexed { index, (name, amount) ->
-                    val percentage = if (totalSpending > 0) (amount / totalSpending * 100).toInt() else 0
+                    val percentage = if (totalSpending > 0) ((amount / totalSpending) * 100).toInt() else 0
                     val colors = listOf(CampusOrange, Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFFFC107), Color(0xFF9C27B0))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     )
                     {
                         Row(verticalAlignment = Alignment.CenterVertically)
@@ -2024,7 +2019,7 @@ fun StudentActivityReports(
                         Text(
                             text = "R${String.format(locale, "%.2f", amount)} ($percentage%)",
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                     }
                 }
@@ -2035,7 +2030,7 @@ fun StudentActivityReports(
             Text(
                 text = "No completed orders found.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline
+                color = MaterialTheme.colorScheme.outline,
             )
         }
 
@@ -2053,19 +2048,19 @@ fun StudentActivityReports(
                             "vendorBreakdown" to spendingByVendor.map { mapOf("vendor" to it.first, "amount" to it.second) },
                             "orderCount" to orders.size,
                         )
-                        val json = Json { prettyPrint = true }.encodeToString(reportData)
+                        val json = prettyJson.encodeToString(reportData)
                         val file = File(context.getExternalFilesDir(null), "spending_report.json")
                         file.writeText(json)
                         Toast.makeText(context, "Report exported to ${file.absolutePath}", Toast.LENGTH_LONG).show()
                     }
-                    catch (e: Exception)
+                    catch (_: Exception)
                     {
-                        Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Export failed.", Toast.LENGTH_SHORT).show()
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
         )
         {
             Icon(imageVector = Icons.Rounded.Download, contentDescription = null)
@@ -2175,12 +2170,12 @@ fun VendorReportHub(
             }
             catch (_: Exception) { }
         }
-        revenueMap.toList().sortedByDescending { it.second }
+        revenueMap.asSequence().map { it.key to it.value }.sortedByDescending { it.second }.toList()
     }
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large)
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large),
     )
     {
         HIGCard(
@@ -2215,14 +2210,14 @@ fun VendorReportHub(
                 {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     )
                     {
                         Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
                         Text(
                             text = "R${String.format(locale, "%.2f", revenue)}",
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                     }
                 }
@@ -2255,7 +2250,7 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
 fun AdminGlobalSummary(orderRepository: OrderRepository)
 {
     val orders by orderRepository.getAllOrders().collectAsState(emptyList())
-    val total = orders.filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
+    val total = orders.asSequence().filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
     {
         Text(text = "Global Revenue: R$total", style = MaterialTheme.typography.headlineLarge)
@@ -2274,9 +2269,9 @@ fun AdminReportHub()
 @Composable
 fun OrderDetailWindow(
     order: OrderEntity?,
-    role: UserRole,
-    userId: String,
-    orderRepository: OrderRepository,
+    @Suppress("UNUSED_PARAMETER") role: UserRole,
+    @Suppress("UNUSED_PARAMETER") userId: String,
+    @Suppress("UNUSED_PARAMETER") orderRepository: OrderRepository,
     onBack: () -> Unit,
 )
 {
@@ -2293,7 +2288,7 @@ fun OrderDetailWindow(
         {
             Json.decodeFromString<List<CartItemEntity>>(order.itemsJson)
         }
-        catch (e: Exception)
+        catch (_: Exception)
         {
             emptyList()
         }
@@ -2353,22 +2348,7 @@ fun OrderDetailWindow(
     }
 }
 
-@Composable
-fun DetailRow(label: String, amount: Double, locale: Locale)
-{
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    )
-    {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium)
-        Text(
-            text = "R${String.format(locale, "%.2f", amount)}",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-        )
-    }
-}
+
 
 @Composable
 fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
@@ -2472,9 +2452,9 @@ fun AdminFeedbackWindow(viewModel: AdminViewModel, type: FeedbackType)
 }
 
 @Composable
-fun StudentRedeemCouponWindow(couponRepository: CouponRepository)
+fun StudentRedeemCouponWindow(@Suppress("UNUSED_PARAMETER") couponRepository: CouponRepository)
 {
-    var code by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf(value = "") }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 

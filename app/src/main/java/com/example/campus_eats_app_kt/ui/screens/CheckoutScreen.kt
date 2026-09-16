@@ -23,7 +23,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -71,7 +70,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
-import java.util.Locale
 
 sealed interface CheckoutState
 {
@@ -163,11 +161,11 @@ fun CheckoutScreen(
     var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.CAMPUS_WALLET) }
     var selectedPickupTime by remember { mutableStateOf("12:00") }
     var specialRequests by remember { mutableStateOf("") }
-    var showTimePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(value = false) }
     val timePickerState = rememberTimePickerState(
         initialHour = 12,
         initialMinute = 0,
-        is24Hour = true
+        is24Hour = true,
     )
 
     if (showTimePicker)

@@ -239,7 +239,7 @@ fun LoginScreen(
                             
                             viewModel.signInWithGoogle(credential.idToken) 
                         } 
-                        catch (e: NoCredentialException)
+                        catch (_: NoCredentialException)
                         {
                             viewModel.setError(LanguageManager.getString("No accounts found.", "Geen rekeninge gevind nie."))
                         }

@@ -9,7 +9,6 @@ import com.example.campus_eats_app_kt.data.FeedbackRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
-import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.entity.UserStatus
@@ -27,7 +26,7 @@ import kotlinx.coroutines.launch
 class AdminViewModel(
     private val adminRepository: AdminRepository,
     private val authRepository: AuthRepository,
-    private val orderRepository: OrderRepository,
+    orderRepository: OrderRepository,
     private val couponRepository: CouponRepository,
     private val feedbackRepository: FeedbackRepository,
 ) : ViewModel()
@@ -87,30 +86,12 @@ class AdminViewModel(
         }
     }
 
-    /**
-     * Deletes a user from the system.
-     */
-    fun deleteUser(user: UserEntity)
-    {
-        viewModelScope.launch()
-        {
-            if (authRepository.isAdmin())
-            {
-                adminRepository.deleteUser(user)
-            }
-        }
-    }
+
 
     /**
      * Updates the status of an order.
      */
-    fun updateOrderStatus(order: OrderEntity, status: OrderStatus)
-    {
-        viewModelScope.launch()
-        {
-            orderRepository.updateOrderStatus(order, status)
-        }
-    }
+
 
     /**
      * Issues credits to a user's wallet.

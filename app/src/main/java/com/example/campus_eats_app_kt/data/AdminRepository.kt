@@ -4,7 +4,6 @@ import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserStatus
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
-import android.util.Log
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
@@ -20,7 +19,6 @@ class AdminRepository(
     private val firebaseDatabase: FirebaseDatabase,
 )
 {
-    private val tag = "AdminRepository"
 
     /**
      * Retrieves all registered users in the system.
@@ -97,32 +95,5 @@ class AdminRepository(
         }
     }
 
-    /**
-     * Permanently removes a user record from the database.
-     * Restricted to authenticated administrators in Firebase rules.
-     */
-    suspend fun deleteUser(user: UserEntity): Result<Unit>
-    {
-        return kotlin.runCatching()
-        {
-            if (!authRepository.isAdmin())
-            {
-                throw Exception("Unauthorized: Administrator privileges required.")
-            }
 
-            connectivityManager.ensureInternet()
-
-            try
-            {
-                firebaseDatabase.getReference("users").child(user.userId).removeValue().await()
-            }
-            catch (e: Exception)
-            {
-                Log.e(tag, "Failed to delete user from RTDB: ${e.message}")
-                throw e
-            }
-
-            userDao.deleteUser(user)
-        }
-    }
 }

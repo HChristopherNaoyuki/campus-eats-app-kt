@@ -70,7 +70,7 @@ object DatabaseSeeder
                     passwordHash = encryptPassword("Adm1n#Amara"),
                     role = UserRole.ADMINISTRATOR,
                     status = UserStatus.ACTIVE,
-                    walletBalance = 500.0
+                    walletBalance = 500.0,
                 ),
                 UserEntity(
                     userId = "ADMN-8B3W-6Y1Z-PL4N",
@@ -80,7 +80,7 @@ object DatabaseSeeder
                     passwordHash = encryptPassword("Adm1n#Pieter"),
                     role = UserRole.ADMINISTRATOR,
                     status = UserStatus.ACTIVE,
-                    walletBalance = 500.0
+                    walletBalance = 500.0,
                 ),
                 UserEntity(
                     userId = "VNDR-2T5H-8J3K-Q7L0",
@@ -91,7 +91,7 @@ object DatabaseSeeder
                     role = UserRole.VENDOR,
                     status = UserStatus.ACTIVE,
                     shopName = "Campus Corner Kitchen",
-                    shopStatus = ShopStatus.OPEN
+                    shopStatus = ShopStatus.OPEN,
                 ),
                 UserEntity(
                     userId = "VNDR-9F4G-7N2M-XP5Q",
@@ -102,7 +102,7 @@ object DatabaseSeeder
                     role = UserRole.VENDOR,
                     status = UserStatus.ACTIVE,
                     shopName = "Braai Brothers",
-                    shopStatus = ShopStatus.OPEN
+                    shopStatus = ShopStatus.OPEN,
                 ),
                 UserEntity(
                     userId = "VNDR-6C1V-9B4L-ZR8T",
@@ -113,7 +113,7 @@ object DatabaseSeeder
                     role = UserRole.VENDOR,
                     status = UserStatus.ACTIVE,
                     shopName = "Coffee and Koeksisters",
-                    shopStatus = ShopStatus.OPEN
+                    shopStatus = ShopStatus.OPEN,
                 ),
                 UserEntity(
                     userId = "STDN-3J7R-5H2K-XQ9M",
@@ -123,7 +123,7 @@ object DatabaseSeeder
                     passwordHash = encryptPassword("Stand@rd#Lerato"),
                     role = UserRole.STANDARD,
                     status = UserStatus.ACTIVE,
-                    walletBalance = 250.0
+                    walletBalance = 250.0,
                 ),
                 UserEntity(
                     userId = "STDN-7P4W-1Y6N-BLZ2",
@@ -133,7 +133,7 @@ object DatabaseSeeder
                     passwordHash = encryptPassword("Stand@rd#Johan"),
                     role = UserRole.STANDARD,
                     status = UserStatus.ACTIVE,
-                    walletBalance = 180.0
+                    walletBalance = 180.0,
                 ),
                 UserEntity(
                     userId = "STDN-5T8M-3K2L-ZXR6",
@@ -143,7 +143,7 @@ object DatabaseSeeder
                     passwordHash = encryptPassword("Stand@rd#Zanele"),
                     role = UserRole.STANDARD,
                     status = UserStatus.ACTIVE,
-                    walletBalance = 320.0
+                    walletBalance = 320.0,
                 ),
                 UserEntity(
                     userId = "STDN-9R2B-7V4M-QP1X",
@@ -153,7 +153,7 @@ object DatabaseSeeder
                     passwordHash = encryptPassword("Stand@rd#Marius"),
                     role = UserRole.STANDARD,
                     status = UserStatus.ACTIVE,
-                    walletBalance = 150.0
+                    walletBalance = 150.0,
                 ),
                 UserEntity(
                     userId = "STDT-4K9X-2P7M-NZR5",
@@ -163,8 +163,8 @@ object DatabaseSeeder
                     passwordHash = encryptPassword("Stud3nt#Naledi"),
                     role = UserRole.STUDENT,
                     status = UserStatus.ACTIVE,
-                    walletBalance = 400.0
-                )
+                    walletBalance = 400.0,
+                ),
             )
             for (user in users)
             {
@@ -186,7 +186,7 @@ object DatabaseSeeder
                 MenuItemEntity(vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Speciality Coffee", description = "Freshly brewed artisanal espresso blend", price = 30.0, stock = 50, category = "Beverages"),
                 MenuItemEntity(vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Fresh Koeksisters", description = "Sweet traditional braided syrup-infused pastry", price = 15.0, stock = 40, category = "Snacks"),
                 MenuItemEntity(vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Muffin Combo", description = "Large blueberry muffin with any hot drink", price = 45.0, stock = 20, category = "Breakfast"),
-                MenuItemEntity(vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Rooibos Tea", description = "Organic South African herbal infusion", price = 22.0, stock = 60, category = "Beverages")
+                MenuItemEntity(vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Rooibos Tea", description = "Organic South African herbal infusion", price = 22.0, stock = 60, category = "Beverages"),
             )
             for (item in items)
             {
@@ -199,16 +199,16 @@ object DatabaseSeeder
         {
             Log.d(TAG, "Seeding coupons table...")
             val coupons = listOf(
-                CouponEntity("CAMPUS10", 10.0, true),
-                CouponEntity("EATS20", 20.0, true),
-                CouponEntity("WELCOME5", 5.0, true),
-                CouponEntity("VEND30", 30.0, true),
-                CouponEntity("BURGER50", 50.0, true),
-                CouponEntity("DISCOUNT15", 15.0, true),
-                CouponEntity("SPRING25", 25.0, true),
-                CouponEntity("BREAKFAST12", 12.0, true),
-                CouponEntity("MIDWEEK18", 18.0, true),
-                CouponEntity("FINALCODE40", 40.0, true)
+                CouponEntity("CAMPUS10", 10.0, isActive = true),
+                CouponEntity("EATS20", 20.0, isActive = true),
+                CouponEntity("WELCOME5", 5.0, isActive = true),
+                CouponEntity("VEND30", 30.0, isActive = true),
+                CouponEntity("BURGER50", 50.0, isActive = true),
+                CouponEntity("DISCOUNT15", 15.0, isActive = true),
+                CouponEntity("SPRING25", 25.0, isActive = true),
+                CouponEntity("BREAKFAST12", 12.0, isActive = true),
+                CouponEntity("MIDWEEK18", 18.0, isActive = true),
+                CouponEntity("FINALCODE40", 40.0, isActive = true),
             )
             for (coupon in coupons)
             {
@@ -230,7 +230,7 @@ object DatabaseSeeder
                 DebitCardEntity(userId = "ADMN-8B3W-6Y1Z-PL4N", cardNumber = "4556********6666", expiryDate = "02/28", cvv = "321"),
                 DebitCardEntity(userId = "VNDR-2T5H-8J3K-Q7L0", cardNumber = "4716********7777", expiryDate = "03/27", cvv = "654"),
                 DebitCardEntity(userId = "VNDR-9F4G-7N2M-XP5Q", cardNumber = "5221********9999", expiryDate = "04/26", cvv = "987"),
-                DebitCardEntity(userId = "VNDR-6C1V-9B4L-ZR8T", cardNumber = "5353********0000", expiryDate = "06/28", cvv = "159")
+                DebitCardEntity(userId = "VNDR-6C1V-9B4L-ZR8T", cardNumber = "5353********0000", expiryDate = "06/28", cvv = "159"),
             )
             for (card in cards)
             {
@@ -252,7 +252,7 @@ object DatabaseSeeder
                 CartItemEntity(userId = "STDN-3J7R-5H2K-XQ9M", itemId = 6L, vendorId = "VNDR-9F4G-7N2M-XP5Q", name = "Vegetarian Skewers", price = 40.0, quantity = 2),
                 CartItemEntity(userId = "STDN-7P4W-1Y6N-BLZ2", itemId = 9L, vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Muffin Combo", price = 45.0, quantity = 1),
                 CartItemEntity(userId = "STDN-5T8M-3K2L-ZXR6", itemId = 3L, vendorId = "VNDR-2T5H-8J3K-Q7L0", name = "Mogodu", price = 55.0, quantity = 1),
-                CartItemEntity(userId = "STDN-9R2B-7V4M-QP1X", itemId = 5L, vendorId = "VNDR-9F4G-7N2M-XP5Q", name = "Steak and Chips", price = 85.0, quantity = 1)
+                CartItemEntity(userId = "STDN-9R2B-7V4M-QP1X", itemId = 5L, vendorId = "VNDR-9F4G-7N2M-XP5Q", name = "Steak and Chips", price = 85.0, quantity = 1),
             )
             for (item in cartItems)
             {
@@ -274,7 +274,7 @@ object DatabaseSeeder
                 FeedbackEntity(userId = "STDN-3J7R-5H2K-XQ9M", type = FeedbackType.COMPLIMENT, subject = "Spicy Chakalaka", message = "Perfect spice level, loved it", userName = "Lerato Khumalo", userEmail = "lerato.khumalo@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:30:00Z", updatedAt = "2026-03-01T12:30:00Z"),
                 FeedbackEntity(userId = "STDN-7P4W-1Y6N-BLZ2", type = FeedbackType.COMPLAINT, subject = "Out of Stock", message = "Blueberry muffins ran out early", userName = "Johan Pretorius", userEmail = "johan.pretorius@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:35:00Z", updatedAt = "2026-03-01T12:35:00Z"),
                 FeedbackEntity(userId = "STDN-5T8M-3K2L-ZXR6", type = FeedbackType.COMPLIMENT, subject = "Awesome Boerewors", message = "Authentic flavor, great job", userName = "Zanele Ndlovu", userEmail = "zanele.ndlovu@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:40:00Z", updatedAt = "2026-03-01T12:40:00Z"),
-                FeedbackEntity(userId = "STDN-9R2B-7V4M-QP1X", type = FeedbackType.COMPLIMENT, subject = "Quick Payout Setup", message = "Vendor configuration works well", userName = "Marius Steyn", userEmail = "marius.steyn@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:45:00Z", updatedAt = "2026-03-01T12:45:00Z")
+                FeedbackEntity(userId = "STDN-9R2B-7V4M-QP1X", type = FeedbackType.COMPLIMENT, subject = "Quick Payout Setup", message = "Vendor configuration works well", userName = "Marius Steyn", userEmail = "marius.steyn@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:45:00Z", updatedAt = "2026-03-01T12:45:00Z"),
             )
             for (fb in feedbacks)
             {
@@ -296,7 +296,7 @@ object DatabaseSeeder
                 OrderEntity(customerId = "STDN-3J7R-5H2K-XQ9M", vendorId = "VNDR-9F4G-7N2M-XP5Q", itemsJson = "[]", totalAmount = 80.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.DEBIT_CARD, pickupTime = "14:00"),
                 OrderEntity(customerId = "STDN-7P4W-1Y6N-BLZ2", vendorId = "VNDR-6C1V-9B4L-ZR8T", itemsJson = "[]", totalAmount = 45.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.CAMPUS_WALLET, pickupTime = "07:45"),
                 OrderEntity(customerId = "STDN-5T8M-3K2L-ZXR6", vendorId = "VNDR-2T5H-8J3K-Q7L0", itemsJson = "[]", totalAmount = 55.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.CAMPUS_WALLET, pickupTime = "13:15"),
-                OrderEntity(customerId = "STDN-9R2B-7V4M-QP1X", vendorId = "VNDR-9F4G-7N2M-XP5Q", itemsJson = "[]", totalAmount = 85.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.DEBIT_CARD, pickupTime = "12:15")
+                OrderEntity(customerId = "STDN-9R2B-7V4M-QP1X", vendorId = "VNDR-9F4G-7N2M-XP5Q", itemsJson = "[]", totalAmount = 85.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.DEBIT_CARD, pickupTime = "12:15"),
             )
             for (order in orders)
             {
