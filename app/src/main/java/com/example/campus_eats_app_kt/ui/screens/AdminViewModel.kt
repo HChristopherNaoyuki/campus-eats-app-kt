@@ -110,13 +110,18 @@ class AdminViewModel(
     /**
      * Generates a new discount coupon.
      */
-    fun generateCoupon(code: String, discount: Double)
+    fun generateCoupon(
+        code: String,
+        discount: Double,
+        expiryDate: Long,
+        assignedUserId: String? = null,
+    )
     {
         viewModelScope.launch()
         {
             if (authRepository.isAdmin())
             {
-                couponRepository.createCoupon(code, discount)
+                couponRepository.createCoupon(code, discount, expiryDate, assignedUserId)
             }
         }
     }

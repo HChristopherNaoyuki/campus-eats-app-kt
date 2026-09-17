@@ -39,7 +39,7 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
         CouponEntity::class,
         DebitCardEntity::class,
     ],
-    version = 8, // Incremented to 8 for usercode column
+    version = 9, // Incremented to 9 for coupon expiry and user assignment
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -57,6 +57,15 @@ abstract class CampusEatsDatabase : RoomDatabase()
     {
         @Volatile
         private var INSTANCE: CampusEatsDatabase? = null
+
+        private val MIGRATION_8_9 = object : Migration(8, 9)
+        {
+            override fun migrate(db: SupportSQLiteDatabase)
+            {
+                addColumnIfNotExists(db, "coupons", "expiryDate", "INTEGER NOT NULL DEFAULT 0")
+                addColumnIfNotExists(db, "coupons", "assignedUserId", "TEXT")
+            }
+        }
 
         private val MIGRATION_7_8 = object : Migration(7, 8)
         {
@@ -147,7 +156,7 @@ abstract class CampusEatsDatabase : RoomDatabase()
                     CampusEatsDatabase::class.java,
                     "campus_eats_database",
                 )
-                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8)
+                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                     .fallbackToDestructiveMigration(dropAllTables = true) // Last resort if no valid migration path is found
                 .build()
                 INSTANCE = instance

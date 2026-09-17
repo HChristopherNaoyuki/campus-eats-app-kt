@@ -12,4 +12,6 @@ data class CouponEntity(
     val code: String,
     val discountPercent: Double,
     val isActive: Boolean = true,
+    val expiryDate: Long = 0L,
+    val assignedUserId: String? = null,
 )

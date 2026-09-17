@@ -18,9 +18,21 @@ class CouponRepository(private val couponDao: CouponDao)
     /**
      * Creates a new discount coupon.
      */
-    suspend fun createCoupon(code: String, discountPercent: Double)
+    suspend fun createCoupon(
+        code: String,
+        discountPercent: Double,
+        expiryDate: Long = 0L,
+        assignedUserId: String? = null,
+    )
     {
-        couponDao.insertCoupon(CouponEntity(code, discountPercent))
+        couponDao.insertCoupon(
+            CouponEntity(
+                code = code,
+                discountPercent = discountPercent,
+                expiryDate = expiryDate,
+                assignedUserId = assignedUserId,
+            ),
+        )
     }
 
     /**
@@ -35,11 +47,19 @@ class CouponRepository(private val couponDao: CouponDao)
     /**
      * Validates a coupon code and returns the entity if it is active.
      */
-    suspend fun validateCoupon(code: String): CouponEntity?
+    suspend fun validateCoupon(code: String, userId: String? = null): CouponEntity?
     {
         return try
         {
-            getAllCoupons().first().find { (it.code == code) && it.isActive }
+            val now = System.currentTimeMillis()
+            getAllCoupons().first().find()
+            { coupon ->
+                val codeMatch = coupon.code == code
+                val isActive = coupon.isActive
+                val notExpired = (coupon.expiryDate == 0L) || (coupon.expiryDate >= now)
+                val userMatch = (coupon.assignedUserId == null) || (coupon.assignedUserId == userId)
+                codeMatch && isActive && notExpired && userMatch
+            }
         }
         catch (_: Exception)
         {

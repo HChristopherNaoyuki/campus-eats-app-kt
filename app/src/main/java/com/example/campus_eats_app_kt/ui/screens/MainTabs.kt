@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -111,6 +112,13 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.SelectableDates
+import androidx.compose.material.icons.rounded.DateRange
+import androidx.compose.runtime.mutableLongStateOf
+import com.example.campus_eats_app_kt.data.entity.UserEntity
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -2350,78 +2358,275 @@ fun OrderDetailWindow(
 
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
 {
-    var targetId by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    val successMsg = remember { mutableStateOf("") }
-    val locale = LocalConfiguration.current.locales[0]
-
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+    val users by viewModel.users.collectAsState()
+    val eligibleUsers = remember(users)
     {
-        OutlinedTextField(
-            value = targetId,
-            onValueChange = { targetId = it },
-            label = { Text("User ID") },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = amount,
-            onValueChange = { amount = it },
-            label = { Text("Amount (R)") },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        HIGButton(
-            onClick = {
-                val a = amount.toDoubleOrNull() ?: 0.0
-                viewModel.issueCredits(targetId, a)
-                successMsg.value = "Success: R${String.format(locale, "%.2f", a)} issued to $targetId"
+        users.filter { (it.role == UserRole.STUDENT) || (it.role == UserRole.STANDARD) }
+    }
+
+    var selectedUser by remember { mutableStateOf<UserEntity?>(null) }
+    var name by remember { mutableStateOf("") }
+    var discount by remember { mutableStateOf("") }
+    var expiryDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val successMsg = remember { mutableStateOf("") }
+    val errorMsg = remember { mutableStateOf("") }
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = expiryDate,
+        selectableDates = object : SelectableDates
+        {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean
+            {
+                val now = System.currentTimeMillis()
+                val fortyDays = now + (40L * 24 * 60 * 60 * 1000)
+                // Allow today and up to 40 days in the future
+                return (utcTimeMillis >= (now - (24 * 60 * 60 * 1000))) && (utcTimeMillis <= fortyDays)
+            }
+        },
+    )
+
+    if (showDatePicker)
+    {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { expiryDate = it }
+                        showDatePicker = false
+                    },
+                )
+                {
+                    Text("OK")
+                }
             },
-            text = "Confirm Credits",
+        )
+        {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+    )
+    {
+        MinimalDropdown(
+            label = "Select User",
+            selectedOption = selectedUser?.fullName ?: "Choose a user...",
+            options = eligibleUsers.map { it.fullName },
+            onOptionSelected = { fullName ->
+                selectedUser = eligibleUsers.find { it.fullName == fullName }
+            },
             modifier = Modifier.fillMaxWidth(),
         )
+
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Coupon Name") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = name.isEmpty() && errorMsg.value.isNotEmpty(),
+        )
+
+        OutlinedTextField(
+            value = discount,
+            onValueChange = { discount = it },
+            label = { Text("Coupon Discount (Max 20%)") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = (discount.toDoubleOrNull() ?: 0.0) > 20.0,
+        )
+
+        val locale = LocalConfiguration.current.locales[0]
+        val dateStr = SimpleDateFormat("dd MMM yyyy", locale).format(Date(expiryDate))
+
+        OutlinedTextField(
+            value = dateStr,
+            onValueChange = {},
+            label = { Text("Valid Date") },
+            readOnly = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDatePicker = true },
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.DateRange,
+                    contentDescription = null,
+                    modifier = Modifier.clickable { showDatePicker = true },
+                )
+            },
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+            ),
+        )
+
+        if (errorMsg.value.isNotEmpty())
+        {
+            Text(text = errorMsg.value, color = MaterialTheme.colorScheme.error)
+        }
         if (successMsg.value.isNotEmpty())
         {
             Text(text = successMsg.value, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
         }
+
+        HIGButton(
+            onClick = {
+                val d = discount.toDoubleOrNull() ?: 0.0
+                if (selectedUser == null)
+                {
+                    errorMsg.value = "Please select a user."
+                }
+                else if (name.isBlank())
+                {
+                    errorMsg.value = "Coupon name is required."
+                }
+                else if (d <= 0 || d > 20)
+                {
+                    errorMsg.value = "Discount must be between 0.1% and 20%."
+                }
+                else
+                {
+                    viewModel.generateCoupon(name, d, expiryDate, selectedUser?.userId)
+                    successMsg.value = "Coupon '$name' issued to ${selectedUser?.fullName}."
+                    errorMsg.value = ""
+                }
+            },
+            text = "Done",
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
 {
-    var code by remember { mutableStateOf("") }
-    var percent by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
+    var discount by remember { mutableStateOf("") }
+    var expiryDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var showDatePicker by remember { mutableStateOf(false) }
     val successMsg = remember { mutableStateOf("") }
+    val errorMsg = remember { mutableStateOf("") }
 
-    Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = expiryDate,
+        selectableDates = object : SelectableDates
+        {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean
+            {
+                val now = System.currentTimeMillis()
+                val fortyDays = now + (40L * 24 * 60 * 60 * 1000)
+                return (utcTimeMillis >= (now - (24 * 60 * 60 * 1000))) && (utcTimeMillis <= fortyDays)
+            }
+        },
+    )
+
+    if (showDatePicker)
+    {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { expiryDate = it }
+                        showDatePicker = false
+                    },
+                )
+                {
+                    Text("OK")
+                }
+            },
+        )
+        {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+    )
     {
         OutlinedTextField(
-            value = code,
-            onValueChange = { code = it },
-            label = { Text("Coupon Code") },
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Coupon Name") },
             modifier = Modifier.fillMaxWidth(),
+            isError = name.isEmpty() && errorMsg.value.isNotEmpty(),
         )
+
         OutlinedTextField(
-            value = percent,
-            onValueChange = { percent = it },
-            label = { Text("Discount %") },
+            value = discount,
+            onValueChange = { discount = it },
+            label = { Text("Coupon Discount (Max 20%)") },
             modifier = Modifier.fillMaxWidth(),
+            isError = (discount.toDoubleOrNull() ?: 0.0) > 20.0,
         )
-        HIGButton(
-            onClick = {
-                val p = percent.toDoubleOrNull() ?: 0.0
-                viewModel.generateCoupon(code, p)
-                successMsg.value = "Coupon '$code' ($p%) generated."
+
+        val locale = LocalConfiguration.current.locales[0]
+        val dateStr = SimpleDateFormat("dd MMM yyyy", locale).format(Date(expiryDate))
+
+        OutlinedTextField(
+            value = dateStr,
+            onValueChange = {},
+            label = { Text("Valid Date") },
+            readOnly = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDatePicker = true },
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.DateRange,
+                    contentDescription = null,
+                    modifier = Modifier.clickable { showDatePicker = true },
+                )
             },
-            text = "Generate Coupon",
-            modifier = Modifier.fillMaxWidth(),
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+            ),
         )
+
+        if (errorMsg.value.isNotEmpty())
+        {
+            Text(text = errorMsg.value, color = MaterialTheme.colorScheme.error)
+        }
         if (successMsg.value.isNotEmpty())
         {
             Text(text = successMsg.value, color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
         }
+
+        HIGButton(
+            onClick = {
+                val d = discount.toDoubleOrNull() ?: 0.0
+                if (name.isBlank())
+                {
+                    errorMsg.value = "Coupon name is required."
+                }
+                else if (d <= 0 || d > 20)
+                {
+                    errorMsg.value = "Discount must be between 0.1% and 20%."
+                }
+                else
+                {
+                    viewModel.generateCoupon(name, d, expiryDate)
+                    successMsg.value = "Coupon '$name' created successfully."
+                    errorMsg.value = ""
+                }
+            },
+            text = "Done",
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
