@@ -229,7 +229,9 @@ fun HIGServiceRow(
 )
 {
     HIGCard(
-        modifier = modifier.padding(vertical = DesignSystem.Spacing.extraSmall),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = DesignSystem.Spacing.extraSmall),
         onClick = onClick,
     )
     {
