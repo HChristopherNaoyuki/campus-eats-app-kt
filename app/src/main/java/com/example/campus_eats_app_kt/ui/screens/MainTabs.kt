@@ -2382,10 +2382,16 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
         {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean
             {
-                val now = System.currentTimeMillis()
-                val fortyDays = now + (40L * 24 * 60 * 60 * 1000)
+                val calendar = Calendar.getInstance()
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                val today = calendar.timeInMillis
+
+                val fortyDays = today + (40L * 24 * 60 * 60 * 1000)
                 // Allow today and up to 40 days in the future
-                return (utcTimeMillis >= (now - (24 * 60 * 60 * 1000))) && (utcTimeMillis <= fortyDays)
+                return (utcTimeMillis >= today) && (utcTimeMillis <= fortyDays)
             }
         },
     )
@@ -2457,14 +2463,12 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
                 Icon(
                     imageVector = Icons.Rounded.DateRange,
                     contentDescription = null,
-                    modifier = Modifier.clickable { showDatePicker = true },
                 )
             },
-            enabled = false,
+            enabled = true,
             colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
             ),
         )
 
@@ -2522,9 +2526,15 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
         {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean
             {
-                val now = System.currentTimeMillis()
-                val fortyDays = now + (40L * 24 * 60 * 60 * 1000)
-                return (utcTimeMillis >= (now - (24 * 60 * 60 * 1000))) && (utcTimeMillis <= fortyDays)
+                val calendar = Calendar.getInstance()
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                val today = calendar.timeInMillis
+
+                val fortyDays = today + (40L * 24 * 60 * 60 * 1000)
+                return (utcTimeMillis >= today) && (utcTimeMillis <= fortyDays)
             }
         },
     )
@@ -2586,14 +2596,12 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
                 Icon(
                     imageVector = Icons.Rounded.DateRange,
                     contentDescription = null,
-                    modifier = Modifier.clickable { showDatePicker = true },
                 )
             },
-            enabled = false,
+            enabled = true,
             colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
             ),
         )
 
