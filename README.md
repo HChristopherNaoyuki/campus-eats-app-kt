@@ -1,15 +1,3 @@
-# Campus Eats README Update
-
-Below is the complete, updated README document for the Campus Eats project. It
-incorporates the commit message convention you supplied, in addition to all
-previously added content.
-
-Note: the original document stated that images and emojis must not appear in
-this file. I have honored that rule. No emojis appear anywhere in this
-document.
-
----
-
 # Campus Eats - Mobile Campus Dining Platform (v3.0.0)
 
 ## Table of Contents
