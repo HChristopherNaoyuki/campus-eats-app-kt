@@ -5,7 +5,8 @@ import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
 
 /**
- * DebitCardEntity stores encrypted or masked debit card information for offline payments.
+ * DebitCardEntity stores masked debit card information for offline reference.
+ * Finding 3: CVV storage is prohibited for PCI compliance. Only the last 4 digits are retained.
  */
 @Serializable
 @Entity(tableName = "debit_cards")
@@ -13,7 +14,6 @@ data class DebitCardEntity(
     @PrimaryKey(autoGenerate = true)
     val cardId: Long = 0,
     val userId: String,
-    val cardNumber: String,
+    val cardNumber: String, // Masked (e.g., **** **** **** 1234)
     val expiryDate: String,
-    val cvv: String,
 )

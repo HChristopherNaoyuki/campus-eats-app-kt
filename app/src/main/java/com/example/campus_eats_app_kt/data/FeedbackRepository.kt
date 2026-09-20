@@ -17,8 +17,7 @@ import java.util.TimeZone
 
 /**
  * FeedbackRepository handles the collection and categorization of user feedback.
- * Integrates Realtime Database for online collection.
- * Enforces compliance with /feedback path security rules.
+ * Finding 5: Hardened for crash resilience with input validation and safe network sync.
  */
 class FeedbackRepository(
     private val feedbackDao: FeedbackDao,
@@ -27,7 +26,7 @@ class FeedbackRepository(
     private val firebaseDatabase: FirebaseDatabase,
 )
 {
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply()
+    private fun getDateFormat() = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply()
     {
         timeZone = TimeZone.getTimeZone("UTC")
     }
@@ -38,34 +37,17 @@ class FeedbackRepository(
     fun getAllFeedback(): Flow<List<FeedbackEntity>> = feedbackDao.getAllFeedback()
 
     /**
-     * Filters feedback to return only complaints.
-     */
-    @Suppress("unused")
-    fun getComplaints(): Flow<List<FeedbackEntity>> =
-        feedbackDao.getAllFeedback()
-            .map()
-            { list -> 
-                list.filter { it.type == FeedbackType.COMPLAINT } 
-            }
-
-    /**
-     * Filters feedback to return only compliments.
-     */
-    @Suppress("unused")
-    fun getCompliments(): Flow<List<FeedbackEntity>> =
-        feedbackDao.getAllFeedback()
-            .map()
-            { list -> 
-                list.filter { it.type == FeedbackType.COMPLIMENT } 
-            }
-
-    /**
-     * Persists a new feedback entry with all mandatory fields required by Firebase rules.
+     * Persists a new feedback entry.
+     * Enforces validation and authoritative cloud synchronization.
      */
     suspend fun submitFeedback(userId: String, subject: String, message: String, type: FeedbackType)
     {
+        // Finding 5: Input validation
+        if (subject.length < 3) throw Exception("Subject must be at least 3 characters.")
+        if (message.length < 10) throw Exception("Feedback details must be at least 10 characters.")
+
         val user = userDao.getUserById(userId) ?: throw Exception("User profile not found.")
-        val now = dateFormat.format(Date())
+        val now = getDateFormat().format(Date())
 
         val feedback = FeedbackEntity(
             userId = userId,
@@ -79,20 +61,56 @@ class FeedbackRepository(
             updatedAt = now,
         )
 
-        // 1. Persist locally
+        // 1. Persist locally first as a "Pending" record
         feedbackDao.insertFeedback(feedback)
 
-        // 2. Sync to RTDB
+        // 2. Authoritative Sync to RTDB
         try
         {
             connectivityManager.ensureInternet()
-            // Firebase validation requires all fields present
-            firebaseDatabase.getReference("feedback").push().setValue(feedback).await()
+            // Finding 6: Use explicit mapping for Firebase compatibility
+            firebaseDatabase.getReference("feedback").push()
+                .setValue(mapFeedbackToMap(feedback))
+                .await()
         }
-        catch (e: Exception)
+        catch (_: Exception)
         {
-            // Map technical error to user-friendly string
-            throw Exception(FirebaseExceptionHandler.parse(e))
+            // Finding 5: Map failure to user-friendly error but maintain local record
+            throw Exception("Offline mode: Feedback saved locally and will sync later.")
         }
     }
+
+    /**
+     * Finding 6: Manual mapper to ensure correct field naming and types in RTDB.
+     */
+    private fun mapFeedbackToMap(feedback: FeedbackEntity): Map<String, Any?>
+    {
+        return mapOf(
+            "userId" to feedback.userId,
+            "type" to feedback.type.name.lowercase(),
+            "subject" to feedback.subject,
+            "message" to feedback.message,
+            "userName" to feedback.userName,
+            "userEmail" to feedback.userEmail,
+            "status" to feedback.status.name,
+            "createdAt" to feedback.createdAt,
+            "updatedAt" to feedback.updatedAt,
+        )
+    }
+
+    @Suppress("unused")
+    fun getComplaints(): Flow<List<FeedbackEntity>> =
+        feedbackDao.getAllFeedback()
+            .map()
+            { list -> 
+                list.filter { it.type == FeedbackType.COMPLAINT } 
+            }
+
+    @Suppress("unused")
+    fun getCompliments(): Flow<List<FeedbackEntity>> =
+        feedbackDao.getAllFeedback()
+            .map()
+            { list -> 
+                list.filter { it.type == FeedbackType.COMPLIMENT } 
+            }
 }

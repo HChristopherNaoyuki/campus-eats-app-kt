@@ -24,20 +24,21 @@ class DebitCardRepositoryTest
 
     /**
      * Requirement: Test card addition
+     * Finding 3: CVV is no longer persisted. Number is masked.
      */
     @Test
     fun addCard_persistsInDao() = runTest {
         val userId = "U1"
-        val number = "1234567812345678"
+        val number = "4321123456785678" // Valid-ish Luhn for demo
         val expiry = "12/26"
-        val cvv = "123"
 
-        repository.addCard(userId, number, expiry, cvv)
+        // We use a known Luhn-valid number if the algorithm is strictly enforced in test
+        repository.addCard(userId, number, expiry)
 
         coVerify {
             debitCardDao.insertCard(
                 match {
-                    (it.userId == userId) && (it.cardNumber == number) && (it.expiryDate == expiry) && (it.cvv == cvv)
+                    (it.userId == userId) && it.cardNumber.contains("5678") && (it.expiryDate == expiry)
                 },
             )
         }

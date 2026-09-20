@@ -117,8 +117,9 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material.icons.rounded.DateRange
-import androidx.compose.runtime.mutableLongStateOf
 import com.example.campus_eats_app_kt.data.entity.UserEntity
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -2368,10 +2369,10 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
         users.filter { (it.role == UserRole.STUDENT) || (it.role == UserRole.STANDARD) }
     }
 
-    var selectedUser by remember { mutableStateOf<UserEntity?>(null) }
-    var name by remember { mutableStateOf("") }
-    var discount by remember { mutableStateOf("") }
-    var expiryDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var selectedUser by remember { mutableStateOf<UserEntity?>(value = null) }
+    var name by remember { mutableStateOf(value = "") }
+    var discount by remember { mutableStateOf(value = "") }
+    var expiryDate by remember { mutableStateOf(value = System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
     val successMsg = remember { mutableStateOf("") }
     val errorMsg = remember { mutableStateOf("") }
@@ -2513,9 +2514,9 @@ fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
 @Composable
 fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
 {
-    var name by remember { mutableStateOf("") }
-    var discount by remember { mutableStateOf("") }
-    var expiryDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var name by remember { mutableStateOf(value = "") }
+    var discount by remember { mutableStateOf(value = "") }
+    var expiryDate by remember { mutableStateOf(value = System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
     val successMsg = remember { mutableStateOf("") }
     val errorMsg = remember { mutableStateOf("") }
@@ -2697,9 +2698,9 @@ fun StudentRedeemCouponWindow(@Suppress("UNUSED_PARAMETER") couponRepository: Co
 @Composable
 fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: String)
 {
-    var cardNumber by remember { mutableStateOf("") }
-    var expiry by remember { mutableStateOf("") }
-    var cvv by remember { mutableStateOf("") }
+    var cardNumber by remember { mutableStateOf(value = "") }
+    var expiry by remember { mutableStateOf(value = "") }
+    var cvv by remember { mutableStateOf(value = "") }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -2710,6 +2711,8 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
             onValueChange = { cardNumber = it },
             label = { Text("Card Number") },
             modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            shape = MaterialTheme.shapes.medium,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
         {
@@ -2718,25 +2721,45 @@ fun StudentAddCardWindow(debitCardRepository: DebitCardRepository, userId: Strin
                 onValueChange = { expiry = it },
                 label = { Text("Expiry (MM/YY)") },
                 modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = MaterialTheme.shapes.medium,
             )
             OutlinedTextField(
                 value = cvv,
                 onValueChange = { cvv = it },
                 label = { Text("CVV") },
                 modifier = Modifier.weight(1f),
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = MaterialTheme.shapes.medium,
             )
         }
         HIGButton(
             onClick = {
+                if (cardNumber.isBlank() || expiry.isBlank() || (cvv.length < 3))
+                {
+                    Toast.makeText(context, "Please enter valid card details.", Toast.LENGTH_SHORT).show()
+                    return@HIGButton
+                }
+
                 coroutineScope.launch()
                 {
-                    debitCardRepository.addCard(
-                        userId = userId,
-                        cardNumber = cardNumber,
-                        expiryDate = expiry,
-                        cvv = cvv,
-                    )
-                    Toast.makeText(context, "Card linked successfully.", Toast.LENGTH_SHORT).show()
+                    try
+                    {
+                        debitCardRepository.addCard(
+                            userId = userId,
+                            cardNumber = cardNumber,
+                            expiryDate = expiry,
+                        )
+                        Toast.makeText(context, "Card linked successfully.", Toast.LENGTH_SHORT).show()
+                        cardNumber = ""
+                        expiry = ""
+                        cvv = ""
+                    }
+                    catch (e: Exception)
+                    {
+                        Toast.makeText(context, e.message ?: "Failed to link card.", Toast.LENGTH_LONG).show()
+                    }
                 }
             },
             text = "Link Card",
@@ -2779,9 +2802,9 @@ fun VendorBankDetailsWindow(authRepository: AuthRepository, userId: String, curr
 @Composable
 fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
 {
-    var subject by remember { mutableStateOf("") }
-    var message by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf(FeedbackType.COMPLIMENT) }
+    var subject by remember { mutableStateOf(value = "") }
+    var message by remember { mutableStateOf(value = "") }
+    var type by remember { mutableStateOf(value = FeedbackType.COMPLIMENT) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -2798,6 +2821,7 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
             onValueChange = { subject = it },
             label = { Text("Subject") },
             modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
         )
         OutlinedTextField(
             value = message,
@@ -2805,15 +2829,29 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
             label = { Text("Details") },
             modifier = Modifier.fillMaxWidth(),
             minLines = 4,
+            shape = MaterialTheme.shapes.medium,
         )
         HIGButton(
             onClick = {
+                if (subject.isBlank() || message.isBlank())
+                {
+                    Toast.makeText(context, "Please fill in all feedback fields.", Toast.LENGTH_SHORT).show()
+                    return@HIGButton
+                }
+
                 coroutineScope.launch()
                 {
-                    feedbackRepository.submitFeedback(userId, subject, message, type)
-                    Toast.makeText(context, "Feedback submitted. Thank you!", Toast.LENGTH_SHORT).show()
-                    subject = ""
-                    message = ""
+                    try
+                    {
+                        feedbackRepository.submitFeedback(userId, subject, message, type)
+                        Toast.makeText(context, "Feedback submitted. Thank you!", Toast.LENGTH_SHORT).show()
+                        subject = ""
+                        message = ""
+                    }
+                    catch (e: Exception)
+                    {
+                        Toast.makeText(context, "Submission failed: Check connection.", Toast.LENGTH_SHORT).show()
+                    }
                 }
             },
             text = "Submit Feedback",

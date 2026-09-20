@@ -61,12 +61,12 @@ class AuthRepositoryTest
         connectivityManager = mockk(relaxed = true)
         
         repository = AuthRepository(
-            userDao, 
-            apiService, 
-            connectivityManager, 
-            firebaseAuth, 
-            firebaseDatabase,
-            testDispatcher,
+            userDao = userDao,
+            apiService = apiService,
+            connectivityManager = connectivityManager,
+            firebaseAuth = firebaseAuth,
+            firebaseDatabase = firebaseDatabase,
+            ioDispatcher = testDispatcher,
         )
     }
 

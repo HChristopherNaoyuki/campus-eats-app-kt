@@ -18,6 +18,7 @@ import org.junit.Test
 
 /**
  * ForgotPasswordViewModelTest verifies the account recovery logic.
+ * Finding 7: Updated to verify Email-based recovery.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ForgotPasswordViewModelTest
@@ -41,19 +42,19 @@ class ForgotPasswordViewModelTest
     }
 
     /**
-     * Requirement: Test successful password reset
+     * Requirement: Test successful password reset email dispatch
      */
     @Test
-    fun resetPassword_withValidId_emitsSuccessState() = runTest {
+    fun sendRecoveryEmail_withValidEmail_emitsSuccessState() = runTest {
         // Given
-        coEvery { authRepository.resetPassword("ID-001", "newpass") } returns Result.success(Unit)
+        coEvery { authRepository.sendRecoveryEmail("aisha.govender@campuseats.test") } returns Result.success(Unit)
 
         // Then
         viewModel.resetState.test {
             assertEquals(ResetState.Idle, awaitItem())
 
             // When
-            viewModel.resetPassword("ID-001", "newpass")
+            viewModel.sendRecoveryEmail("aisha.govender@campuseats.test")
 
             assertEquals(ResetState.Loading, awaitItem())
             assertEquals(ResetState.Success, awaitItem())
@@ -62,48 +63,45 @@ class ForgotPasswordViewModelTest
     }
 
     /**
-     * Requirement: Test reset failure due to invalid User ID
+     * Requirement: Test reset failure due to network or missing account
      */
     @Test
-    fun resetPassword_withInvalidId_emitsErrorState() = runTest {
+    fun sendRecoveryEmail_withFailure_emitsErrorState() = runTest {
         // Given
         coEvery {
-            authRepository.resetPassword(
-                "WRONG",
-                "any",
-            )
-        } returns Result.failure(Exception("Invalid User ID"))
+            authRepository.sendRecoveryEmail("missing@test.com")
+        } returns Result.failure(Exception("Failed to send email"))
 
         // Then
         viewModel.resetState.test {
             assertEquals(ResetState.Idle, awaitItem())
 
             // When
-            viewModel.resetPassword("WRONG", "any")
+            viewModel.sendRecoveryEmail("missing@test.com")
 
             assertEquals(ResetState.Loading, awaitItem())
             val error = awaitItem()
             assertTrue(error is ResetState.Error)
-            assertEquals("Invalid User ID", (error as ResetState.Error).message)
+            assertEquals("Failed to send email", (error as ResetState.Error).message)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     /**
-     * Requirement: Test empty field validation
+     * Requirement: Test empty email validation
      */
     @Test
-    fun resetPassword_withEmptyFields_emitsErrorState() = runTest {
+    fun sendRecoveryEmail_withEmptyEmail_emitsErrorState() = runTest {
         // Then
         viewModel.resetState.test {
             assertEquals(ResetState.Idle, awaitItem())
 
             // When
-            viewModel.resetPassword("", "")
+            viewModel.sendRecoveryEmail("")
 
             val error = awaitItem()
             assertTrue(error is ResetState.Error)
-            assertEquals("Please fill in all fields", (error as ResetState.Error).message)
+            assertEquals("Please enter your registered email address.", (error as ResetState.Error).message)
             cancelAndIgnoreRemainingEvents()
         }
     }

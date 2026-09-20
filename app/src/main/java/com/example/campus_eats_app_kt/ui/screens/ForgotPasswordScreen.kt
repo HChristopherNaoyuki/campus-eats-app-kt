@@ -1,5 +1,6 @@
 package com.example.campus_eats_app_kt.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,7 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,16 +31,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
- * ForgotPasswordScreen allows users to reset their security credentials.
+ * ForgotPasswordScreen allows users to initiate an account recovery flow.
+ * Finding 7: Updated to support standard Firebase Email-based recovery.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,16 +53,15 @@ fun ForgotPasswordScreen(
     viewModel: ForgotPasswordViewModel,
 )
 {
-    var userId by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-
+    var email by remember { mutableStateOf(value = "") }
     val resetState by viewModel.resetState.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(resetState)
     {
         if (resetState is ResetState.Success)
         {
+            Toast.makeText(context, "Recovery email sent. Please check your inbox.", Toast.LENGTH_LONG).show()
             onResetSuccess()
         }
     }
@@ -95,7 +97,7 @@ fun ForgotPasswordScreen(
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
 
             Text(
-                text = "Credential Recovery",
+                text = "Account Recovery",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -103,7 +105,7 @@ fun ForgotPasswordScreen(
             )
 
             Text(
-                text = "Enter your user identifier and a new secure key to regain access.",
+                text = "Enter your registered university email to receive a secure recovery link.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier
@@ -112,34 +114,12 @@ fun ForgotPasswordScreen(
             )
 
             OutlinedTextField(
-                value = userId,
-                onValueChange = { userId = it },
-                label = { Text("User Identifier (UID)") },
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("University Email") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
-            )
-
-            OutlinedTextField(
-                value = newPassword,
-                onValueChange = { newPassword = it },
-                label = { Text("New Security Key") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true,
-                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
-            )
-
-            OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                label = { Text("Confirm New Key") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
             )
@@ -152,18 +132,15 @@ fun ForgotPasswordScreen(
                     text = (resetState as ResetState.Error).message,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(bottom = DesignSystem.Spacing.small),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    textAlign = TextAlign.Center,
                 )
             }
 
             HIGButton(
                 onClick = {
-                    if (newPassword == confirmPassword)
-                    {
-                        viewModel.resetPassword(userId, newPassword)
-                    }
+                    viewModel.sendRecoveryEmail(email)
                 },
-                text = "Confirm reset",
+                text = "Send Recovery Email",
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,

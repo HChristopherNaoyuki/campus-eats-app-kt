@@ -19,7 +19,8 @@ sealed interface ResetState
 }
 
 /**
- * ForgotPasswordViewModel manages the logic for resetting a user's password using their unique User ID.
+ * ForgotPasswordViewModel manages the logic for password recovery via Firebase Email.
+ * Finding 7: Hardened to handle signed-out account recovery.
  */
 class ForgotPasswordViewModel(private val authRepository: AuthRepository) : ViewModel()
 {
@@ -27,14 +28,13 @@ class ForgotPasswordViewModel(private val authRepository: AuthRepository) : View
     val resetState: StateFlow<ResetState> = _resetState
 
     /**
-     * Attempts to reset the user's password.
-     * Performs basic validation before calling the repository.
+     * Triggers a Firebase password reset email.
      */
-    fun resetPassword(userId: String, newPassword: String)
+    fun sendRecoveryEmail(email: String)
     {
-        if (userId.isBlank() || newPassword.isBlank())
+        if (email.isBlank())
         {
-            _resetState.value = ResetState.Error("Please fill in all fields")
+            _resetState.value = ResetState.Error("Please enter your registered email address.")
             return
         }
 
@@ -44,18 +44,18 @@ class ForgotPasswordViewModel(private val authRepository: AuthRepository) : View
 
             try
             {
-                val result = authRepository.resetPassword(userId, newPassword)
+                val result = authRepository.sendRecoveryEmail(email)
                 result.onSuccess()
                 {
                     _resetState.value = ResetState.Success
                 }.onFailure()
                 {
-                    _resetState.value = ResetState.Error(it.message ?: "Reset failed")
+                    _resetState.value = ResetState.Error(it.message ?: "Recovery email failed to send.")
                 }
             }
             catch (e: Exception)
             {
-                _resetState.value = ResetState.Error("An error occurred: ${e.message}")
+                _resetState.value = ResetState.Error("An unexpected error occurred: ${e.message}")
             }
         }
     }

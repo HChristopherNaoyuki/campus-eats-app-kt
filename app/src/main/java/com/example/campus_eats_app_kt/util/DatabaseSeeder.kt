@@ -2,8 +2,9 @@ package com.example.campus_eats_app_kt.util
 
 import android.content.Context
 import android.util.Log
+import androidx.room.withTransaction
+import com.example.campus_eats_app_kt.BuildConfig
 import com.example.campus_eats_app_kt.data.CampusEatsDatabase
-import com.example.campus_eats_app_kt.data.entity.CartItemEntity
 import com.example.campus_eats_app_kt.data.entity.CouponEntity
 import com.example.campus_eats_app_kt.data.entity.DebitCardEntity
 import com.example.campus_eats_app_kt.data.entity.FeedbackEntity
@@ -24,15 +25,15 @@ import java.security.MessageDigest
 
 /**
  * DatabaseSeeder handles prepopulating the local database with sample data.
- * It ensures that each table contains at least 10 valid records to comply with 
- * project specifications while keeping the system error-free.
+ * Finding 2: Seeding is gated by BuildConfig.ENABLE_DEMO_DATA to prevent bypass in production.
  */
 object DatabaseSeeder
 {
     private const val TAG = "DatabaseSeeder"
 
     /**
-     * Hashes/encrypts passwords using SHA-256 for secure storage.
+     * Hashes/encrypts passwords using SHA-256.
+     * Note: Finding 2 identifies this as a potential bypass if used locally without Firebase.
      */
     fun encryptPassword(password: String): String
     {
@@ -43,24 +44,34 @@ object DatabaseSeeder
     }
 
     /**
-     * Seeds the database asynchronously if any tables are lacking sufficient data.
+     * Seeds the database asynchronously if enabled and empty.
+     * Finding 16: Uses atomic transaction and consistent marker check.
      */
     suspend fun seed(context: Context) = withContext(Dispatchers.IO)
     {
+        if (!BuildConfig.ENABLE_DEMO_DATA)
+        {
+            Log.i(TAG, "Demo data seeding skipped (ENABLE_DEMO_DATA=false)")
+            return@withContext
+        }
+
         val db = CampusEatsDatabase.getDatabase(context)
         val userDao = db.userDao()
-        val menuItemDao = db.menuItemDao()
-        val orderDao = db.orderDao()
-        val cartDao = db.cartDao()
-        val feedbackDao = db.feedbackDao()
-        val couponDao = db.couponDao()
-        val debitCardDao = db.debitCardDao()
 
-        // 1. Seed Users (Exactly the 10 users specified in user requirements)
-        val existingUsers = userDao.getUserByEmail("amara.nkosi@campuseats.test")
-        if (existingUsers == null)
+        // Use the first administrator as the "seeded" marker to prevent repeated execution
+        if (userDao.getUserByEmail("amara.nkosi@campuseats.test") != null)
         {
-            Log.d(TAG, "Seeding users table...")
+            Log.v(TAG, "Database already contains seed data. Skipping seeder.")
+            return@withContext
+        }
+
+        db.withTransaction()
+        {
+            val menuItemDao = db.menuItemDao()
+            val couponDao = db.couponDao()
+            val debitCardDao = db.debitCardDao()
+
+            Log.d(TAG, "Seeding authoritative users table...")
             val users = listOf(
                 UserEntity(
                     userId = "ADMN-4K7P-2Q9X-RT5M",
@@ -170,12 +181,8 @@ object DatabaseSeeder
             {
                 userDao.insertUser(user)
             }
-        }
 
-        // 2. Seed Menu Items (At least 10 items)
-        if (menuItemDao.getAllMenuItems().first().isEmpty())
-        {
-            Log.d(TAG, "Seeding menu_items table...")
+            Log.d(TAG, "Seeding menu items...")
             val items = listOf(
                 MenuItemEntity(vendorId = "VNDR-2T5H-8J3K-Q7L0", name = "Pap and Chakalaka", description = "Traditional maize porridge with spicy relish", price = 45.0, stock = 20, category = "Meals"),
                 MenuItemEntity(vendorId = "VNDR-2T5H-8J3K-Q7L0", name = "Grilled Chicken Quarter", description = "Flame-grilled chicken quarter with chips", price = 65.0, stock = 15, category = "Meals"),
@@ -192,12 +199,8 @@ object DatabaseSeeder
             {
                 menuItemDao.insertMenuItem(item)
             }
-        }
 
-        // 3. Seed Coupons (At least 10 items)
-        if (couponDao.getAllCoupons().first().isEmpty())
-        {
-            Log.d(TAG, "Seeding coupons table...")
+            Log.d(TAG, "Seeding coupons...")
             val coupons = listOf(
                 CouponEntity("CAMPUS10", 10.0, isActive = true),
                 CouponEntity("EATS20", 20.0, isActive = true),
@@ -214,95 +217,25 @@ object DatabaseSeeder
             {
                 couponDao.insertCoupon(coupon)
             }
-        }
 
-        // 4. Seed Debit Cards (At least 10 items)
-        if (debitCardDao.getCardsByUserId("STDT-4K9X-2P7M-NZR5").first().isEmpty())
-        {
-            Log.d(TAG, "Seeding debit_cards table...")
+            Log.d(TAG, "Seeding debit cards...")
             val cards = listOf(
-                DebitCardEntity(userId = "STDT-4K9X-2P7M-NZR5", cardNumber = "4321********8888", expiryDate = "12/28", cvv = "123"),
-                DebitCardEntity(userId = "STDN-3J7R-5H2K-XQ9M", cardNumber = "5432********1111", expiryDate = "05/27", cvv = "456"),
-                DebitCardEntity(userId = "STDN-7P4W-1Y6N-BLZ2", cardNumber = "4000********2222", expiryDate = "08/26", cvv = "789"),
-                DebitCardEntity(userId = "STDN-5T8M-3K2L-ZXR6", cardNumber = "5105********3333", expiryDate = "09/29", cvv = "234"),
-                DebitCardEntity(userId = "STDN-9R2B-7V4M-QP1X", cardNumber = "4916********4444", expiryDate = "11/27", cvv = "567"),
-                DebitCardEntity(userId = "ADMN-4K7P-2Q9X-RT5M", cardNumber = "4532********5555", expiryDate = "01/30", cvv = "890"),
-                DebitCardEntity(userId = "ADMN-8B3W-6Y1Z-PL4N", cardNumber = "4556********6666", expiryDate = "02/28", cvv = "321"),
-                DebitCardEntity(userId = "VNDR-2T5H-8J3K-Q7L0", cardNumber = "4716********7777", expiryDate = "03/27", cvv = "654"),
-                DebitCardEntity(userId = "VNDR-9F4G-7N2M-XP5Q", cardNumber = "5221********9999", expiryDate = "04/26", cvv = "987"),
-                DebitCardEntity(userId = "VNDR-6C1V-9B4L-ZR8T", cardNumber = "5353********0000", expiryDate = "06/28", cvv = "159"),
+                DebitCardEntity(userId = "STDT-4K9X-2P7M-NZR5", cardNumber = "**** **** **** 8888", expiryDate = "12/28"),
+                DebitCardEntity(userId = "STDN-3J7R-5H2K-XQ9M", cardNumber = "**** **** **** 1111", expiryDate = "05/27"),
+                DebitCardEntity(userId = "STDN-7P4W-1Y6N-BLZ2", cardNumber = "**** **** **** 2222", expiryDate = "08/26"),
+                DebitCardEntity(userId = "STDN-5T8M-3K2L-ZXR6", cardNumber = "**** **** **** 3333", expiryDate = "09/29"),
+                DebitCardEntity(userId = "STDN-9R2B-7V4M-QP1X", cardNumber = "**** **** **** 4444", expiryDate = "11/27"),
+                DebitCardEntity(userId = "ADMN-4K7P-2Q9X-RT5M", cardNumber = "**** **** **** 5555", expiryDate = "01/30"),
+                DebitCardEntity(userId = "ADMN-8B3W-6Y1Z-PL4N", cardNumber = "**** **** **** 6666", expiryDate = "02/28"),
+                DebitCardEntity(userId = "VNDR-2T5H-8J3K-Q7L0", cardNumber = "**** **** **** 7777", expiryDate = "03/27"),
+                DebitCardEntity(userId = "VNDR-9F4G-7N2M-XP5Q", cardNumber = "**** **** **** 9999", expiryDate = "04/26"),
+                DebitCardEntity(userId = "VNDR-6C1V-9B4L-ZR8T", cardNumber = "**** **** **** 0000", expiryDate = "06/28"),
             )
             for (card in cards)
             {
                 debitCardDao.insertCard(card)
             }
         }
-
-        // 5. Seed Cart Items (At least 10 items)
-        if (cartDao.getCartByUserId("STDT-4K9X-2P7M-NZR5").first().isEmpty())
-        {
-            Log.d(TAG, "Seeding cart_items table...")
-            val cartItems = listOf(
-                CartItemEntity(userId = "STDT-4K9X-2P7M-NZR5", itemId = 1L, vendorId = "VNDR-2T5H-8J3K-Q7L0", name = "Pap and Chakalaka", price = 45.0, quantity = 1),
-                CartItemEntity(userId = "STDN-3J7R-5H2K-XQ9M", itemId = 4L, vendorId = "VNDR-9F4G-7N2M-XP5Q", name = "Boerewors Roll", price = 35.0, quantity = 2),
-                CartItemEntity(userId = "STDN-7P4W-1Y6N-BLZ2", itemId = 7L, vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Speciality Coffee", price = 30.0, quantity = 1),
-                CartItemEntity(userId = "STDN-5T8M-3K2L-ZXR6", itemId = 8L, vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Fresh Koeksisters", price = 15.0, quantity = 3),
-                CartItemEntity(userId = "STDN-9R2B-7V4M-QP1X", itemId = 2L, vendorId = "VNDR-2T5H-8J3K-Q7L0", name = "Grilled Chicken Quarter", price = 65.0, quantity = 1),
-                CartItemEntity(userId = "STDT-4K9X-2P7M-NZR5", itemId = 10L, vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Rooibos Tea", price = 22.0, quantity = 1),
-                CartItemEntity(userId = "STDN-3J7R-5H2K-XQ9M", itemId = 6L, vendorId = "VNDR-9F4G-7N2M-XP5Q", name = "Vegetarian Skewers", price = 40.0, quantity = 2),
-                CartItemEntity(userId = "STDN-7P4W-1Y6N-BLZ2", itemId = 9L, vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Muffin Combo", price = 45.0, quantity = 1),
-                CartItemEntity(userId = "STDN-5T8M-3K2L-ZXR6", itemId = 3L, vendorId = "VNDR-2T5H-8J3K-Q7L0", name = "Mogodu", price = 55.0, quantity = 1),
-                CartItemEntity(userId = "STDN-9R2B-7V4M-QP1X", itemId = 5L, vendorId = "VNDR-9F4G-7N2M-XP5Q", name = "Steak and Chips", price = 85.0, quantity = 1),
-            )
-            for (item in cartItems)
-            {
-                cartDao.addToCart(item)
-            }
-        }
-
-        // 6. Seed Feedback (At least 10 items)
-        if (feedbackDao.getAllFeedback().first().isEmpty())
-        {
-            Log.d(TAG, "Seeding feedback table...")
-            val feedbacks = listOf(
-                FeedbackEntity(userId = "STDT-4K9X-2P7M-NZR5", type = FeedbackType.COMPLIMENT, subject = "Great Service", message = "Food from Campus Corner is amazing!", userName = "Naledi Mahlangu", userEmail = "naledi.mahlangu@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:00:00Z", updatedAt = "2026-03-01T12:00:00Z"),
-                FeedbackEntity(userId = "STDN-3J7R-5H2K-XQ9M", type = FeedbackType.COMPLAINT, subject = "Long Waiting Time", message = "Waited 30 minutes at Braai Brothers", userName = "Lerato Khumalo", userEmail = "lerato.khumalo@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:05:00Z", updatedAt = "2026-03-01T12:05:00Z"),
-                FeedbackEntity(userId = "STDN-7P4W-1Y6N-BLZ2", type = FeedbackType.COMPLIMENT, subject = "Delicious Koeksisters", message = "Best pastries on campus grounds", userName = "Johan Pretorius", userEmail = "johan.pretorius@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:10:00Z", updatedAt = "2026-03-01T12:10:00Z"),
-                FeedbackEntity(userId = "STDN-5T8M-3K2L-ZXR6", type = FeedbackType.COMPLIMENT, subject = "Friendly Vendor", message = "Annelie is always smiling!", userName = "Zanele Ndlovu", userEmail = "zanele.ndlovu@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:15:00Z", updatedAt = "2026-03-01T12:15:00Z"),
-                FeedbackEntity(userId = "STDN-9R2B-7V4M-QP1X", type = FeedbackType.COMPLAINT, subject = "Cold Chips", message = "Fries were slightly cold today", userName = "Marius Steyn", userEmail = "marius.steyn@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:20:00Z", updatedAt = "2026-03-01T12:20:00Z"),
-                FeedbackEntity(userId = "STDT-4K9X-2P7M-NZR5", type = FeedbackType.COMPLIMENT, subject = "Clean App UI", message = "App navigation is smooth and interactive", userName = "Naledi Mahlangu", userEmail = "naledi.mahlangu@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:25:00Z", updatedAt = "2026-03-01T12:25:00Z"),
-                FeedbackEntity(userId = "STDN-3J7R-5H2K-XQ9M", type = FeedbackType.COMPLIMENT, subject = "Spicy Chakalaka", message = "Perfect spice level, loved it", userName = "Lerato Khumalo", userEmail = "lerato.khumalo@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:30:00Z", updatedAt = "2026-03-01T12:30:00Z"),
-                FeedbackEntity(userId = "STDN-7P4W-1Y6N-BLZ2", type = FeedbackType.COMPLAINT, subject = "Out of Stock", message = "Blueberry muffins ran out early", userName = "Johan Pretorius", userEmail = "johan.pretorius@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:35:00Z", updatedAt = "2026-03-01T12:35:00Z"),
-                FeedbackEntity(userId = "STDN-5T8M-3K2L-ZXR6", type = FeedbackType.COMPLIMENT, subject = "Awesome Boerewors", message = "Authentic flavor, great job", userName = "Zanele Ndlovu", userEmail = "zanele.ndlovu@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:40:00Z", updatedAt = "2026-03-01T12:40:00Z"),
-                FeedbackEntity(userId = "STDN-9R2B-7V4M-QP1X", type = FeedbackType.COMPLIMENT, subject = "Quick Payout Setup", message = "Vendor configuration works well", userName = "Marius Steyn", userEmail = "marius.steyn@campuseats.test", status = FeedbackStatus.PENDING, createdAt = "2026-03-01T12:45:00Z", updatedAt = "2026-03-01T12:45:00Z"),
-            )
-            for (fb in feedbacks)
-            {
-                feedbackDao.insertFeedback(fb)
-            }
-        }
-
-        // 7. Seed Orders (At least 10 items)
-        if (orderDao.getAllOrders().first().isEmpty())
-        {
-            Log.d(TAG, "Seeding orders table...")
-            val orders = listOf(
-                OrderEntity(customerId = "STDT-4K9X-2P7M-NZR5", vendorId = "VNDR-2T5H-8J3K-Q7L0", itemsJson = "[]", totalAmount = 45.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.CAMPUS_WALLET, pickupTime = "12:30"),
-                OrderEntity(customerId = "STDN-3J7R-5H2K-XQ9M", vendorId = "VNDR-9F4G-7N2M-XP5Q", itemsJson = "[]", totalAmount = 70.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.DEBIT_CARD, pickupTime = "13:00"),
-                OrderEntity(customerId = "STDN-7P4W-1Y6N-BLZ2", vendorId = "VNDR-6C1V-9B4L-ZR8T", itemsJson = "[]", totalAmount = 30.0, status = OrderStatus.READY, paymentMethod = PaymentMethod.CAMPUS_WALLET, pickupTime = "08:15"),
-                OrderEntity(customerId = "STDN-5T8M-3K2L-ZXR6", vendorId = "VNDR-6C1V-9B4L-ZR8T", itemsJson = "[]", totalAmount = 45.0, status = OrderStatus.PREPARING, paymentMethod = PaymentMethod.DEBIT_CARD, pickupTime = "09:30"),
-                OrderEntity(customerId = "STDN-9R2B-7V4M-QP1X", vendorId = "VNDR-2T5H-8J3K-Q7L0", itemsJson = "[]", totalAmount = 65.0, status = OrderStatus.PENDING, paymentMethod = PaymentMethod.DEBIT_CARD, pickupTime = "12:45"),
-                OrderEntity(customerId = "STDT-4K9X-2P7M-NZR5", vendorId = "VNDR-6C1V-9B4L-ZR8T", itemsJson = "[]", totalAmount = 22.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.CAMPUS_WALLET, pickupTime = "10:00"),
-                OrderEntity(customerId = "STDN-3J7R-5H2K-XQ9M", vendorId = "VNDR-9F4G-7N2M-XP5Q", itemsJson = "[]", totalAmount = 80.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.DEBIT_CARD, pickupTime = "14:00"),
-                OrderEntity(customerId = "STDN-7P4W-1Y6N-BLZ2", vendorId = "VNDR-6C1V-9B4L-ZR8T", itemsJson = "[]", totalAmount = 45.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.CAMPUS_WALLET, pickupTime = "07:45"),
-                OrderEntity(customerId = "STDN-5T8M-3K2L-ZXR6", vendorId = "VNDR-2T5H-8J3K-Q7L0", itemsJson = "[]", totalAmount = 55.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.CAMPUS_WALLET, pickupTime = "13:15"),
-                OrderEntity(customerId = "STDN-9R2B-7V4M-QP1X", vendorId = "VNDR-9F4G-7N2M-XP5Q", itemsJson = "[]", totalAmount = 85.0, status = OrderStatus.COMPLETED, paymentMethod = PaymentMethod.DEBIT_CARD, pickupTime = "12:15"),
-            )
-            for (order in orders)
-            {
-                orderDao.insertOrder(order)
-            }
-        }
-        Log.d(TAG, "Database successfully pre-populated with required 10 records per table.")
+        Log.d(TAG, "Database successfully pre-populated with required records.")
     }
 }

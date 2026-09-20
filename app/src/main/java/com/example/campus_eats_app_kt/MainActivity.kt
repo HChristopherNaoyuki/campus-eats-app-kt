@@ -412,7 +412,7 @@ class MainActivity : ComponentActivity()
                                         val nextRoute = Route.OrderConfirmation(
                                             orderId,
                                             route.userId,
-                                            "STUDENT",
+                                            viewModel.userRole.value.name,
                                         )
                                         backStack.add(nextRoute)
                                         while (backStack.size > 1)

@@ -136,9 +136,10 @@ fun RegistrationScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // Requirement: Account types must include Student, Standard, Vendor, Administrator.
+            // Requirement: Account types must include Student, Standard, Vendor.
+            // ADMINISTRATOR is excluded from self-registration for security (Finding 1).
             HIGSegmentedControl(
-                options = UserRole.entries.toList(),
+                options = UserRole.entries.filter { it != UserRole.ADMINISTRATOR },
                 selectedOption = selectedRole,
                 onOptionSelected = { selectedRole = it },
                 labelProvider = { role ->

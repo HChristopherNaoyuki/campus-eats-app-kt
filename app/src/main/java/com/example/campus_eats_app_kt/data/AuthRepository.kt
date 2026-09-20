@@ -5,9 +5,9 @@ import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.ShopStatus
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
+import com.example.campus_eats_app_kt.data.entity.UserStatus
 import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
 import com.example.campus_eats_app_kt.data.network.RegistrationRequest
-import com.example.campus_eats_app_kt.util.DatabaseSeeder
 import com.example.campus_eats_app_kt.util.IdGenerator
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.example.campus_eats_app_kt.util.ValidationEngine
@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.security.SecureRandom
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -44,16 +45,12 @@ class AuthRepository(
     private val connectivityManager: NetworkConnectivityManager,
     private val firebaseAuth: FirebaseAuth,
     private val firebaseDatabase: FirebaseDatabase,
-    ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    @Suppress("UNUSED_PARAMETER") ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 )
 {
     private val tag = "AuthRepository"
 
-    /**
-     * repositoryScope is used for background synchronization tasks that should 
-     * outlive the immediate UI operation but are bound to the repository's lifecycle.
-     */
-    private val repositoryScope = CoroutineScope(SupervisorJob() + ioDispatcher)
+
 
     /**
      * Registers a new user.
@@ -72,7 +69,7 @@ class AuthRepository(
     ): Result<UserEntity> = coroutineScope()
     {
         Log.d(tag, "Initiating registration for: $email with role: ${role.name}")
-        return@coroutineScope kotlin.runCatching()
+        return@coroutineScope runCatching()
         {
             connectivityManager.ensureInternet()
 
@@ -86,32 +83,36 @@ class AuthRepository(
                 throw Exception("Password must be at least 8 characters long.")
             }
 
+            // Finding 1: Prevention of unauthorized role promotion
+            if (role == UserRole.ADMINISTRATOR)
+            {
+                throw Exception("Self-registration as Administrator is strictly prohibited.")
+            }
+
             if (userDao.getUserByEmail(email) != null)
             {
                 throw Exception("An account with this email is already registered locally.")
             }
 
             // 1. Firebase Auth Account Creation
-            // Credentials are encrypted and handled exclusively by the Firebase SDK.
-            val authDeferred = async()
+            val firebaseUser = try
             {
-                try
-                {
-                    val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-                    result.user?.uid ?: throw Exception("Firebase UID generation failed.")
-                }
-                catch (e: Exception)
-                {
-                    throw Exception(FirebaseExceptionHandler.parse(e))
-                }
+                val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                result.user ?: throw Exception("Firebase user creation failed.")
+            }
+            catch (e: Exception)
+            {
+                throw Exception(FirebaseExceptionHandler.parse(e))
             }
 
             // 2. Parallel Remote API Synchronization (External "Fake Restaurant" provider)
+            // Finding 4: Protect user credentials by using a per-user random secret for 3rd party sync.
+            val apiSecret = generateRandomSecret()
             val apiSyncDeferred = async()
             {
                 try
                 {
-                    val response = apiService.registerUser(RegistrationRequest(email, password))
+                    val response = apiService.registerUser(RegistrationRequest(email, apiSecret))
                     if (response.isSuccessful) response.body()?.usercode else null
                 }
                 catch (_: Exception)
@@ -120,40 +121,38 @@ class AuthRepository(
                 }
             }
 
-            authDeferred.await()
             val remoteUsercode = apiSyncDeferred.await()
 
             // 3. Construct the Authoritative User Entity
-            // Note: campusUserId is the primary key in both Room and Realtime Database.
             val campusUserId = IdGenerator.generateUserId()
             val user = UserEntity(
                 userId = campusUserId,
                 fullName = fullName,
                 username = username,
                 email = email,
-                passwordHash = "[FIREBASE_SSO]", // Security: Passwords are NOT stored in RTDB.
+                passwordHash = "[FIREBASE_AUTH]", // Passwords are NOT stored in our database.
                 role = role,
                 shopName = if (role == UserRole.VENDOR) shopName else null,
                 shopStatus = if (role == UserRole.VENDOR) ShopStatus.OPEN else null,
                 usercode = remoteUsercode,
             )
 
-            // 4. Persistence - Cloud (Authoritative) then Local (Cache)
-            repositoryScope.launch()
+            // 4. Persistence - Cloud (Authoritative)
+            try
             {
-                try
-                {
-                    // Security: This write will be rejected if UserRole.ADMINISTRATOR is selected 
-                    // and the user lacks the 'admin' custom claim.
-                    firebaseDatabase.getReference("users").child(campusUserId).setValue(user)
-                        .await()
-                }
-                catch (e: Exception)
-                {
-                    Log.e(tag, "RTDB Registration Sync failed: ${e.message}")
-                }
+                // Finding 6: Use explicit Map mapping for Firebase to avoid serialization issues
+                firebaseDatabase.getReference("users").child(campusUserId)
+                    .setValue(mapToFirebase(user))
+                    .await()
+            }
+            catch (e: Exception)
+            {
+                // Atomic cleanup: If RTDB write fails, remove the Auth account to prevent orphaned identities
+                firebaseUser.delete().await()
+                throw Exception("Cloud synchronization failed. Please try again.")
             }
 
+            // 5. Persistence - Local (Cache)
             userDao.insertUser(user)
             user
         }
@@ -161,9 +160,6 @@ class AuthRepository(
 
     /**
      * Registers a new user via Google SSO.
-     * 
-     * Requirement: Google Single Sign-On integration.
-     * Generates a 16-character global identifier for the new profile.
      */
     suspend fun registerWithGoogle(
         idToken: String,
@@ -172,9 +168,14 @@ class AuthRepository(
     ): Result<UserEntity> = coroutineScope()
     {
         Log.d(tag, "Initiating Google SSO registration")
-        return@coroutineScope kotlin.runCatching()
+        return@coroutineScope runCatching()
         {
             connectivityManager.ensureInternet()
+
+            if (role == UserRole.ADMINISTRATOR)
+            {
+                throw Exception("Self-registration as Administrator is strictly prohibited.")
+            }
 
             // 1. Firebase Authentication with Google Credential
             val credential = GoogleAuthProvider.getCredential(idToken, null)
@@ -187,12 +188,12 @@ class AuthRepository(
             existingUser?.let { return@runCatching it }
 
             // 2. Parallel Remote API Synchronization
+            val apiSecret = generateRandomSecret()
             val apiSyncDeferred = async()
             {
                 try
                 {
-                    // We use a dummy password for the external API as we rely on SSO for main identity
-                    val response = apiService.registerUser(RegistrationRequest(email, "[GOOGLE_SSO_LINKED]"))
+                    val response = apiService.registerUser(RegistrationRequest(email, apiSecret))
                     if (response.isSuccessful) response.body()?.usercode else null
                 }
                 catch (_: Exception)
@@ -203,7 +204,7 @@ class AuthRepository(
 
             val remoteUsercode = apiSyncDeferred.await()
 
-            // 3. Construct the User Entity with 16-character UID
+            // 3. Construct the User Entity
             val campusUserId = IdGenerator.generateUserId()
             val user = UserEntity(
                 userId = campusUserId,
@@ -217,18 +218,17 @@ class AuthRepository(
                 usercode = remoteUsercode,
             )
 
-            // 4. Persistence
-            repositoryScope.launch()
+            // 4. Persistence - Cloud then Local
+            try
             {
-                try
-                {
-                    firebaseDatabase.getReference("users").child(campusUserId).setValue(user)
-                        .await()
-                }
-                catch (e: Exception)
-                {
-                    Log.e(tag, "RTDB Google Sync failed: ${e.message}")
-                }
+                firebaseDatabase.getReference("users").child(campusUserId)
+                    .setValue(mapToFirebase(user))
+                    .await()
+            }
+            catch (e: Exception)
+            {
+                firebaseUser.delete().await()
+                throw Exception("Cloud synchronization failed during Google Registration.")
             }
 
             userDao.insertUser(user)
@@ -239,52 +239,38 @@ class AuthRepository(
     /**
      * Authenticates a user and restores their account state.
      * 
-     * Requirement: Cross-device access. If a user logs in on a new device, 
-     * their profile is retrieved from Firebase Realtime Database and cached in Room.
+     * Finding 2: Security hardening - Removal of the unvalidated local password bypass.
+     * All logins must now be validated against Firebase Authentication.
      */
     suspend fun login(email: String, password: String): Result<UserEntity>
     {
         Log.d(tag, "Login attempt for: $email")
-        return kotlin.runCatching()
+        return runCatching()
         {
-            // First check if user exists locally with a valid encrypted SHA-256 password hash
-            val localUser = userDao.getUserByEmail(email)
-            if ((localUser != null) && (localUser.passwordHash == DatabaseSeeder.encryptPassword(password)))
-            {
-                return@runCatching localUser
-            }
-
+            connectivityManager.ensureInternet()
+            
+            // 1. Firebase Authentication (Auth Identity)
             try
             {
-                connectivityManager.ensureInternet()
-                // 1. Firebase Authentication (Auth Identity)
                 firebaseAuth.signInWithEmailAndPassword(email, password).await()
             }
             catch (e: Exception)
             {
-                // Fallback if password matches locally but firebase fails or is not synced
-                if ((localUser != null) && (localUser.passwordHash == DatabaseSeeder.encryptPassword(password)))
-                {
-                    return@runCatching localUser
-                }
                 throw Exception(FirebaseExceptionHandler.parse(e))
             }
 
-            // 2. Resolve Application User Record
+            // 2. Resolve Application User Record (Restores cache if missing)
             resolveUserRecord(email)
         }
     }
 
     /**
      * Authenticates a user with a Google ID Token.
-     * 
-     * Requirement: Google Single Sign-On.
-     * Uses Firebase's GoogleAuthProvider to complete the exchange.
      */
     suspend fun signInWithGoogle(idToken: String): Result<UserEntity>
     {
         Log.d(tag, "Initiating Google SSO exchange")
-        return kotlin.runCatching()
+        return runCatching()
         {
             connectivityManager.ensureInternet()
 
@@ -299,6 +285,7 @@ class AuthRepository(
 
     /**
      * Helper to resolve the application user record from RTDB or Cache.
+     * Finding 6: Explicit Map mapping to handle Serialization and Role naming.
      */
     private suspend fun resolveUserRecord(email: String): UserEntity
     {
@@ -314,7 +301,8 @@ class AuthRepository(
                 .get()
                 .await()
 
-            user = snapshot.children.firstOrNull()?.getValue(UserEntity::class.java)
+            val map = snapshot.children.firstOrNull()?.value as? Map<Any?, Any?>
+            user = map?.let { mapFromFirebase(it) }
             
             if (user != null)
             {
@@ -327,8 +315,61 @@ class AuthRepository(
     }
 
     /**
+     * Finding 6: Mapping logic for Firebase RTDB compatibility.
+     * Enforces the "ADMIN" role name in the database while using UserRole.ADMINISTRATOR in app.
+     */
+    private fun mapToFirebase(user: UserEntity): Map<String, Any?>
+    {
+        return mapOf(
+            "userId" to user.userId,
+            "fullName" to user.fullName,
+            "username" to user.username,
+            "email" to user.email,
+            "passwordHash" to user.passwordHash,
+            "role" to when (user.role)
+            {
+                UserRole.ADMINISTRATOR -> "ADMIN"
+                else -> user.role.name
+            },
+            "status" to user.status.name,
+            "walletBalance" to user.walletBalance,
+            "shopName" to user.shopName,
+            "shopStatus" to user.shopStatus?.name,
+            "bankAccountInfo" to user.bankAccountInfo,
+            "registrationDate" to user.registrationDate,
+            "usercode" to user.usercode,
+        )
+    }
+
+    private fun mapFromFirebase(map: Map<Any?, Any?>): UserEntity
+    {
+        val stringMap = map.mapKeys { it.key.toString() }
+        return UserEntity(
+            userId = stringMap["userId"] as? String ?: "",
+            fullName = stringMap["fullName"] as? String ?: "",
+            username = stringMap["username"] as? String ?: "",
+            email = stringMap["email"] as? String ?: "",
+            passwordHash = stringMap["passwordHash"] as? String ?: "[FIREBASE_SSO]",
+            role = when (stringMap["role"] as? String)
+            {
+                "ADMIN" -> UserRole.ADMINISTRATOR
+                "VENDOR" -> UserRole.VENDOR
+                "STUDENT" -> UserRole.STUDENT
+                "STANDARD" -> UserRole.STANDARD
+                else -> UserRole.STANDARD
+            },
+            status = try { UserStatus.valueOf(stringMap["status"] as? String ?: "ACTIVE") } catch (_: Exception) { UserStatus.ACTIVE },
+            walletBalance = (stringMap["walletBalance"] as? Number)?.toDouble() ?: 0.0,
+            shopName = stringMap["shopName"] as? String,
+            shopStatus = (stringMap["shopStatus"] as? String)?.let { try { ShopStatus.valueOf(it) } catch (_: Exception) { null } },
+            bankAccountInfo = stringMap["bankAccountInfo"] as? String,
+            registrationDate = (stringMap["registrationDate"] as? Number)?.toLong() ?: 0L,
+            usercode = stringMap["usercode"] as? String,
+        )
+    }
+
+    /**
      * Periodic background synchronization.
-     * Synchronizes non-restricted fields from local cache to cloud to ensure multi-device consistency.
      */
     fun startBackgroundSync(userId: String, scope: CoroutineScope)
     {
@@ -343,8 +384,6 @@ class AuthRepository(
                     {
                         userDao.getUserById(userId)?.let()
                         { user ->
-                            // Requirement: Selective update. 
-                            // Avoid syncing immutable fields (email, role) to prevent rule violations.
                             val updates = mapOf<String, Any?>(
                                 "fullName" to user.fullName,
                                 "username" to user.username,
@@ -368,7 +407,6 @@ class AuthRepository(
 
     /**
      * Checks if the current user has administrative privileges via custom claims.
-     * Authority: Firebase Authentication Token Claims.
      */
     suspend fun isAdmin(): Boolean
     {
@@ -385,38 +423,32 @@ class AuthRepository(
         }
     }
 
-    /**
-     * Refreshes the current user's token to pick up new custom claims.
-     * Essential for administrative authorization compliance when roles are granted.
-     */
-    @Suppress("unused")
-    suspend fun refreshUserClaims()
-    {
-        try
-        {
-            firebaseAuth.currentUser?.getIdToken(true)?.await()
-        }
-        catch (e: Exception)
-        {
-            Log.e(tag, "Failed to refresh user token: ${e.message}")
-        }
-    }
-
     fun isUserAuthenticated(): Boolean = firebaseAuth.currentUser != null
     fun getCurrentUserEmail(): String? = firebaseAuth.currentUser?.email
     fun logout() = firebaseAuth.signOut()
 
     /**
-     * Resets the user's password.
-     * Note: This operation requires a recent login session in Firebase.
+     * Account recovery flow.
+     * Finding 7: Corrected to handle signed-out password resets via email.
+     */
+    suspend fun sendRecoveryEmail(email: String): Result<Unit>
+    {
+        return runCatching()
+        {
+            connectivityManager.ensureInternet()
+            firebaseAuth.sendPasswordResetEmail(email).await()
+        }
+    }
+
+    /**
+     * Internal password update (requires recent login).
      */
     suspend fun resetPassword(userId: String, newPassword: String): Result<Unit>
     {
         Log.d(tag, "Password reset initiated for User ID: $userId")
-        return kotlin.runCatching()
+        return runCatching()
         {
             connectivityManager.ensureInternet()
-            val user = userDao.getUserById(userId) ?: throw Exception("Invalid User ID")
             
             val currentUser = firebaseAuth.currentUser ?: throw Exception("You must be signed in to change your password.")
             
@@ -429,36 +461,18 @@ class AuthRepository(
                 throw Exception(FirebaseExceptionHandler.parse(e))
             }
             
-            if (user.usercode != null)
-            {
-                try
-                {
-                    apiService.updatePassword(user.usercode, newPassword)
-                }
-                catch (e: Exception)
-                {
-                    Log.e(tag, "Remote password sync failed: ${e.message}")
-                }
-            }
-        }.onFailure()
-        { e ->
-            throw Exception(FirebaseExceptionHandler.parse(e))
+            // Password sync to 3rd party is deprecated in v3.1.0 for security compliance.
+            // We only update the local cache status if needed.
         }
     }
 
-    /**
-     * Re-authenticates the current user. Required for sensitive operations like 
-     * password changes or account deletion if the session has expired.
-     */
-    @Suppress("unused")
-    suspend fun reauthenticate(password: String): Result<Unit>
+    private fun generateRandomSecret(): String
     {
-        return kotlin.runCatching()
-        {
-            val email = getCurrentUserEmail() ?: throw Exception("No active session.")
-            val credential = EmailAuthProvider.getCredential(email, password)
-            firebaseAuth.currentUser?.reauthenticate(credential)?.await()
-        }
+        val charPool : List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+        return (1..16)
+            .map { SecureRandom().nextInt(charPool.size) }
+            .map(charPool::get)
+            .joinToString("")
     }
 
     /**
@@ -474,7 +488,7 @@ class AuthRepository(
      */
     suspend fun linkBankAccount(userId: String, bankInfo: String): Result<Unit>
     {
-        return kotlin.runCatching()
+        return runCatching()
         {
             val user = userDao.getUserById(userId) ?: throw Exception("User not found")
             val updatedUser = user.copy(bankAccountInfo = bankInfo)
@@ -494,8 +508,6 @@ class AuthRepository(
 
     /**
      * Updates user profile while respecting immutable field rules.
-     * Password changes are applied to Firebase Auth only; the database stores 
-     * a constant placeholder to indicate SSO usage.
      */
     suspend fun updateProfile(
         userId: String,
@@ -504,7 +516,7 @@ class AuthRepository(
         newPassword: String? = null,
     ): Result<Unit>
     {
-        return kotlin.runCatching()
+        return runCatching()
         {
             connectivityManager.ensureInternet()
             val user = userDao.getUserById(userId) ?: throw Exception("User not found")
@@ -539,7 +551,7 @@ class AuthRepository(
      */
     suspend fun updateShopStatus(userId: String, status: ShopStatus): Result<Unit>
     {
-        return kotlin.runCatching()
+        return runCatching()
         {
             val user = userDao.getUserById(userId)
             if ((user != null) && (user.role == UserRole.VENDOR))

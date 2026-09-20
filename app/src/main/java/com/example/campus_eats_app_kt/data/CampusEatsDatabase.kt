@@ -151,13 +151,17 @@ abstract class CampusEatsDatabase : RoomDatabase()
         {
             return INSTANCE ?: synchronized(this)
             {
+                val existing = INSTANCE
+                if (existing != null) return@synchronized existing
+
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     CampusEatsDatabase::class.java,
                     "campus_eats_database",
                 )
                     .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
-                    .fallbackToDestructiveMigration(dropAllTables = true) // Last resort if no valid migration path is found
+                    // Finding 15: Preserve production data by limiting destructive fallback to legacy versions.
+                    .fallbackToDestructiveMigrationFrom(true, 1, 2, 3, 4, 5)
                 .build()
                 INSTANCE = instance
                 instance
