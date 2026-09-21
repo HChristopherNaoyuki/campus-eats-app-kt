@@ -45,6 +45,9 @@ interface MenuItemDao
     @Query("UPDATE menu_items SET stock = stock - :quantity WHERE itemId = :itemId AND stock >= :quantity")
     suspend fun decrementStock(itemId: Long, quantity: Int): Int
 
+    @Query("SELECT * FROM menu_items WHERE itemId = :itemId LIMIT 1")
+    suspend fun getMenuItemById(itemId: Long): MenuItemEntity?
+
     /**
      * Retrieves all items offered by a specific vendor.
      */

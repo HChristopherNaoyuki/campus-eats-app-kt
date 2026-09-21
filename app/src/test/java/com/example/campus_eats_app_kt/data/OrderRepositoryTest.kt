@@ -44,9 +44,9 @@ class OrderRepositoryTest
         connectivityManager = mockk(relaxed = true)
         
         mockkStatic("androidx.room.RoomDatabaseKt")
-        coEvery { database.withTransaction<Long>(any()) } coAnswers {
+        coEvery { database.withTransaction<String>(any()) } coAnswers {
             // Finding 13: Mocking withTransaction extension (args[1] is the lambda)
-            val block = it.invocation.args[1] as suspend () -> Long
+            val block = it.invocation.args[1] as suspend () -> String
             block()
         }
 
@@ -65,7 +65,7 @@ class OrderRepositoryTest
     fun placeOrder_persistsOrderAndClearsCart() = runTest {
         val userId = "USER-001"
         val vendorId = "VENDOR-001"
-        coEvery { orderDao.insertOrder(any()) } returns 123L
+        coEvery { orderDao.insertOrder(any()) } returns Unit
         coEvery { userDao.debitWallet(any(), any()) } returns 1
         coEvery { menuItemDao.decrementStock(any(), any()) } returns 1
 
@@ -85,7 +85,7 @@ class OrderRepositoryTest
     @Test
     fun updateOrderStatus_updatesInDao() = runTest {
         val order = OrderEntity(
-            orderId = 123L,
+            orderId = "ORD-123",
             customerId = "C1",
             vendorId = "V1",
             itemsJson = "[]",
@@ -101,7 +101,7 @@ class OrderRepositoryTest
         coVerify {
             orderDao.updateOrder(
                 match {
-                    (it.orderId == 123L) && (it.status == OrderStatus.ACCEPTED)
+                    (it.orderId == "ORD-123") && (it.status == OrderStatus.ACCEPTED)
                 },
             )
         }

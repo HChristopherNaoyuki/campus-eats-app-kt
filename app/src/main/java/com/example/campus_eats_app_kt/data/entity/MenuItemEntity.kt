@@ -17,4 +17,5 @@ data class MenuItemEntity(
     val stock: Int,
     val category: String,
     val imageUrl: String? = null,
+    val isInventoryTracked: Boolean = true,
 )

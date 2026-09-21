@@ -66,6 +66,7 @@ class AuthRepositoryTest
             connectivityManager = connectivityManager,
             firebaseAuth = firebaseAuth,
             firebaseDatabase = firebaseDatabase,
+            orderRepository = mockk(relaxed = true),
         )
     }
 

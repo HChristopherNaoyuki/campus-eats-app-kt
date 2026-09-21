@@ -2,6 +2,7 @@ package com.example.campus_eats_app_kt.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Index
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 
@@ -47,13 +48,16 @@ enum class ShopStatus
 
 /**
  * UserEntity represents a user record in the local database and Firebase Realtime Database.
- * The primary key is a 19-character formatted string: XXXX-XXXX-XXXX-XXXX.
+ * Finding 22 & 27: Primary key is a 16-character secure identifier. Email is unique.
  */
 @Serializable
-@Entity(tableName = "users")
+@Entity(
+    tableName = "users",
+    indices = [Index(value = ["email"], unique = true)]
+)
 data class UserEntity(
     @PrimaryKey
-    val userId: String, // 19-character formatted (XXXX-XXXX-XXXX-XXXX)
+    val userId: String, // 16-character secure identifier
     val fullName: String,
     val username: String,
     val email: String,

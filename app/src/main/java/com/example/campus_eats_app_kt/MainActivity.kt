@@ -82,13 +82,6 @@ class MainActivity : ComponentActivity()
         val firebaseAuth = FirebaseAuth.getInstance()
         val firebaseDatabase = FirebaseDatabaseProvider.instance
 
-        val authRepository = AuthRepository(
-            userDao = database.userDao(),
-            apiService = apiService,
-            connectivityManager = connectivityManager,
-            firebaseAuth = firebaseAuth,
-            firebaseDatabase = firebaseDatabase,
-        )
         val menuRepository = MenuRepository(
             menuItemDao = database.menuItemDao(),
             userDao = database.userDao(),
@@ -104,6 +97,14 @@ class MainActivity : ComponentActivity()
             menuItemDao = database.menuItemDao(),
             apiService = apiService,
             connectivityManager = connectivityManager,
+        )
+        val authRepository = AuthRepository(
+            userDao = database.userDao(),
+            apiService = apiService,
+            connectivityManager = connectivityManager,
+            firebaseAuth = firebaseAuth,
+            firebaseDatabase = firebaseDatabase,
+            orderRepository = orderRepository,
         )
         val adminRepository = AdminRepository(
             userDao = database.userDao(),
@@ -373,7 +374,7 @@ class MainActivity : ComponentActivity()
                                 )
                                 CheckoutScreen(
                                     onBackClick = { backStack.removeLastOrNull() },
-                                    onOrderPlaced = { orderId ->
+                                        onOrderPlaced = { orderId ->
                                         val nextRoute = Route.OrderConfirmation(
                                             orderId,
                                             route.userId,

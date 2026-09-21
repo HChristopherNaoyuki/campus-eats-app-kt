@@ -5,54 +5,48 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * IdGeneratorTest verifies the generation of unique, correctly formatted User IDs.
+ * IdGeneratorTest verifies the generation of unique identifiers.
  */
 class IdGeneratorTest
 {
     /**
-     * Requirement: Test format (XXXX-XXXX-XXXX-XXXX)
+     * Finding 22: Test 16-character continuous format
      */
     @Test
     fun generateUserId_returnsCorrectFormat()
     {
-        // When: Generating an ID
         val userId = IdGenerator.generateUserId()
-
-        // Then: It matches the pattern of 4 segments separated by dashes
-        val regex = Regex("^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")
+        val regex = Regex("^[A-Z0-9]{16}$")
         assertTrue("ID $userId should match the required format", regex.matches(userId))
     }
 
-    /**
-     * Requirement: Test length (16 characters before formatting, 19 with dashes)
-     */
     @Test
     fun generateUserId_returnsCorrectLength()
     {
-        // When: Generating an ID
         val userId = IdGenerator.generateUserId()
-
-        // Then: Total length including dashes is 19
-        assertEquals(19, userId.length)
+        assertEquals(16, userId.length)
     }
 
-    /**
-     * Requirement: Test uniqueness
-     */
     @Test
     fun generateUserId_producesUniqueValues()
     {
-        // Given: Multiple generations
         val iterations = 100
         val ids = mutableSetOf<String>()
-
-        // When: Generating IDs
         repeat(iterations)
         {
             ids.add(IdGenerator.generateUserId())
         }
-
-        // Then: All IDs in the set are unique (size matches iterations)
         assertEquals(iterations, ids.size)
+    }
+
+    /**
+     * Finding 22: Test Order ID format
+     */
+    @Test
+    fun generateOrderId_returnsCorrectFormat()
+    {
+        val orderId = IdGenerator.generateOrderId()
+        val regex = Regex("^ORD-[0-9]{8}-[A-Z0-9]{8}$")
+        assertTrue("Order ID $orderId should match required format", regex.matches(orderId))
     }
 }

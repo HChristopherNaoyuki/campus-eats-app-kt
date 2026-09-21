@@ -125,6 +125,7 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.campus_eats_app_kt.BuildConfig
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -1554,7 +1555,7 @@ fun SettingsScreenTab(
             }
 
             Text(
-                text = "v3.0.0",
+                text = "v${BuildConfig.VERSION_NAME}",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.labelSmall,

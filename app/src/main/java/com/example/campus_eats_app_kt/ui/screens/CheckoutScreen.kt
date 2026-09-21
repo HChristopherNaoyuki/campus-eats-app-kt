@@ -75,7 +75,7 @@ sealed interface CheckoutState
 {
     data object Idle : CheckoutState
     data object Processing : CheckoutState
-    data class Success(val orderId: Long) : CheckoutState
+    data class Success(val orderId: String) : CheckoutState
     data class Error(val message: String) : CheckoutState
 }
 
@@ -113,7 +113,7 @@ class CheckoutViewModel(
         paymentMethod: PaymentMethod,
         pickupTime: String,
         specialRequests: String?,
-        onSuccess: (Long) -> Unit,
+        onSuccess: (String) -> Unit,
     )
     {
         viewModelScope.launch()
@@ -149,7 +149,7 @@ class CheckoutViewModel(
 @Composable
 fun CheckoutScreen(
     onBackClick: () -> Unit,
-    onOrderPlaced: (Long) -> Unit,
+    onOrderPlaced: (String) -> Unit,
     viewModel: CheckoutViewModel,
 )
 {

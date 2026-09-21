@@ -18,7 +18,7 @@ interface OrderDao
      * Persists a new order.
      */
     @Insert
-    suspend fun insertOrder(order: OrderEntity): Long
+    suspend fun insertOrder(order: OrderEntity)
 
     /**
      * Updates an existing order.

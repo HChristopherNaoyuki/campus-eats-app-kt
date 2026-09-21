@@ -30,7 +30,7 @@ import com.example.campus_eats_app_kt.ui.theme.DesignSystem
  */
 @Composable
 fun OrderConfirmationScreen(
-    orderId: Long,
+    orderId: String,
     onTrackOrder: () -> Unit,
     onReturnHome: () -> Unit,
 )

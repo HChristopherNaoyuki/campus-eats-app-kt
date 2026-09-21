@@ -30,7 +30,7 @@ import kotlinx.coroutines.coroutineScope
 
 /**
  * AuthRepository manages the authentication lifecycle and profile synchronization.
- * Hardened in Batch 2 to enforce account suspension and atomic operations.
+ * Hardened in Batch 2 and 3 to enforce account suspension and Online-First sync.
  */
 class AuthRepository(
     private val userDao: UserDao,
@@ -38,6 +38,7 @@ class AuthRepository(
     private val connectivityManager: NetworkConnectivityManager,
     private val firebaseAuth: FirebaseAuth,
     private val firebaseDatabase: FirebaseDatabase,
+    private val orderRepository: OrderRepository,
 )
 {
     private val tag = "AuthRepository"
@@ -295,6 +296,7 @@ class AuthRepository(
 
         if (cloudUser != null)
         {
+            // Sync cloud state to local cache (Finding 8: ensure suspension is cached)
             userDao.insertUser(cloudUser)
             return cloudUser
         }
@@ -360,6 +362,9 @@ class AuthRepository(
                 {
                     if ((firebaseAuth.currentUser != null) && connectivityManager.hasInternetConnection())
                     {
+                        // Finding 1: Explicitly flush pending orders on a interval
+                        orderRepository.syncPendingOrders(userId)
+
                         userDao.getUserById(userId)?.let()
                         { user ->
                             val updates = mapOf<String, Any?>(
@@ -369,7 +374,8 @@ class AuthRepository(
                                 "shopStatus" to user.shopStatus?.name,
                                 "bankAccountInfo" to user.bankAccountInfo,
                             )
-                            firebaseDatabase.getReference("users").child(userId).updateChildren(updates).await()
+                            firebaseDatabase.getReference("users").child(userId)
+                                .updateChildren(updates).await()
                         }
                     }
                 }
