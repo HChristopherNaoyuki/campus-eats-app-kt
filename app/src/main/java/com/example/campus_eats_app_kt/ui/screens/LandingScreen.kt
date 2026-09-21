@@ -1,5 +1,6 @@
 package com.example.campus_eats_app_kt.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +33,7 @@ import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 import com.example.campus_eats_app_kt.ui.theme.CampusWhite
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.ui.theme.IconOrange
+import com.example.campus_eats_app_kt.util.LanguageManager
 
 /**
  * LandingScreen serves as the welcome page for the application.
@@ -89,7 +92,7 @@ fun LandingScreen(
             )
 
             Text(
-                text = "Order. Track. Pickup.",
+                text = LanguageManager.getString("Order. Track. Pickup.", "Bestel. Spoor na. Optel."),
                 style = MaterialTheme.typography.titleMedium.copy(
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     fontWeight = FontWeight.Bold,
@@ -102,7 +105,7 @@ fun LandingScreen(
             // Stacked Buttons following professional minimalist style
             HIGButton(
                 onClick = onRegisterClick,
-                text = "Register",
+                text = LanguageManager.getString("Register", "Registreer"),
                 modifier = Modifier.fillMaxWidth(),
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             )
@@ -115,14 +118,14 @@ fun LandingScreen(
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
-                border = androidx.compose.foundation.BorderStroke(
+                border = BorderStroke(
                     width = 2.dp,
                     color = MaterialTheme.colorScheme.onBackground,
                 ),
             )
             {
                 Text(
-                    text = "Login",
+                    text = LanguageManager.getString("Login", "Teken In"),
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onBackground,
                 )
@@ -134,11 +137,11 @@ fun LandingScreen(
             )
             {
                 Text(
-                    text = "Forgot Password?",
+                    text = LanguageManager.getString("Forgot Password?", "Wagwoord Vergeet?"),
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                        textDecoration = TextDecoration.Underline,
                     ),
                 )
             }

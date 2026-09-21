@@ -71,10 +71,10 @@ object DatabaseSeeder
             val couponDao = db.couponDao()
             val debitCardDao = db.debitCardDao()
 
-            Log.d(TAG, "Seeding authoritative users table...")
+            Log.d(TAG, "Seeding authoritative users table with exact project sample data...")
             val users = listOf(
                 UserEntity(
-                    userId = "ADMN-4K7P-2Q9X-RT5M",
+                    userId = "ADMN4K7P2Q9XRT5M",
                     fullName = "Amara Nkosi",
                     username = "amara.nkosi",
                     email = "amara.nkosi@campuseats.test",
@@ -84,7 +84,7 @@ object DatabaseSeeder
                     walletBalance = 500.0,
                 ),
                 UserEntity(
-                    userId = "ADMN-8B3W-6Y1Z-PL4N",
+                    userId = "ADMN8B3W6Y1ZPL4N",
                     fullName = "Pieter van Wyk",
                     username = "pieter.vanwyk",
                     email = "pieter.vanwyk@campuseats.test",
@@ -94,7 +94,7 @@ object DatabaseSeeder
                     walletBalance = 500.0,
                 ),
                 UserEntity(
-                    userId = "VNDR-2T5H-8J3K-Q7L0",
+                    userId = "VNDR2T5H8J3KQ7L",
                     fullName = "Thandiwe Mokoena",
                     username = "thandiwe.mokoena",
                     email = "thandiwe.mokoena@campuseats.test",
@@ -105,7 +105,7 @@ object DatabaseSeeder
                     shopStatus = ShopStatus.OPEN,
                 ),
                 UserEntity(
-                    userId = "VNDR-9F4G-7N2M-XP5Q",
+                    userId = "VNDR9F4G7N2MXP5Q",
                     fullName = "Sipho Dlamini",
                     username = "sipho.dlamini",
                     email = "sipho.dlamini@campuseats.test",
@@ -116,7 +116,7 @@ object DatabaseSeeder
                     shopStatus = ShopStatus.OPEN,
                 ),
                 UserEntity(
-                    userId = "VNDR-6C1V-9B4L-ZR8T",
+                    userId = "VNDR6C1V9B4LZR8T",
                     fullName = "Annelie Botha",
                     username = "annelie.botha",
                     email = "annelie.botha@campuseats.test",
@@ -127,7 +127,7 @@ object DatabaseSeeder
                     shopStatus = ShopStatus.OPEN,
                 ),
                 UserEntity(
-                    userId = "STDN-3J7R-5H2K-XQ9M",
+                    userId = "STDN3J7R5H2KXQ9M",
                     fullName = "Lerato Khumalo",
                     username = "lerato.khumalo",
                     email = "lerato.khumalo@campuseats.test",
@@ -137,7 +137,7 @@ object DatabaseSeeder
                     walletBalance = 250.0,
                 ),
                 UserEntity(
-                    userId = "STDN-7P4W-1Y6N-BLZ2",
+                    userId = "STDN7P4W1Y6NBLZ2",
                     fullName = "Johan Pretorius",
                     username = "johan.pretorius",
                     email = "johan.pretorius@campuseats.test",
@@ -147,7 +147,7 @@ object DatabaseSeeder
                     walletBalance = 180.0,
                 ),
                 UserEntity(
-                    userId = "STDN-5T8M-3K2L-ZXR6",
+                    userId = "STDN5T8M3K2LZXR6Q",
                     fullName = "Zanele Ndlovu",
                     username = "zanele.ndlovu",
                     email = "zanele.ndlovu@campuseats.test",
@@ -157,7 +157,7 @@ object DatabaseSeeder
                     walletBalance = 320.0,
                 ),
                 UserEntity(
-                    userId = "STDN-9R2B-7V4M-QP1X",
+                    userId = "STDN9R2B7V4MQP1X",
                     fullName = "Marius Steyn",
                     username = "marius.steyn",
                     email = "marius.steyn@campuseats.test",
@@ -167,7 +167,7 @@ object DatabaseSeeder
                     walletBalance = 150.0,
                 ),
                 UserEntity(
-                    userId = "STDT-4K9X-2P7M-NZR5",
+                    userId = "STDT4K9X2P7MNZR5B",
                     fullName = "Naledi Mahlangu",
                     username = "naledi.mahlangu",
                     email = "naledi.mahlangu@campuseats.test",
@@ -182,18 +182,18 @@ object DatabaseSeeder
                 userDao.insertUser(user)
             }
 
-            Log.d(TAG, "Seeding menu items...")
+            Log.d(TAG, "Seeding menu items linked to new Vendor IDs...")
             val items = listOf(
-                MenuItemEntity(vendorId = "VNDR-2T5H-8J3K-Q7L0", name = "Pap and Chakalaka", description = "Traditional maize porridge with spicy relish", price = 45.0, stock = 20, category = "Meals"),
-                MenuItemEntity(vendorId = "VNDR-2T5H-8J3K-Q7L0", name = "Grilled Chicken Quarter", description = "Flame-grilled chicken quarter with chips", price = 65.0, stock = 15, category = "Meals"),
-                MenuItemEntity(vendorId = "VNDR-2T5H-8J3K-Q7L0", name = "Mogodu", description = "Traditional slow-cooked tripe stew", price = 55.0, stock = 10, category = "Meals"),
-                MenuItemEntity(vendorId = "VNDR-9F4G-7N2M-XP5Q", name = "Boerewors Roll", description = "Classic South African sausage roll with relish", price = 35.0, stock = 30, category = "Braai"),
-                MenuItemEntity(vendorId = "VNDR-9F4G-7N2M-XP5Q", name = "Steak and Chips", description = "200g rump steak with seasoned fries", price = 85.0, stock = 12, category = "Braai"),
-                MenuItemEntity(vendorId = "VNDR-9F4G-7N2M-XP5Q", name = "Vegetarian Skewers", description = "Grilled mixed vegetable skewers", price = 40.0, stock = 25, category = "Braai"),
-                MenuItemEntity(vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Speciality Coffee", description = "Freshly brewed artisanal espresso blend", price = 30.0, stock = 50, category = "Beverages"),
-                MenuItemEntity(vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Fresh Koeksisters", description = "Sweet traditional braided syrup-infused pastry", price = 15.0, stock = 40, category = "Snacks"),
-                MenuItemEntity(vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Muffin Combo", description = "Large blueberry muffin with any hot drink", price = 45.0, stock = 20, category = "Breakfast"),
-                MenuItemEntity(vendorId = "VNDR-6C1V-9B4L-ZR8T", name = "Rooibos Tea", description = "Organic South African herbal infusion", price = 22.0, stock = 60, category = "Beverages"),
+                MenuItemEntity(vendorId = "VNDR2T5H8J3KQ7L", name = "Pap and Chakalaka", description = "Traditional maize porridge with spicy relish", price = 45.0, stock = 20, category = "Meals"),
+                MenuItemEntity(vendorId = "VNDR2T5H8J3KQ7L", name = "Grilled Chicken Quarter", description = "Flame-grilled chicken quarter with chips", price = 65.0, stock = 15, category = "Meals"),
+                MenuItemEntity(vendorId = "VNDR2T5H8J3KQ7L", name = "Mogodu", description = "Traditional slow-cooked tripe stew", price = 55.0, stock = 10, category = "Meals"),
+                MenuItemEntity(vendorId = "VNDR9F4G7N2MXP5Q", name = "Boerewors Roll", description = "Classic South African sausage roll with relish", price = 35.0, stock = 30, category = "Braai"),
+                MenuItemEntity(vendorId = "VNDR9F4G7N2MXP5Q", name = "Steak and Chips", description = "200g rump steak with seasoned fries", price = 85.0, stock = 12, category = "Braai"),
+                MenuItemEntity(vendorId = "VNDR9F4G7N2MXP5Q", name = "Vegetarian Skewers", description = "Grilled mixed vegetable skewers", price = 40.0, stock = 25, category = "Braai"),
+                MenuItemEntity(vendorId = "VNDR6C1V9B4LZR8T", name = "Speciality Coffee", description = "Freshly brewed artisanal espresso blend", price = 30.0, stock = 50, category = "Beverages"),
+                MenuItemEntity(vendorId = "VNDR6C1V9B4LZR8T", name = "Fresh Koeksisters", description = "Sweet traditional braided syrup-infused pastry", price = 15.0, stock = 40, category = "Snacks"),
+                MenuItemEntity(vendorId = "VNDR6C1V9B4LZR8T", name = "Muffin Combo", description = "Large blueberry muffin with any hot drink", price = 45.0, stock = 20, category = "Breakfast"),
+                MenuItemEntity(vendorId = "VNDR6C1V9B4LZR8T", name = "Rooibos Tea", description = "Organic South African herbal infusion", price = 22.0, stock = 60, category = "Beverages"),
             )
             for (item in items)
             {
@@ -218,24 +218,24 @@ object DatabaseSeeder
                 couponDao.insertCoupon(coupon)
             }
 
-            Log.d(TAG, "Seeding debit cards...")
+            Log.d(TAG, "Seeding debit cards linked to sample User IDs...")
             val cards = listOf(
-                DebitCardEntity(userId = "STDT-4K9X-2P7M-NZR5", cardNumber = "**** **** **** 8888", expiryDate = "12/28"),
-                DebitCardEntity(userId = "STDN-3J7R-5H2K-XQ9M", cardNumber = "**** **** **** 1111", expiryDate = "05/27"),
-                DebitCardEntity(userId = "STDN-7P4W-1Y6N-BLZ2", cardNumber = "**** **** **** 2222", expiryDate = "08/26"),
-                DebitCardEntity(userId = "STDN-5T8M-3K2L-ZXR6", cardNumber = "**** **** **** 3333", expiryDate = "09/29"),
-                DebitCardEntity(userId = "STDN-9R2B-7V4M-QP1X", cardNumber = "**** **** **** 4444", expiryDate = "11/27"),
-                DebitCardEntity(userId = "ADMN-4K7P-2Q9X-RT5M", cardNumber = "**** **** **** 5555", expiryDate = "01/30"),
-                DebitCardEntity(userId = "ADMN-8B3W-6Y1Z-PL4N", cardNumber = "**** **** **** 6666", expiryDate = "02/28"),
-                DebitCardEntity(userId = "VNDR-2T5H-8J3K-Q7L0", cardNumber = "**** **** **** 7777", expiryDate = "03/27"),
-                DebitCardEntity(userId = "VNDR-9F4G-7N2M-XP5Q", cardNumber = "**** **** **** 9999", expiryDate = "04/26"),
-                DebitCardEntity(userId = "VNDR-6C1V-9B4L-ZR8T", cardNumber = "**** **** **** 0000", expiryDate = "06/28"),
+                DebitCardEntity(userId = "STDT4K9X2P7MNZR5B", cardNumber = "**** **** **** 8888", expiryDate = "12/28"),
+                DebitCardEntity(userId = "STDN3J7R5H2KXQ9M", cardNumber = "**** **** **** 1111", expiryDate = "05/27"),
+                DebitCardEntity(userId = "STDN7P4W1Y6NBLZ2", cardNumber = "**** **** **** 2222", expiryDate = "08/26"),
+                DebitCardEntity(userId = "STDN5T8M3K2LZXR6Q", cardNumber = "**** **** **** 3333", expiryDate = "09/29"),
+                DebitCardEntity(userId = "STDN9R2B7V4MQP1X", cardNumber = "**** **** **** 4444", expiryDate = "11/27"),
+                DebitCardEntity(userId = "ADMN4K7P2Q9XRT5M", cardNumber = "**** **** **** 5555", expiryDate = "01/30"),
+                DebitCardEntity(userId = "ADMN8B3W6Y1ZPL4N", cardNumber = "**** **** **** 6666", expiryDate = "02/28"),
+                DebitCardEntity(userId = "VNDR2T5H8J3KQ7L", cardNumber = "**** **** **** 7777", expiryDate = "03/27"),
+                DebitCardEntity(userId = "VNDR9F4G7N2MXP5Q", cardNumber = "**** **** **** 9999", expiryDate = "04/26"),
+                DebitCardEntity(userId = "VNDR6C1V9B4LZR8T", cardNumber = "**** **** **** 0000", expiryDate = "06/28"),
             )
             for (card in cards)
             {
                 debitCardDao.insertCard(card)
             }
         }
-        Log.d(TAG, "Database successfully pre-populated with required records.")
+        Log.d(TAG, "Database successfully pre-populated with project-defined records.")
     }
 }

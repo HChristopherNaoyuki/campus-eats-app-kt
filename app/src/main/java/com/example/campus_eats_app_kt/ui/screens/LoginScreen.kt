@@ -1,5 +1,6 @@
 package com.example.campus_eats_app_kt.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import com.example.campus_eats_app_kt.util.LanguageManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -45,6 +46,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -93,7 +96,7 @@ fun LoginScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Login",
+                title = LanguageManager.getString("Login", "Teken In"),
                 navigationIcon = {
                     IconButton(onClick = onBackClick)
                     {
@@ -121,7 +124,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
 
             Text(
-                text = "Welcome back",
+                text = LanguageManager.getString("Welcome back", "Welkom terug"),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -129,7 +132,7 @@ fun LoginScreen(
             )
 
             Text(
-                text = "Please sign in to your account.",
+                text = LanguageManager.getString("Please sign in to your account.", "Meld asseblief aan by jou rekening."),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier
@@ -141,7 +144,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email Address") },
+                label = { Text(LanguageManager.getString("Email Address", "E-posadres")) },
                 placeholder = { Text("aisha@coebank.ac.za") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
@@ -155,7 +158,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Password") },
+                    label = { Text(LanguageManager.getString("Password", "Wagwoord")) },
                     modifier = Modifier.fillMaxWidth(),
                     leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -180,11 +183,11 @@ fun LoginScreen(
                 )
                 {
                     Text(
-                        text = "Forgot Password?",
+                        text = LanguageManager.getString("Forgot Password?", "Wagwoord Vergeet?"),
                         color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                            textDecoration = TextDecoration.Underline,
                         ),
                     )
                 }
@@ -199,7 +202,7 @@ fun LoginScreen(
                     text = (loginState as LoginState.Error).message,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(bottom = DesignSystem.Spacing.small),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                 )
             }
@@ -207,7 +210,7 @@ fun LoginScreen(
             // Principle: Feedback - Action status indicators
             HIGButton(
                 onClick = { viewModel.login(email, password) },
-                text = "Login",
+                text = LanguageManager.getString("Login", "Teken In"),
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -254,7 +257,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
-                border = androidx.compose.foundation.BorderStroke(
+                border = BorderStroke(
                     width = 2.dp,
                     color = MaterialTheme.colorScheme.onSurface,
                 ),
@@ -309,15 +312,15 @@ fun LoginScreen(
                 Row()
                 {
                     Text(
-                        text = "No account? ",
+                        text = LanguageManager.getString("No account? ", "Geen rekening nie? "),
                         color = MaterialTheme.colorScheme.onBackground,
                     )
                     Text(
-                        text = "Register",
+                        text = LanguageManager.getString("Register", "Registreer"),
                         color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                            textDecoration = TextDecoration.Underline,
                         ),
                     )
                 }

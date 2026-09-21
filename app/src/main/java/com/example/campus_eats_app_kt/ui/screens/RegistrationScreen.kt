@@ -1,5 +1,6 @@
 package com.example.campus_eats_app_kt.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import com.example.campus_eats_app_kt.util.LanguageManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -96,7 +98,7 @@ fun RegistrationScreen(
     Scaffold(
         topBar = {
             HIGTopAppBar(
-                title = "Create Account",
+                title = LanguageManager.getString("Create Account", "Skep Rekening"),
                 navigationIcon = {
                     IconButton(onClick = onBackClick)
                     {
@@ -123,7 +125,7 @@ fun RegistrationScreen(
         )
         {
             Text(
-                text = "Join Campus Eats",
+                text = LanguageManager.getString("Join Campus Eats", "Sluit aan by Campus Eats"),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -131,7 +133,7 @@ fun RegistrationScreen(
             )
 
             Text(
-                text = "Select your account type to get started.",
+                text = LanguageManager.getString("Select your account type to get started.", "Kies jou rekeningtipe om te begin."),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.fillMaxWidth(),
@@ -144,9 +146,11 @@ fun RegistrationScreen(
                 selectedOption = selectedRole,
                 onOptionSelected = { selectedRole = it },
                 labelProvider = { role ->
-                    role.name.lowercase().replaceFirstChar() 
-                    { char -> 
-                        if (char.isLowerCase()) char.titlecase() else char.toString() 
+                    when (role) {
+                        UserRole.STUDENT -> LanguageManager.getString("Student", "Student")
+                        UserRole.STANDARD -> LanguageManager.getString("Standard", "Standaard")
+                        UserRole.VENDOR -> LanguageManager.getString("Vendor", "Verkoper")
+                        else -> role.name
                     }
                 },
             )
@@ -157,7 +161,7 @@ fun RegistrationScreen(
             OutlinedTextField(
                 value = fullName,
                 onValueChange = { fullName = it },
-                label = { Text("Full Legal Name") },
+                label = { Text(LanguageManager.getString("Full Legal Name", "Volle Wetlike Naam")) },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
                 singleLine = true,
@@ -167,7 +171,7 @@ fun RegistrationScreen(
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("Display Username") },
+                label = { Text(LanguageManager.getString("Display Username", "Vertoon Gebruikersnaam")) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
@@ -176,7 +180,7 @@ fun RegistrationScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("University Email") },
+                label = { Text(LanguageManager.getString("University Email", "Universiteit E-pos")) },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -189,7 +193,7 @@ fun RegistrationScreen(
                 OutlinedTextField(
                     value = shopName,
                     onValueChange = { shopName = it },
-                    label = { Text("Shop or Merchant Name") },
+                    label = { Text(LanguageManager.getString("Shop or Merchant Name", "Winkel of Handelaarnaam")) },
                     modifier = Modifier.fillMaxWidth(),
                     leadingIcon = { Icon(Icons.Rounded.Store, contentDescription = null) },
                     singleLine = true,
@@ -200,7 +204,7 @@ fun RegistrationScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Secure Password") },
+                label = { Text(LanguageManager.getString("Secure Password", "Veilige Wagwoord")) },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
@@ -212,7 +216,7 @@ fun RegistrationScreen(
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
-                label = { Text("Confirm Password") },
+                label = { Text(LanguageManager.getString("Confirm Password", "Bevestig Wagwoord")) },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
@@ -229,14 +233,30 @@ fun RegistrationScreen(
                     text = (registrationState as RegistrationState.Error).message,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(bottom = DesignSystem.Spacing.small),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    textAlign = TextAlign.Center,
                 )
             }
 
             // Standard registration trigger
             HIGButton(
                 onClick = {
-                    if (password == confirmPassword)
+                    val usernameRegex = Regex("^[a-zA-Z0-9._]{3,20}$")
+                    if (fullName.isBlank() || username.isBlank() || email.isBlank() || password.isBlank())
+                    {
+                        viewModel.setError(LanguageManager.getString("Please fill in all fields.", "Vul asseblief alle velde in."))
+                    }
+                    else if (!username.matches(usernameRegex))
+                    {
+                        viewModel.setError(LanguageManager.getString(
+                            "Username must be 3-20 characters and only contain alphanumeric, dots, or underscores.",
+                            "Gebruikersnaam moet 3-20 karakters wees en mag slegs alfanumeries, kolle of onderstrepe bevat."
+                        ))
+                    }
+                    else if (password != confirmPassword)
+                    {
+                        viewModel.setError(LanguageManager.getString("Passwords do not match.", "Wagwoorde stem nie ooreen nie."))
+                    }
+                    else
                     {
                         viewModel.register(
                             fullName,
@@ -247,12 +267,8 @@ fun RegistrationScreen(
                             shopName.takeIf { selectedRole == UserRole.VENDOR },
                         )
                     }
-                    else
-                    {
-                        viewModel.setError("Passwords do not match.")
-                    }
                 },
-                text = "Create account",
+                text = LanguageManager.getString("Create account", "Skep rekening"),
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -307,7 +323,7 @@ fun RegistrationScreen(
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
-                border = androidx.compose.foundation.BorderStroke(
+                border = BorderStroke(
                     width = 2.dp,
                     color = MaterialTheme.colorScheme.onSurface,
                 ),
