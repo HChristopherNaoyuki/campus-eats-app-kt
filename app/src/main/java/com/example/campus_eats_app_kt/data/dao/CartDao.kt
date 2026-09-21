@@ -22,6 +22,18 @@ interface CartDao
     suspend fun addToCart(cartItem: CartItemEntity)
 
     /**
+     * Increments the quantity of an existing cart item.
+     */
+    @Query("UPDATE cart_items SET quantity = quantity + 1 WHERE userId = :userId AND itemId = :itemId")
+    suspend fun incrementQuantity(userId: String, itemId: Long)
+
+    /**
+     * Decrements the quantity of an existing cart item.
+     */
+    @Query("UPDATE cart_items SET quantity = quantity - 1 WHERE userId = :userId AND itemId = :itemId AND quantity > 1")
+    suspend fun decrementQuantity(userId: String, itemId: Long)
+
+    /**
      * Updates an item's quantity or price in the cart.
      */
     @Update

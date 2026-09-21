@@ -36,8 +36,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -153,9 +153,9 @@ fun CheckoutScreen(
     viewModel: CheckoutViewModel,
 )
 {
-    val cartItems by viewModel.cartItems.collectAsState()
-    val role by viewModel.userRole.collectAsState()
-    val checkoutState by viewModel.checkoutState.collectAsState()
+    val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
+    val role by viewModel.userRole.collectAsStateWithLifecycle()
+    val checkoutState by viewModel.checkoutState.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
 
     var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.CAMPUS_WALLET) }

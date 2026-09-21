@@ -3,12 +3,11 @@ package com.example.campus_eats_app_kt.data
 import com.example.campus_eats_app_kt.data.dao.MenuItemDao
 import com.example.campus_eats_app_kt.data.dao.OrderDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
-import com.example.campus_eats_app_kt.data.entity.OrderStatus
-import com.example.campus_eats_app_kt.data.entity.UserRole
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import java.util.Calendar
 
 /**
  * VendorStats holds the performance metrics for a single shop owner.
@@ -35,8 +34,8 @@ data class AdminStats(
 )
 
 /**
- * StatsRepository computes analytical data and financial reports by aggregating 
- * information from Users, Menu Items, and Orders.
+ * StatsRepository computes analytical data.
+ * Hardened in Batch 2 with SQL-based aggregation and local time boundaries.
  */
 class StatsRepository(
     private val userDao: UserDao,
@@ -44,35 +43,35 @@ class StatsRepository(
     private val orderDao: OrderDao,
 )
 {
-    companion object
+    private fun getStartTime(daysBack: Int): Long
     {
-        private const val MILLIS_PER_DAY = 24 * 60 * 60 * 1000L
-        private const val MILLIS_PER_WEEK = 7 * MILLIS_PER_DAY
-        private const val MILLIS_PER_MONTH = 30 * MILLIS_PER_DAY
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, -daysBack)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        return calendar.timeInMillis
     }
 
     /**
      * Aggregates real-time statistics for a vendor.
+     * Finding 18: Uses SQL aggregation for performance.
      */
     fun getVendorStats(vendorId: String): Flow<VendorStats>
     {
+        val today = getStartTime(0)
         return combine(
-            orderDao.getOrdersByVendor(vendorId),
-            menuItemDao.getMenuItemsByVendor(vendorId),
-        ) { orders, menuItems ->
-            val now = System.currentTimeMillis()
-            val startOfDay = now - (now % MILLIS_PER_DAY)
-
+            orderDao.getVendorTotalEarnings(vendorId),
+            menuItemDao.getMenuItemCountByVendor(vendorId),
+            orderDao.getVendorActiveOrderCount(vendorId),
+            orderDao.getVendorRevenueSince(vendorId, today),
+        ) { earnings, count, active, todayRev ->
             VendorStats(
-                allTimeEarnings = orders.asSequence().filter { it.status == OrderStatus.COMPLETED }
-                    .sumOf { it.totalAmount },
-                menuItemCount = menuItems.size,
-                activeOrders = orders.count() 
-                {
-                    (it.status != OrderStatus.COMPLETED) && (it.status != OrderStatus.CANCELLED)
-                },
-                todayRevenue = orders.asSequence().filter { (it.status == OrderStatus.COMPLETED) && (it.timestamp >= startOfDay) }
-                    .sumOf { it.totalAmount },
+                allTimeEarnings = earnings ?: 0.0,
+                menuItemCount = count,
+                activeOrders = active,
+                todayRevenue = todayRev ?: 0.0,
             )
         }.flowOn(Dispatchers.Default)
     }
@@ -82,28 +81,30 @@ class StatsRepository(
      */
     fun getAdminStats(): Flow<AdminStats>
     {
-        return combine(
-            userDao.getAllUsers(),
-            menuItemDao.getAllMenuItems(),
-            orderDao.getOrdersByStatus(OrderStatus.COMPLETED),
-        ) { users, menuItems, completedOrders ->
-            val now = System.currentTimeMillis()
-            val startOfDay = now - (now % MILLIS_PER_DAY)
-            val startOfWeek = now - MILLIS_PER_WEEK
-            val startOfMonth = now - MILLIS_PER_MONTH
+        val today = getStartTime(0)
+        val week = getStartTime(7)
+        val month = getStartTime(30)
 
+        // Using combine with varargs since we have > 5 flows
+        return combine(
+            orderDao.getGlobalTotalEarnings(),
+            userDao.getTotalUserCount(),
+            userDao.getVendorCount(),
+            menuItemDao.getGlobalMenuItemCount(),
+            orderDao.getGlobalCompletedOrderCount(),
+            orderDao.getRevenueSince(today),
+            orderDao.getRevenueSince(week),
+            orderDao.getRevenueSince(month),
+        ) { args: Array<*> ->
             AdminStats(
-                allTimeEarnings = completedOrders.sumOf { it.totalAmount },
-                totalUsers = users.size,
-                activeVendors = users.count { it.role == UserRole.VENDOR },
-                menuItemCount = menuItems.size,
-                orderCount = completedOrders.size,
-                todayRevenue = completedOrders.asSequence().filter { it.timestamp >= startOfDay }
-                    .sumOf { it.totalAmount },
-                weekRevenue = completedOrders.asSequence().filter { it.timestamp >= startOfWeek }
-                    .sumOf { it.totalAmount },
-                monthRevenue = completedOrders.asSequence().filter { it.timestamp >= startOfMonth }
-                    .sumOf { it.totalAmount },
+                allTimeEarnings = args[0] as? Double ?: 0.0,
+                totalUsers = args[1] as Int,
+                activeVendors = args[2] as Int,
+                menuItemCount = args[3] as Int,
+                orderCount = args[4] as Int,
+                todayRevenue = args[5] as? Double ?: 0.0,
+                weekRevenue = args[6] as? Double ?: 0.0,
+                monthRevenue = args[7] as? Double ?: 0.0,
             )
         }.flowOn(Dispatchers.Default)
     }

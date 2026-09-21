@@ -10,7 +10,6 @@ import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.UserEntity
-import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.entity.UserStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,8 +19,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * AdminViewModel orchestrates administrative business logic across user management, 
- * order oversight, and system feedback.
+ * AdminViewModel orchestrates administrative business logic.
+ * Hardened in Batch 2 to remove dead code and ensure claim verification.
  */
 class AdminViewModel(
     private val adminRepository: AdminRepository,
@@ -39,9 +38,6 @@ class AdminViewModel(
         checkAdminStatus()
     }
 
-    /**
-     * Verifies administrative privileges using Firebase custom claims.
-     */
     fun checkAdminStatus()
     {
         viewModelScope.launch()
@@ -50,15 +46,7 @@ class AdminViewModel(
         }
     }
 
-    // State exposed to UI - Restricted if not admin
     val users: StateFlow<List<UserEntity>> = adminRepository.getAllUsers()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val vendors: StateFlow<List<UserEntity>> = users
-        .map()
-        { userList -> 
-            userList.filter { user -> user.role == UserRole.VENDOR } 
-        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val orders: StateFlow<List<OrderEntity>> = orderRepository.getAllOrders()
@@ -66,7 +54,6 @@ class AdminViewModel(
 
     /**
      * Toggles the active status of a user.
-     * Enforces admin claim verification before repository call.
      */
     fun toggleUserStatus(user: UserEntity)
     {
@@ -86,29 +73,8 @@ class AdminViewModel(
         }
     }
 
-
-
     /**
-     * Updates the status of an order.
-     */
-
-
-    /**
-     * Issues credits to a user's wallet.
-     */
-    fun issueCredits(userId: String, amount: Double)
-    {
-        viewModelScope.launch()
-        {
-            if (authRepository.isAdmin())
-            {
-                adminRepository.issueCredits(userId, amount)
-            }
-        }
-    }
-
-    /**
-     * Generates a new discount coupon.
+     * Generates a new discount coupon or issues a targeted credit.
      */
     fun generateCoupon(
         code: String,

@@ -35,6 +35,7 @@ import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Inventory
@@ -106,8 +107,11 @@ import com.example.campus_eats_app_kt.ui.components.HIGServiceRow
 import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.LanguageManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -120,6 +124,7 @@ import androidx.compose.material.icons.rounded.DateRange
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -137,10 +142,22 @@ fun HomeScreenTab(
     onExploreVendors: () -> Unit,
 )
 {
-    val user by authRepository.getUserFlow(userId).collectAsState(null)
-    val vendorStats by statsRepository.getVendorStats(userId).collectAsState(null)
-    val adminStats by statsRepository.getAdminStats().collectAsState(null)
-    val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
+    val user by remember(userId) { authRepository.getUserFlow(userId) }.collectAsStateWithLifecycle(initialValue = null)
+    
+    val vendorStats by remember(userId, role) 
+    { 
+        if (role == UserRole.VENDOR) statsRepository.getVendorStats(userId) 
+        else flowOf(null) 
+    }.collectAsStateWithLifecycle(initialValue = null)
+
+    val adminStats by remember(role) 
+    { 
+        if (role == UserRole.ADMINISTRATOR) statsRepository.getAdminStats() 
+        else flowOf(null) 
+    }.collectAsStateWithLifecycle(initialValue = null)
+
+    val vendors by remember { menuRepository.getAllVendors() }.collectAsStateWithLifecycle(initialValue = emptyList())
+    
     val coroutineScope = rememberCoroutineScope()
     val locale = LocalConfiguration.current.locales[0]
     val responsivePadding = DesignSystem.Spacing.responsiveHorizontalPadding()
@@ -847,7 +864,6 @@ fun ActivityScreenTab(
                     "VendorReports" -> VendorReportHub(userId, orderRepository)
                     "AdminReceipts" -> AdminReceiptsHub(orderRepository)
                     "AdminSummary" -> AdminGlobalSummary(orderRepository)
-                    "AdminReports" -> AdminReportHub()
                     "OrderDetail" -> OrderDetailWindow(
                         order = selectedOrder,
                         role = userRole,
@@ -870,7 +886,7 @@ fun StudentVendorList(
     onVendorClick: (String, String) -> Unit,
 )
 {
-    val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
+    val vendors by remember { menuRepository.getAllVendors() }.collectAsStateWithLifecycle(initialValue = emptyList())
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -925,7 +941,7 @@ fun StudentVendorList(
 @Composable
 fun AdminUserManagement(viewModel: AdminViewModel)
 {
-    val users by viewModel.users.collectAsState()
+    val users by viewModel.users.collectAsStateWithLifecycle()
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),
@@ -975,7 +991,7 @@ fun AdminUserManagement(viewModel: AdminViewModel)
 @Composable
 fun AdminVendorManagement(viewModel: AdminViewModel)
 {
-    val users by viewModel.users.collectAsState()
+    val users by viewModel.users.collectAsStateWithLifecycle()
     val vendors = users.filter { it.role == UserRole.VENDOR }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -1008,7 +1024,7 @@ fun AdminVendorManagement(viewModel: AdminViewModel)
 @Composable
 fun AdminOrderManagement(viewModel: AdminViewModel)
 {
-    val orders by viewModel.orders.collectAsState()
+    val orders by viewModel.orders.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -1074,7 +1090,7 @@ fun StudentReceipts(
     onOrderClick: (OrderEntity) -> Unit,
 )
 {
-    val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
+    val orders by remember(userId) { orderRepository.getOrdersForUser(userId) }.collectAsStateWithLifecycle(initialValue = emptyList())
     val locale = LocalConfiguration.current.locales[0]
 
     var selectedMonth by remember { mutableIntStateOf(-1) }
@@ -1207,7 +1223,7 @@ fun StudentTotalSpending(
     orderRepository: OrderRepository,
 )
 {
-    val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
+    val orders by remember(userId) { orderRepository.getOrdersForUser(userId) }.collectAsStateWithLifecycle(initialValue = emptyList())
     val total = orders.asSequence().filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
     val locale = LocalConfiguration.current.locales[0]
 
@@ -1243,10 +1259,10 @@ fun SettingsScreenTab(
 )
 {
     var activeSettingView by remember { mutableStateOf("Main") }
-    val user by authRepository.getUserFlow(userId).collectAsState(null)
+    val user by remember(userId) { authRepository.getUserFlow(userId) }.collectAsStateWithLifecycle(initialValue = null)
     val coroutineScope = rememberCoroutineScope()
     val locale = LocalConfiguration.current.locales[0]
-    val isAdmin by adminViewModel.isAdmin.collectAsState()
+    val isAdmin by adminViewModel.isAdmin.collectAsStateWithLifecycle()
     val responsivePadding = DesignSystem.Spacing.responsiveHorizontalPadding()
 
     if (activeSettingView == "Main")
@@ -1685,9 +1701,9 @@ fun StudentCurrentOrderHub(
     onReturnHome: () -> Unit,
 )
 {
-    val cartItems by cartRepository.getCart(userId).collectAsState(emptyList())
-    val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
-    val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
+    val cartItems by remember(userId) { cartRepository.getCart(userId) }.collectAsStateWithLifecycle(initialValue = emptyList())
+    val orders by remember(userId) { orderRepository.getOrdersForUser(userId) }.collectAsStateWithLifecycle(initialValue = emptyList())
+    val vendors by remember { menuRepository.getAllVendors() }.collectAsStateWithLifecycle(initialValue = emptyList())
     val coroutineScope = rememberCoroutineScope()
     val locale = LocalConfiguration.current.locales[0]
 
@@ -1906,8 +1922,8 @@ fun StudentActivityReports(
     menuRepository: MenuRepository,
 )
 {
-    val orders by orderRepository.getOrdersForUser(userId).collectAsState(emptyList())
-    val vendors by menuRepository.getAllVendors().collectAsState(emptyList())
+    val orders by remember(userId) { orderRepository.getOrdersForUser(userId) }.collectAsStateWithLifecycle(initialValue = emptyList())
+    val vendors by remember { menuRepository.getAllVendors() }.collectAsStateWithLifecycle(initialValue = emptyList())
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val locale = LocalConfiguration.current.locales[0]
@@ -2051,20 +2067,36 @@ fun StudentActivityReports(
                 {
                     try
                     {
-                        val reportData = mapOf(
-                            "userId" to userId,
-                            "totalSpending" to totalSpending,
-                            "vendorBreakdown" to spendingByVendor.map { mapOf("vendor" to it.first, "amount" to it.second) },
-                            "orderCount" to orders.size,
-                        )
-                        val json = prettyJson.encodeToString(reportData)
-                        val file = File(context.getExternalFilesDir(null), "spending_report.json")
-                        file.writeText(json)
-                        Toast.makeText(context, "Report exported to ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                        val reportJson = buildJsonObject {
+                            put("userId", userId)
+                            put("totalSpending", totalSpending)
+                            put("orderCount", orders.size)
+                            put("vendorBreakdown", buildJsonArray {
+                                spendingByVendor.forEach { (vendor, amount) ->
+                                    addJsonObject {
+                                        put("vendor", vendor)
+                                        put("amount", amount)
+                                    }
+                                }
+                            })
+                        }
+                        
+                        val json = prettyJson.encodeToString(reportJson)
+                        
+                        withContext(Dispatchers.IO)
+                        {
+                            val dir = context.getExternalFilesDir(null) ?: throw Exception("Storage unavailable.")
+                            val file = File(dir, "spending_report.json")
+                            file.writeText(json)
+                            withContext(Dispatchers.Main)
+                            {
+                                Toast.makeText(context, "Report exported to ${file.absolutePath}", Toast.LENGTH_LONG).show()
+                            }
+                        }
                     }
-                    catch (_: Exception)
+                    catch (e: Exception)
                     {
-                        Toast.makeText(context, "Export failed.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
             },
@@ -2086,7 +2118,7 @@ fun VendorOrderHub(
     onOrderClick: (OrderEntity) -> Unit,
 )
 {
-    val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
+    val orders by remember(vendorId) { orderRepository.getOrdersForVendor(vendorId) }.collectAsStateWithLifecycle(initialValue = emptyList())
     val locale = LocalConfiguration.current.locales[0]
     val coroutineScope = rememberCoroutineScope()
 
@@ -2125,28 +2157,48 @@ fun VendorOrderHub(
                             Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
                             Text(text = "R${String.format(locale, "%.2f", order.totalAmount)}")
                         }
-                        IconButton(
-                            onClick = {
-                                coroutineScope.launch()
-                                {
-                                    val nextStatus = when (order.status)
-                                    {
-                                        OrderStatus.PENDING -> OrderStatus.ACCEPTED
-                                        OrderStatus.ACCEPTED -> OrderStatus.PREPARING
-                                        OrderStatus.PREPARING -> OrderStatus.READY
-                                        OrderStatus.READY -> OrderStatus.COMPLETED
-                                        else -> order.status
-                                    }
-                                    orderRepository.updateOrderStatus(order, nextStatus)
-                                }
-                            },
-                        )
+                        
+                        Row()
                         {
-                            Icon(
-                                imageVector = Icons.Rounded.CheckCircle,
-                                contentDescription = "Progress",
-                                tint = MaterialTheme.colorScheme.primary,
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch()
+                                    {
+                                        try { orderRepository.updateOrderStatus(order, OrderStatus.CANCELLED) } catch (_: Exception) {}
+                                    }
+                                },
                             )
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "Reject",
+                                    tint = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                            
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch()
+                                    {
+                                        val nextStatus = when (order.status)
+                                        {
+                                            OrderStatus.PENDING -> OrderStatus.ACCEPTED
+                                            OrderStatus.ACCEPTED -> OrderStatus.PREPARING
+                                            OrderStatus.PREPARING -> OrderStatus.READY
+                                            OrderStatus.READY -> OrderStatus.COMPLETED
+                                            else -> order.status
+                                        }
+                                        try { orderRepository.updateOrderStatus(order, nextStatus) } catch (_: Exception) {}
+                                    }
+                                },
+                            )
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.CheckCircle,
+                                    contentDescription = "Progress",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            }
                         }
                     }
                 }
@@ -2161,7 +2213,7 @@ fun VendorReportHub(
     orderRepository: OrderRepository,
 )
 {
-    val orders by orderRepository.getOrdersForVendor(vendorId).collectAsState(emptyList())
+    val orders by remember(vendorId) { orderRepository.getOrdersForVendor(vendorId) }.collectAsStateWithLifecycle(initialValue = emptyList())
     val completedOrders = remember(orders) { orders.filter { it.status == OrderStatus.COMPLETED } }
     val totalRevenue = completedOrders.sumOf { it.totalAmount }
     val locale = LocalConfiguration.current.locales[0]
@@ -2238,7 +2290,7 @@ fun VendorReportHub(
 @Composable
 fun AdminReceiptsHub(orderRepository: OrderRepository)
 {
-    val orders by orderRepository.getAllOrders().collectAsState(emptyList())
+    val orders by remember { orderRepository.getAllOrders() }.collectAsStateWithLifecycle(initialValue = emptyList())
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),
@@ -2247,9 +2299,10 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
     {
         items(orders)
         { order ->
+            val locale = LocalConfiguration.current.locales[0]
             HIGCard(modifier = Modifier.fillMaxWidth())
             {
-                Text(text = "Order #${order.orderId} - R${order.totalAmount}")
+                Text(text = "Order #${order.orderId} - R${String.format(locale, "%.2f", order.totalAmount)}")
             }
         }
     }
@@ -2258,22 +2311,16 @@ fun AdminReceiptsHub(orderRepository: OrderRepository)
 @Composable
 fun AdminGlobalSummary(orderRepository: OrderRepository)
 {
-    val orders by orderRepository.getAllOrders().collectAsState(emptyList())
+    val orders by remember { orderRepository.getAllOrders() }.collectAsStateWithLifecycle(initialValue = emptyList())
     val total = orders.asSequence().filter { it.status == OrderStatus.COMPLETED }.sumOf { it.totalAmount }
+    val locale = LocalConfiguration.current.locales[0]
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
     {
-        Text(text = "Global Revenue: R$total", style = MaterialTheme.typography.headlineLarge)
+        Text(text = "Global Revenue: R${String.format(locale, "%.2f", total)}", style = MaterialTheme.typography.headlineLarge)
     }
 }
 
-@Composable
-fun AdminReportHub()
-{
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
-    {
-        Text(text = "System Admin Reports")
-    }
-}
+
 
 @Composable
 fun OrderDetailWindow(
@@ -2363,7 +2410,7 @@ fun OrderDetailWindow(
 @Composable
 fun AdminIssueCreditsWindow(viewModel: AdminViewModel)
 {
-    val users by viewModel.users.collectAsState()
+    val users by viewModel.users.collectAsStateWithLifecycle()
     val eligibleUsers = remember(users)
     {
         users.filter { (it.role == UserRole.STUDENT) || (it.role == UserRole.STANDARD) }
@@ -2642,7 +2689,7 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
 @Composable
 fun AdminFeedbackWindow(viewModel: AdminViewModel, type: FeedbackType)
 {
-    val feedbacks by viewModel.getFeedbackByType(type).collectAsState(emptyList())
+    val feedbacks by remember(type) { viewModel.getFeedbackByType(type) }.collectAsStateWithLifecycle(initialValue = emptyList())
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),

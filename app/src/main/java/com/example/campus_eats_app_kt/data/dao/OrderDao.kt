@@ -49,4 +49,22 @@ interface OrderDao
      */
     @Query("SELECT * FROM orders ORDER BY timestamp DESC")
     fun getAllOrders(): Flow<List<OrderEntity>>
+
+    @Query("SELECT SUM(totalAmount) FROM orders WHERE vendorId = :vendorId AND status = 'COMPLETED'")
+    fun getVendorTotalEarnings(vendorId: String): Flow<Double?>
+
+    @Query("SELECT COUNT(*) FROM orders WHERE vendorId = :vendorId AND status NOT IN ('COMPLETED', 'CANCELLED')")
+    fun getVendorActiveOrderCount(vendorId: String): Flow<Int>
+
+    @Query("SELECT SUM(totalAmount) FROM orders WHERE status = 'COMPLETED'")
+    fun getGlobalTotalEarnings(): Flow<Double?>
+
+    @Query("SELECT COUNT(*) FROM orders WHERE status = 'COMPLETED'")
+    fun getGlobalCompletedOrderCount(): Flow<Int>
+
+    @Query("SELECT SUM(totalAmount) FROM orders WHERE status = 'COMPLETED' AND timestamp >= :startTime")
+    fun getRevenueSince(startTime: Long): Flow<Double?>
+
+    @Query("SELECT SUM(totalAmount) FROM orders WHERE vendorId = :vendorId AND status = 'COMPLETED' AND timestamp >= :startTime")
+    fun getVendorRevenueSince(vendorId: String, startTime: Long): Flow<Double?>
 }

@@ -1,8 +1,11 @@
 package com.example.campus_eats_app_kt.data
 
+import androidx.room.withTransaction
 import com.example.campus_eats_app_kt.data.dao.CartDao
+import com.example.campus_eats_app_kt.data.dao.MenuItemDao
 import com.example.campus_eats_app_kt.data.dao.OrderDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
+import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import com.example.campus_eats_app_kt.data.entity.PaymentMethod
 import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
@@ -10,6 +13,7 @@ import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -19,9 +23,11 @@ import org.junit.Test
  */
 class OrderRepositoryTest
 {
+    private lateinit var database: CampusEatsDatabase
     private lateinit var orderDao: OrderDao
     private lateinit var cartDao: CartDao
     private lateinit var userDao: UserDao
+    private lateinit var menuItemDao: MenuItemDao
     private lateinit var apiService: FakeRestaurantApiService
     private lateinit var connectivityManager: NetworkConnectivityManager
     private lateinit var repository: OrderRepository
@@ -29,25 +35,40 @@ class OrderRepositoryTest
     @Before
     fun setUp()
     {
+        database = mockk(relaxed = true)
         orderDao = mockk(relaxed = true)
         cartDao = mockk(relaxed = true)
         userDao = mockk(relaxed = true)
+        menuItemDao = mockk(relaxed = true)
         apiService = mockk(relaxed = true)
         connectivityManager = mockk(relaxed = true)
-        repository = OrderRepository(orderDao, cartDao, userDao, apiService, connectivityManager)
+        
+        mockkStatic("androidx.room.RoomDatabaseKt")
+        coEvery { database.withTransaction<Long>(any()) } coAnswers {
+            // Finding 13: Mocking withTransaction extension (args[1] is the lambda)
+            val block = it.invocation.args[1] as suspend () -> Long
+            block()
+        }
+
+        repository = OrderRepository(
+            database, 
+            orderDao, 
+            cartDao, 
+            userDao, 
+            menuItemDao, 
+            apiService, 
+            connectivityManager
+        )
     }
 
-    /**
-     * Requirement: Test Pending to Accepted transition
-     */
     @Test
     fun placeOrder_persistsOrderAndClearsCart() = runTest {
-        // Given
         val userId = "USER-001"
         val vendorId = "VENDOR-001"
         coEvery { orderDao.insertOrder(any()) } returns 123L
+        coEvery { userDao.debitWallet(any(), any()) } returns 1
+        coEvery { menuItemDao.decrementStock(any(), any()) } returns 1
 
-        // When
         repository.placeOrder(
             userId = userId,
             vendorId = vendorId,
@@ -57,18 +78,13 @@ class OrderRepositoryTest
             pickupTime = "12:00",
         )
 
-        // Then
         coVerify { orderDao.insertOrder(any()) }
         coVerify { cartDao.clearCart(userId) }
     }
 
-    /**
-     * Requirement: Test order status update
-     */
     @Test
     fun updateOrderStatus_updatesInDao() = runTest {
-        // Given
-        val order = com.example.campus_eats_app_kt.data.entity.OrderEntity(
+        val order = OrderEntity(
             orderId = 123L,
             customerId = "C1",
             vendorId = "V1",
@@ -78,13 +94,10 @@ class OrderRepositoryTest
             paymentMethod = PaymentMethod.DEBIT_CARD,
             pickupTime = "12:00",
         )
-        // Stub the update call even though it's relaxed, to be safe with match
         coEvery { orderDao.updateOrder(any()) } returns Unit
 
-        // When
         repository.updateOrderStatus(order, OrderStatus.ACCEPTED)
 
-        // Then
         coVerify {
             orderDao.updateOrder(
                 match {

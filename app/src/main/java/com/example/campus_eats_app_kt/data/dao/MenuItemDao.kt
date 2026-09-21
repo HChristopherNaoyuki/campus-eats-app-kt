@@ -20,6 +20,12 @@ interface MenuItemDao
     @Insert
     suspend fun insertMenuItem(item: MenuItemEntity)
 
+    @Query("SELECT COUNT(*) FROM menu_items WHERE vendorId = :vendorId")
+    fun getMenuItemCountByVendor(vendorId: String): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM menu_items")
+    fun getGlobalMenuItemCount(): Flow<Int>
+
     /**
      * Updates an existing menu item's details.
      */
@@ -31,6 +37,13 @@ interface MenuItemDao
      */
     @Delete
     suspend fun deleteMenuItem(item: MenuItemEntity)
+
+    /**
+     * Decrements the stock of an item if sufficient quantity exists.
+     * Returns the number of rows affected (1 if successful, 0 if insufficient stock).
+     */
+    @Query("UPDATE menu_items SET stock = stock - :quantity WHERE itemId = :itemId AND stock >= :quantity")
+    suspend fun decrementStock(itemId: Long, quantity: Int): Int
 
     /**
      * Retrieves all items offered by a specific vendor.

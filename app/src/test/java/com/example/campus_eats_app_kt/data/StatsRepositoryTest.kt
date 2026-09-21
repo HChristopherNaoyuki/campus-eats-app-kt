@@ -4,9 +4,6 @@ import app.cash.turbine.test
 import com.example.campus_eats_app_kt.data.dao.MenuItemDao
 import com.example.campus_eats_app_kt.data.dao.OrderDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
-import com.example.campus_eats_app_kt.data.entity.OrderEntity
-import com.example.campus_eats_app_kt.data.entity.OrderStatus
-import com.example.campus_eats_app_kt.data.entity.PaymentMethod
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
@@ -16,7 +13,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * StatsRepositoryTest verifies the data aggregation logic for vendor and admin reports.
+ * StatsRepositoryTest verifies data aggregation using SQL-optimized DAOs.
  */
 class StatsRepositoryTest
 {
@@ -34,74 +31,42 @@ class StatsRepositoryTest
         repository = StatsRepository(userDao, menuItemDao, orderDao)
     }
 
-    /**
-     * Requirement: Test vendor earnings aggregation
-     */
     @Test
     fun getVendorStats_aggregatesEarningsAndOrders() = runTest {
-        // Given
         val vendorId = "VENDOR-1"
-        val orders = listOf(
-            OrderEntity(
-                orderId = 1,
-                customerId = "C1",
-                vendorId = vendorId,
-                itemsJson = "[]",
-                totalAmount = 100.0,
-                status = OrderStatus.COMPLETED,
-                paymentMethod = PaymentMethod.DEBIT_CARD,
-                pickupTime = "12:00",
-            ),
-            OrderEntity(
-                orderId = 2,
-                customerId = "C1",
-                vendorId = vendorId,
-                itemsJson = "[]",
-                totalAmount = 50.0,
-                status = OrderStatus.PENDING,
-                paymentMethod = PaymentMethod.DEBIT_CARD,
-                pickupTime = "12:15",
-            ),
-        )
-        every { orderDao.getOrdersByVendor(vendorId) } returns flowOf(orders)
-        every { menuItemDao.getMenuItemsByVendor(vendorId) } returns flowOf(emptyList())
+        
+        every { orderDao.getVendorTotalEarnings(vendorId) } returns flowOf(100.0)
+        every { menuItemDao.getMenuItemCountByVendor(vendorId) } returns flowOf(5)
+        every { orderDao.getVendorActiveOrderCount(vendorId) } returns flowOf(1)
+        every { orderDao.getVendorRevenueSince(vendorId, any()) } returns flowOf(20.0)
 
-        // When/Then
         repository.getVendorStats(vendorId).test {
             val stats = awaitItem()
             assertEquals(100.0, stats.allTimeEarnings, 0.001)
-            assertEquals(1, stats.activeOrders) // The PENDING one
+            assertEquals(5, stats.menuItemCount)
+            assertEquals(1, stats.activeOrders)
+            assertEquals(20.0, stats.todayRevenue, 0.001)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
-    /**
-     * Requirement: Test admin system stats aggregation
-     */
     @Test
     fun getAdminStats_aggregatesSystemMetrics() = runTest {
-        // Given
-        val completedOrders = listOf(
-            OrderEntity(
-                orderId = 1,
-                customerId = "C1",
-                vendorId = "V1",
-                itemsJson = "[]",
-                totalAmount = 500.0,
-                status = OrderStatus.COMPLETED,
-                paymentMethod = PaymentMethod.DEBIT_CARD,
-                pickupTime = "12:00",
-            ),
-        )
-        every { orderDao.getOrdersByStatus(OrderStatus.COMPLETED) } returns flowOf(completedOrders)
-        every { userDao.getAllUsers() } returns flowOf(emptyList())
-        every { menuItemDao.getAllMenuItems() } returns flowOf(emptyList())
+        every { orderDao.getGlobalTotalEarnings() } returns flowOf(500.0)
+        every { userDao.getTotalUserCount() } returns flowOf(10)
+        every { userDao.getVendorCount() } returns flowOf(2)
+        every { menuItemDao.getGlobalMenuItemCount() } returns flowOf(20)
+        every { orderDao.getGlobalCompletedOrderCount() } returns flowOf(15)
+        every { orderDao.getRevenueSince(any()) } returns flowOf(100.0)
 
-        // When/Then
         repository.getAdminStats().test {
             val stats = awaitItem()
             assertEquals(500.0, stats.allTimeEarnings, 0.001)
-            assertEquals(1, stats.orderCount)
+            assertEquals(10, stats.totalUsers)
+            assertEquals(2, stats.activeVendors)
+            assertEquals(20, stats.menuItemCount)
+            assertEquals(15, stats.orderCount)
+            assertEquals(100.0, stats.todayRevenue, 0.001)
             cancelAndIgnoreRemainingEvents()
         }
     }

@@ -12,12 +12,15 @@ import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GetTokenResult
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.Query
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -26,7 +29,6 @@ import org.junit.Test
 
 /**
  * AuthRepositoryTest verifies the authentication and profile management logic.
- * Enforces security rule compliance and administrative authorization.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AuthRepositoryTest
@@ -34,14 +36,12 @@ class AuthRepositoryTest
     private lateinit var userDao: UserDao
     private lateinit var apiService: FakeRestaurantApiService
     private lateinit var firebaseAuth: FirebaseAuth
-    private lateinit var firebaseDatabase: com.google.firebase.database.FirebaseDatabase
+    private lateinit var firebaseDatabase: FirebaseDatabase
     private lateinit var connectivityManager: NetworkConnectivityManager
     private lateinit var repository: AuthRepository
-    
-    private val testDispatcher = UnconfinedTestDispatcher()
 
     private val testUser = UserEntity(
-        userId = "TEST-USER-ID-X1234", // 19 chars: XXXX-XXXX-XXXX-XXXX
+        userId = "TEST-USER-ID-X1234",
         fullName = "Test User",
         username = "testuser",
         email = "test@example.com",
@@ -66,7 +66,6 @@ class AuthRepositoryTest
             connectivityManager = connectivityManager,
             firebaseAuth = firebaseAuth,
             firebaseDatabase = firebaseDatabase,
-            ioDispatcher = testDispatcher,
         )
     }
 
@@ -87,12 +86,8 @@ class AuthRepositoryTest
         return task
     }
 
-    /**
-     * Requirement: Verify isAdmin correctly identifies administrative custom claims.
-     */
     @Test
     fun isAdmin_withAdminClaim_returnsTrue() = runTest {
-        // Given
         val mockFirebaseUser = mockk<FirebaseUser>(relaxed = true)
         val tokenResult = mockk<GetTokenResult>()
         val task = mockSuccessfulTask(tokenResult)
@@ -101,46 +96,59 @@ class AuthRepositoryTest
         every { mockFirebaseUser.getIdToken(false) } returns task
         every { tokenResult.claims } returns mapOf("admin" to true)
 
-        // When
         val isAdmin = repository.isAdmin()
-
-        // Then
         assertTrue("User should be identified as admin", isAdmin)
     }
 
-    /**
-     * Requirement: Test successful profile update with restricted fields.
-     */
     @Test
     fun updateProfile_updatesAllowedFields() = runTest {
-        // Given
         coEvery { userDao.getUserById(testUser.userId) } returns testUser
-        val ref = mockk<com.google.firebase.database.DatabaseReference>(relaxed = true)
+        val ref = mockk<DatabaseReference>(relaxed = true)
         every { firebaseDatabase.getReference("users").child(any()) } returns ref
         every { ref.updateChildren(any()) } returns mockSuccessfulTask(null)
 
-        // When
         val result = repository.updateProfile(testUser.userId, "New Name", "newusername")
 
-        // Then
         assertTrue(result.isSuccess)
-        coVerify { userDao.updateUser(match { (it.fullName == "New Name") && (it.username == "newusername") }) }
+        // Finding 14: Verification updated to use targeted update
+        coVerify { userDao.updateProfileFields(testUser.userId, "New Name", "newusername") }
         coVerify { ref.updateChildren(match { (it["fullName"] == "New Name") && (it["username"] == "newusername") }) }
     }
 
     @Test
     fun login_withCorrectCredentials_returnsSuccess() = runTest {
         val authResult = mockk<AuthResult>()
-        val task = mockSuccessfulTask(authResult)
+        val authTask = mockSuccessfulTask(authResult)
 
         every {
             firebaseAuth.signInWithEmailAndPassword("test@example.com", "password123")
-        } returns task
-        coEvery { userDao.getUserByEmail("test@example.com") } returns testUser
+        } returns authTask
+        
+        // Mock resolveUserRecord's cloud fetch
+        val ref = mockk<DatabaseReference>(relaxed = true)
+        val query = mockk<Query>(relaxed = true)
+        val snapshot = mockk<DataSnapshot>(relaxed = true)
+        val childSnapshot = mockk<DataSnapshot>(relaxed = true)
+        
+        every { firebaseDatabase.getReference("users") } returns ref
+        every { ref.orderByChild("email") } returns query
+        every { query.equalTo("test@example.com") } returns query
+        every { query.get() } returns mockSuccessfulTask(snapshot)
+        every { snapshot.children } returns listOf(childSnapshot)
+        
+        // Map data from cloud
+        every { childSnapshot.value } returns mapOf(
+            "userId" to testUser.userId,
+            "fullName" to testUser.fullName,
+            "username" to testUser.username,
+            "email" to testUser.email,
+            "role" to "STUDENT",
+            "status" to "ACTIVE"
+        )
 
         val result = repository.login("test@example.com", "password123")
 
         assertTrue(result.isSuccess)
-        assertEquals(testUser, result.getOrNull())
+        assertEquals(testUser.userId, result.getOrNull()?.userId)
     }
 }

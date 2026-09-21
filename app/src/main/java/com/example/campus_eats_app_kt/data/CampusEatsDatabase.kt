@@ -40,7 +40,7 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
         DebitCardEntity::class,
     ],
     version = 9, // Incremented to 9 for coupon expiry and user assignment
-    exportSchema = false,
+    exportSchema = true,
 )
 @TypeConverters(Converters::class)
 abstract class CampusEatsDatabase : RoomDatabase()

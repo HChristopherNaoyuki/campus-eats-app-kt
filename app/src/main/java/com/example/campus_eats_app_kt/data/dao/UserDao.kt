@@ -21,6 +21,12 @@ interface UserDao
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertUser(user: UserEntity)
 
+    @Query("SELECT COUNT(*) FROM users")
+    fun getTotalUserCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM users WHERE role = 'VENDOR'")
+    fun getVendorCount(): Flow<Int>
+
     /**
      * Retrieves a user by their email address.
      */
@@ -62,6 +68,19 @@ interface UserDao
      */
     @Query("UPDATE users SET status = :status WHERE userId = :userId")
     suspend fun updateStatus(userId: String, status: UserStatus)
+
+    /**
+     * Deducts credits from a user's wallet balance if sufficient funds exist.
+     * Returns the number of rows affected (1 if successful, 0 if insufficient funds).
+     */
+    @Query("UPDATE users SET walletBalance = walletBalance - :amount WHERE userId = :userId AND walletBalance >= :amount")
+    suspend fun debitWallet(userId: String, amount: Double): Int
+
+    /**
+     * Updates specific profile fields to avoid lost updates on other fields like walletBalance.
+     */
+    @Query("UPDATE users SET fullName = :fullName, username = :username WHERE userId = :userId")
+    suspend fun updateProfileFields(userId: String, fullName: String, username: String)
 
     /**
      * Deletes a user record.

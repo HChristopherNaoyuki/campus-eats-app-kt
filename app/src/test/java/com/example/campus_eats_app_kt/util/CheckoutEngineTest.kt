@@ -96,9 +96,9 @@ class CheckoutEngineTest
         val res500 = CheckoutEngine.calculateSummary(500.0, UserRole.STANDARD)
         assertEquals(500.0 * 0.065, res500.serviceFee.toDouble(), 0.001)
 
-        // Boundary R1000 (inclusive of mid tier)
+        // Boundary R1000 (Free above or at R1000)
         val res1000 = CheckoutEngine.calculateSummary(1000.0, UserRole.STANDARD)
-        assertEquals(1000.0 * 0.065, res1000.serviceFee.toDouble(), 0.001)
+        assertEquals(0.0, res1000.serviceFee.toDouble(), 0.001)
     }
 
     /**

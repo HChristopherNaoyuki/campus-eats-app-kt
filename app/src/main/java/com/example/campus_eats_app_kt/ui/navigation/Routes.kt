@@ -29,9 +29,6 @@ sealed interface Route : NavKey {
     data class AddEditMenuItem(val vendorId: String, val itemId: Long? = null) : Route
 
     @Serializable
-    data class CustomerVendorBrowse(val userId: String) : Route
-
-    @Serializable
     data class CustomerMenuBrowse(val userId: String, val vendorId: String) : Route
 
     @Serializable

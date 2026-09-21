@@ -56,7 +56,7 @@ object CheckoutEngine
         val serviceFee = when
         {
             subtotal < TIER_LOW_THRESHOLD -> subtotal.multiply(TIER_LOW_FEE_RATE)
-            subtotal <= TIER_MID_THRESHOLD -> subtotal.multiply(TIER_MID_FEE_RATE)
+            subtotal < TIER_MID_THRESHOLD -> subtotal.multiply(TIER_MID_FEE_RATE)
             else -> subtotal.multiply(TIER_HIGH_FEE_RATE)
         }.setScale(2, RoundingMode.HALF_UP)
 

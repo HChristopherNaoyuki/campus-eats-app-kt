@@ -23,11 +23,13 @@ android {
     buildTypes {
         debug {
             buildConfigField("boolean", "ENABLE_DEMO_DATA", "true")
+            buildConfigField("String", "GOOGLE_CLIENT_ID", "\"project-google-sso.apps.googleusercontent.com\"")
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             buildConfigField("boolean", "ENABLE_DEMO_DATA", "false")
+            buildConfigField("String", "GOOGLE_CLIENT_ID", "\"project-google-sso.apps.googleusercontent.com\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -46,6 +48,10 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {

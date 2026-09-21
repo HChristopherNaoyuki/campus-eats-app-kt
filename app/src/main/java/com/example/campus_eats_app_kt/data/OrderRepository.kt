@@ -1,7 +1,9 @@
 package com.example.campus_eats_app_kt.data
 
 import android.util.Log
+import androidx.room.withTransaction
 import com.example.campus_eats_app_kt.data.dao.CartDao
+import com.example.campus_eats_app_kt.data.dao.MenuItemDao
 import com.example.campus_eats_app_kt.data.dao.OrderDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.CartItemEntity
@@ -13,18 +15,21 @@ import com.example.campus_eats_app_kt.data.network.MasterOrder
 import com.example.campus_eats_app_kt.data.network.OrderItemRequest
 import com.example.campus_eats_app_kt.data.network.OrderRequest
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
+import com.example.campus_eats_app_kt.util.OrderStatusEngine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 
 /**
- * OrderRepository manages the lifecycle of customer orders.
- * It coordinates with the local database and the remote Fake Restaurant API.
+ * OrderRepository manages the order lifecycle.
+ * Hardened in Batch 2 with atomic transactions, wallet checks, and stock management.
  */
 class OrderRepository(
+    private val database: CampusEatsDatabase,
     private val orderDao: OrderDao,
     private val cartDao: CartDao,
     private val userDao: UserDao,
+    private val menuItemDao: MenuItemDao,
     private val apiService: FakeRestaurantApiService,
     private val connectivityManager: NetworkConnectivityManager,
 )
@@ -32,8 +37,7 @@ class OrderRepository(
     private val tag = "OrderRepository"
 
     /**
-     * Persists a new order. If the vendor is from the remote API and the user
-     * has an active usercode, the order is also synchronized with the server.
+     * Finding 12 & 13: Atomic order placement with financial and inventory checks.
      */
     suspend fun placeOrder(
         userId: String,
@@ -43,40 +47,25 @@ class OrderRepository(
         paymentMethod: PaymentMethod,
         pickupTime: String,
         specialRequests: String? = null,
-    ): Long
+    ): Long = database.withTransaction()
     {
-        Log.d(tag, "Initiating order placement for User: $userId at Vendor: $vendorId")
-        // 1. Check if we need to sync with the remote API
-        val numericVendorId = vendorId.toIntOrNull()
-        val user = userDao.getUserById(userId)
-        val apikey = user?.usercode
+        Log.d(tag, "Placing order for $userId at $vendorId. Total: $totalAmount")
 
-        if ((numericVendorId != null) && (apikey != null))
+        // 1. Enforce Wallet Balance if using Campus Wallet
+        if (paymentMethod == PaymentMethod.CAMPUS_WALLET)
         {
-            try
-            {
-                Log.i(tag, "Detected remote vendor. Synchronizing order with REST API...")
-                // Check connectivity for remote sync
-                connectivityManager.ensureInternet()
-
-                val networkItems = cartItems.map()
-                {
-                    OrderItemRequest(it.name, it.quantity)
-                }
-                apiService.createOrder(
-                    numericVendorId,
-                    apikey,
-                    OrderRequest(networkItems),
-                )
-                Log.i(tag, "Remote order synchronization successful")
-            }
-            catch (e: Exception)
-            {
-                Log.e(tag, "Remote order sync failed: ${e.message}. Proceeding with local storage.")
-            }
+            val affected = userDao.debitWallet(userId, totalAmount)
+            if (affected == 0) throw Exception("Insufficient Campus Wallet balance.")
         }
 
-        // 2. Persist locally in Room
+        // 2. Enforce Inventory Availability (Finding 12)
+        for (item in cartItems)
+        {
+            val affected = menuItemDao.decrementStock(item.itemId, item.quantity)
+            if (affected == 0) throw Exception("Item '${item.name}' is out of stock.")
+        }
+
+        // 3. Persist Order Record
         val order = OrderEntity(
             customerId = userId,
             vendorId = vendorId,
@@ -87,83 +76,45 @@ class OrderRepository(
             pickupTime = pickupTime,
             specialRequests = specialRequests,
         )
-        val id = orderDao.insertOrder(order)
-        Log.d(tag, "Local order record created. ID: $id")
+        val orderId = orderDao.insertOrder(order)
 
-        // Ensure atomic operations: clearing cart after order placement
-        cartDao.clearCart(userId)
-        Log.v(tag, "Cart cleared for user: $userId")
-
-        return id
-    }
-
-    /**
-     * Retrieves all orders placed by a specific customer.
-     */
-    fun getOrdersForUser(userId: String): Flow<List<OrderEntity>> =
-        orderDao.getOrdersByCustomer(userId)
-
-    /**
-     * Retrieves orders from the remote API for the given user.
-     */
-    @Suppress("unused")
-    fun getRemoteOrders(userId: String): Flow<List<MasterOrder>> = flow()
-    {
+        // 4. Remote API Synchronization (Best-effort prototyping)
+        val numericVendorId = vendorId.toIntOrNull()
         val user = userDao.getUserById(userId)
         val apikey = user?.usercode
-        if (apikey != null)
+
+        if ((numericVendorId != null) && (apikey != null) && connectivityManager.hasInternetConnection())
         {
             try
             {
-                connectivityManager.ensureInternet()
-                val response = apiService.getUserOrders(apikey)
-                if (response.isSuccessful)
-                {
-                    emit(response.body() ?: emptyList())
-                }
+                val networkItems = cartItems.map { OrderItemRequest(it.name, it.quantity) }
+                val response = apiService.createOrder(numericVendorId, apikey, OrderRequest(networkItems))
+                if (!response.isSuccessful) Log.w(tag, "Remote sync warning: ${response.code()}")
             }
-            catch (_: Exception)
-            {
-                // Network error
-            }
+            catch (_: Exception) {}
         }
+
+        // 5. Atomic Cart Clear (Finding 13)
+        cartDao.clearCart(userId)
+
+        orderId
     }
 
-    /**
-     * Retrieves all orders assigned to a specific vendor.
-     */
-    fun getOrdersForVendor(vendorId: String): Flow<List<OrderEntity>> =
-        orderDao.getOrdersByVendor(vendorId)
+    fun getOrdersForUser(userId: String): Flow<List<OrderEntity>> = orderDao.getOrdersByCustomer(userId)
 
-    /**
-     * Updates the status of an existing order.
-     */
+    fun getOrdersForVendor(vendorId: String): Flow<List<OrderEntity>> = orderDao.getOrdersByVendor(vendorId)
+
     suspend fun updateOrderStatus(order: OrderEntity, status: OrderStatus)
     {
-        orderDao.updateOrder(order.copy(status = status))
-    }
-
-    /**
-     * Deletes a remote master order.
-     */
-    @Suppress("unused")
-    suspend fun deleteRemoteMasterOrder(userId: String, masterId: Int): Boolean
-    {
-        val user = userDao.getUserById(userId)
-        val apikey = user?.usercode ?: return false
-        return try
+        if (OrderStatusEngine.isValidTransition(order.status, status))
         {
-            val response = apiService.deleteMasterOrder(masterId, apikey)
-            response.isSuccessful
+            orderDao.updateOrder(order.copy(status = status))
         }
-        catch (e: Exception)
+        else
         {
-            false
+            throw Exception("Invalid status transition from ${order.status} to $status")
         }
     }
 
-    /**
-     * Retrieves a list of all orders across the entire system (Admin restricted).
-     */
     fun getAllOrders(): Flow<List<OrderEntity>> = orderDao.getAllOrders()
 }

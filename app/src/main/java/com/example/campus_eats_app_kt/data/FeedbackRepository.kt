@@ -8,7 +8,6 @@ import com.example.campus_eats_app_kt.data.entity.FeedbackStatus
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -98,19 +97,4 @@ class FeedbackRepository(
         )
     }
 
-    @Suppress("unused")
-    fun getComplaints(): Flow<List<FeedbackEntity>> =
-        feedbackDao.getAllFeedback()
-            .map()
-            { list -> 
-                list.filter { it.type == FeedbackType.COMPLAINT } 
-            }
-
-    @Suppress("unused")
-    fun getCompliments(): Flow<List<FeedbackEntity>> =
-        feedbackDao.getAllFeedback()
-            .map()
-            { list -> 
-                list.filter { it.type == FeedbackType.COMPLIMENT } 
-            }
 }

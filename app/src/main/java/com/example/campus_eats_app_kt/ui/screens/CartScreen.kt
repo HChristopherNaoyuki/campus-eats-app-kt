@@ -34,12 +34,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -133,8 +133,8 @@ fun CartScreen(
     viewModel: CartViewModel,
 )
 {
-    val cartItems by viewModel.cartItems.collectAsState()
-    val role by viewModel.userRole.collectAsState()
+    val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
+    val role by viewModel.userRole.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
 
     val subtotal = cartItems.sumOf { it.price * it.quantity }

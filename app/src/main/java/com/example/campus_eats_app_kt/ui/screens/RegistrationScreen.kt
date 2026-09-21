@@ -30,9 +30,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +49,7 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
+import com.example.campus_eats_app_kt.BuildConfig
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGSegmentedControl
@@ -80,7 +81,7 @@ fun RegistrationScreen(
     var selectedRole by remember { mutableStateOf(UserRole.STUDENT) }
     var shopName by remember { mutableStateOf("") }
 
-    val registrationState by viewModel.registrationState.collectAsState()
+    val registrationState by viewModel.registrationState.collectAsStateWithLifecycle()
 
     // Process-driven navigation: triggered only on successful persistence
     LaunchedEffect(registrationState)
@@ -274,7 +275,7 @@ fun RegistrationScreen(
                             // Implementation fix: Ensure valid project identity is used for the request.
                             val googleIdOption = GetGoogleIdOption.Builder()
                                 .setFilterByAuthorizedAccounts(filterByAuthorizedAccounts = false)
-                                .setServerClientId("project-google-sso.apps.googleusercontent.com") 
+                                .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
                                 .setAutoSelectEnabled(false)
                                 .build()
 
