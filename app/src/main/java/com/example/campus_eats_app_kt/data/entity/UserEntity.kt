@@ -70,4 +70,6 @@ data class UserEntity(
     val bankAccountInfo: String? = null,
     val registrationDate: Long = System.currentTimeMillis(),
     val usercode: String? = null, // API key for external "Fake Restaurant" API
+    val isSynced: Boolean = false, // Finding: Offline-first registration sync status
+    val isDemo: Boolean = false,   // Finding: Distinguish built-in accounts
 )

@@ -124,6 +124,8 @@ Administrators can use the following sample coupons for testing:
 ## 8. Functional Features
 
 * Secure Authentication: Email and password login, plus Google Single Sign-On (SSO).
+* Offline-First Registration: User registration is performed locally in the Room Database without a network dependency.
+* Automated Cloud Backup: Local user records and orders are automatically backed up to Firebase every 30 seconds via a background synchronization loop.
 * Role-Based Access Control: Specialized dashboards for Students, Vendors, and Administrators.
 * Responsive UI: Dynamic layouts that adapt to both phone and tablet sizes.
 * Order Management: Itemized ordering with platform-native time selection.

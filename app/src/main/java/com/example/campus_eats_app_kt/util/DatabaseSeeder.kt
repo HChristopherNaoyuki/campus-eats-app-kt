@@ -20,15 +20,14 @@ import java.security.MessageDigest
 
 /**
  * DatabaseSeeder handles prepopulating the local database with sample data.
- * Finding 2: Seeding is gated by BuildConfig.ENABLE_DEMO_DATA.
- * Finding 16: Uses authoritative records and atomic transactions.
+ * Requirement: All sample data must be built into the app as demo accounts.
  */
 object DatabaseSeeder
 {
     private const val TAG = "DatabaseSeeder"
 
     /**
-     * Hashes passwords using SHA-256.
+     * Hashes passwords using SHA-256 for secure storage compliance.
      */
     fun encryptPassword(password: String): String
     {
@@ -40,11 +39,11 @@ object DatabaseSeeder
 
     suspend fun seed(context: Context) = withContext(Dispatchers.IO)
     {
-        if (!BuildConfig.ENABLE_DEMO_DATA) return@withContext
-
+        // Seeding is always enabled for built-in demo account requirement
         val db = CampusEatsDatabase.getDatabase(context)
         val userDao = db.userDao()
 
+        // Check if demo accounts already exist
         if (userDao.getUserByEmail("amara.nkosi@campuseats.test") != null) return@withContext
 
         db.withTransaction()
@@ -53,33 +52,33 @@ object DatabaseSeeder
             val couponDao = db.couponDao()
             val orderDao = db.orderDao()
 
-            Log.d(TAG, "Seeding 10 authoritative user accounts...")
+            Log.d(TAG, "Seeding 10 authoritative built-in demo accounts...")
             val users = listOf(
-                UserEntity("ADMN4K7P2Q9XRT5M", "Amara Nkosi", "amara.nkosi", "amara.nkosi@campuseats.test", encryptPassword("Adm1n#Amara"), UserRole.ADMINISTRATOR, UserStatus.ACTIVE, 500.0),
-                UserEntity("ADMN8B3W6Y1ZPL4N", "Pieter van Wyk", "pieter.vanwyk", "pieter.vanwyk@campuseats.test", encryptPassword("Adm1n#Pieter"), UserRole.ADMINISTRATOR, UserStatus.ACTIVE, 500.0),
-                UserEntity("VNDR2T5H8J3KQ7L", "Thandiwe Mokoena", "thandiwe.mokoena", "thandiwe.mokoena@campuseats.test", encryptPassword("Vend0r#Thandi"), UserRole.VENDOR, UserStatus.ACTIVE, 0.0, "Campus Corner Kitchen", ShopStatus.OPEN),
-                UserEntity("VNDR9F4G7N2MXP5Q", "Sipho Dlamini", "sipho.dlamini", "sipho.dlamini@campuseats.test", encryptPassword("Vend0r#Sipho"), UserRole.VENDOR, UserStatus.ACTIVE, 0.0, "Braai Brothers", ShopStatus.OPEN),
-                UserEntity("VNDR6C1V9B4LZR8T", "Annelie Botha", "annelie.botha", "annelie.botha@campuseats.test", encryptPassword("Vend0r#Annelie"), UserRole.VENDOR, UserStatus.ACTIVE, 0.0, "Coffee and Koeksisters", ShopStatus.OPEN),
-                UserEntity("STDN3J7R5H2KXQ9M", "Lerato Khumalo", "lerato.khumalo", "lerato.khumalo@campuseats.test", encryptPassword("Stand@rd#Lerato"), UserRole.STANDARD, UserStatus.ACTIVE, 250.0),
-                UserEntity("STDN7P4W1Y6NBLZ2", "Johan Pretorius", "johan.pretorius", "johan.pretorius@campuseats.test", encryptPassword("Stand@rd#Johan"), UserRole.STANDARD, UserStatus.ACTIVE, 180.0),
-                UserEntity("STDN5T8M3K2LZXR6Q", "Zanele Ndlovu", "zanele.ndlovu", "zanele.ndlovu@campuseats.test", encryptPassword("Stand@rd#Zanele"), UserRole.STANDARD, UserStatus.ACTIVE, 320.0),
-                UserEntity("STDN9R2B7V4MQP1X", "Marius Steyn", "marius.steyn", "marius.steyn@campuseats.test", encryptPassword("Stand@rd#Marius"), UserRole.STANDARD, UserStatus.ACTIVE, 150.0),
-                UserEntity("STDT4K9X2P7MNZR5B", "Naledi Mahlangu", "naledi.mahlangu", "naledi.mahlangu@campuseats.test", encryptPassword("Stud3nt#Naledi"), UserRole.STUDENT, UserStatus.ACTIVE, 400.0)
+                UserEntity("ADMN4K7P2Q9XRT5M", "Amara Nkosi", "amara.nkosi", "amara.nkosi@campuseats.test", encryptPassword("Adm1n#Amara"), UserRole.ADMINISTRATOR, UserStatus.ACTIVE, 500.0, isSynced = true, isDemo = true),
+                UserEntity("ADMN8B3W6Y1ZPL4N", "Pieter van Wyk", "pieter.vanwyk", "pieter.vanwyk@campuseats.test", encryptPassword("Adm1n#Pieter"), UserRole.ADMINISTRATOR, UserStatus.ACTIVE, 500.0, isSynced = true, isDemo = true),
+                UserEntity("VNDR2T5H8J3KQ7L", "Thandiwe Mokoena", "thandiwe.mokoena", "thandiwe.mokoena@campuseats.test", encryptPassword("Vend0r#Thandi"), UserRole.VENDOR, UserStatus.ACTIVE, 0.0, "Campus Corner Kitchen", ShopStatus.OPEN, isSynced = true, isDemo = true),
+                UserEntity("VNDR9F4G7N2MXP5Q", "Sipho Dlamini", "sipho.dlamini", "sipho.dlamini@campuseats.test", encryptPassword("Vend0r#Sipho"), UserRole.VENDOR, UserStatus.ACTIVE, 0.0, "Braai Brothers", ShopStatus.OPEN, isSynced = true, isDemo = true),
+                UserEntity("VNDR6C1V9B4LZR8T", "Annelie Botha", "annelie.botha", "annelie.botha@campuseats.test", encryptPassword("Vend0r#Annelie"), UserRole.VENDOR, UserStatus.ACTIVE, 0.0, "Coffee and Koeksisters", ShopStatus.OPEN, isSynced = true, isDemo = true),
+                UserEntity("STDN3J7R5H2KXQ9M", "Lerato Khumalo", "lerato.khumalo", "lerato.khumalo@campuseats.test", encryptPassword("Stand@rd#Lerato"), UserRole.STANDARD, UserStatus.ACTIVE, 250.0, isSynced = true, isDemo = true),
+                UserEntity("STDN7P4W1Y6NBLZ2", "Johan Pretorius", "johan.pretorius", "johan.pretorius@campuseats.test", encryptPassword("Stand@rd#Johan"), UserRole.STANDARD, UserStatus.ACTIVE, 180.0, isSynced = true, isDemo = true),
+                UserEntity("STDN5T8M3K2LZXR6Q", "Zanele Ndlovu", "zanele.ndlovu", "zanele.ndlovu@campuseats.test", encryptPassword("Stand@rd#Zanele"), UserRole.STANDARD, UserStatus.ACTIVE, 320.0, isSynced = true, isDemo = true),
+                UserEntity("STDN9R2B7V4MQP1X", "Marius Steyn", "marius.steyn", "marius.steyn@campuseats.test", encryptPassword("Stand@rd#Marius"), UserRole.STANDARD, UserStatus.ACTIVE, 150.0, isSynced = true, isDemo = true),
+                UserEntity("STDT4K9X2P7MNZR5B", "Naledi Mahlangu", "naledi.mahlangu", "naledi.mahlangu@campuseats.test", encryptPassword("Stud3nt#Naledi"), UserRole.STUDENT, UserStatus.ACTIVE, 400.0, isSynced = true, isDemo = true)
             )
             users.forEach { userDao.insertUser(it) }
 
             Log.d(TAG, "Seeding menu items...")
             val items = listOf(
-                MenuItemEntity(1, "VNDR2T5H8J3KQ7L", "Pap and Chakalaka", "Traditional special", 45.0, 20, "Meals"),
-                MenuItemEntity(2, "VNDR2T5H8J3KQ7L", "Grilled Chicken", "Flame-grilled quarter", 65.0, 15, "Meals"),
+                MenuItemEntity(1, "VNDR2T5H8J3KQ7L", "Pap and Chakalaka", "Traditional South African special", 45.0, 20, "Meals"),
+                MenuItemEntity(2, "VNDR2T5H8J3KQ7L", "Grilled Chicken", "Flame-grilled chicken quarter", 65.0, 15, "Meals"),
                 MenuItemEntity(3, "VNDR9F4G7N2MXP5Q", "Boerewors Roll", "Braai staple", 35.0, 30, "Braai"),
-                MenuItemEntity(4, "VNDR9F4G7N2MXP5Q", "Steak and Chips", "200g rump", 85.0, 12, "Braai"),
-                MenuItemEntity(5, "VNDR9F4G7N2MXP5Q", "Vegetarian Skewer", "Mixed veggies", 40.0, 25, "Braai"),
-                MenuItemEntity(6, "VNDR6C1V9B4LZR8T", "Speciality Coffee", "Artisanal blend", 30.0, 50, "Beverages"),
-                MenuItemEntity(7, "VNDR6C1V9B4LZR8T", "Koeksister", "Sweet pastry", 15.0, 40, "Snacks"),
-                MenuItemEntity(8, "VNDR6C1V9B4LZR8T", "Muffin", "Blueberry", 25.0, 20, "Snacks"),
-                MenuItemEntity(9, "VNDR6C1V9B4LZR8T", "Rooibos Tea", "Herbal infusion", 22.0, 60, "Beverages"),
-                MenuItemEntity(10, "VNDR2T5H8J3KQ7L", "Mogodu", "Tripe stew", 55.0, 10, "Meals")
+                MenuItemEntity(4, "VNDR9F4G7N2MXP5Q", "Steak and Chips", "200g rump with seasoned fries", 85.0, 12, "Braai"),
+                MenuItemEntity(5, "VNDR9F4G7N2MXP5Q", "Vegetarian Skewer", "Grilled mixed vegetables", 40.0, 25, "Braai"),
+                MenuItemEntity(6, "VNDR6C1V9B4LZR8T", "Speciality Coffee", "Artisanal espresso blend", 30.0, 50, "Beverages"),
+                MenuItemEntity(7, "VNDR6C1V9B4LZR8T", "Koeksister", "Sweet traditional braided pastry", 15.0, 40, "Snacks"),
+                MenuItemEntity(8, "VNDR6C1V9B4LZR8T", "Muffin", "Large blueberry muffin", 25.0, 20, "Snacks"),
+                MenuItemEntity(9, "VNDR6C1V9B4LZR8T", "Rooibos Tea", "South African herbal infusion", 22.0, 60, "Beverages"),
+                MenuItemEntity(10, "VNDR2T5H8J3KQ7L", "Mogodu", "Traditional tripe stew", 55.0, 10, "Meals")
             )
             items.forEach { menuItemDao.insertMenuItem(it) }
 
@@ -108,5 +107,6 @@ object DatabaseSeeder
             )
             orders.forEach { orderDao.insertOrder(it) }
         }
+        Log.d(TAG, "Database successfully pre-populated with built-in demo records.")
     }
 }

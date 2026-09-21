@@ -58,6 +58,18 @@ interface UserDao
     fun getAllUsers(): Flow<List<UserEntity>>
 
     /**
+     * Retrieves users that have not yet been backed up to Firebase.
+     */
+    @Query("SELECT * FROM users WHERE isSynced = 0 AND isDemo = 0")
+    suspend fun getUnsyncedUsers(): List<UserEntity>
+
+    /**
+     * Marks a user as synced with the cloud database.
+     */
+    @Query("UPDATE users SET isSynced = 1 WHERE userId = :userId")
+    suspend fun markAsSynced(userId: String)
+
+    /**
      * Adds credits to a user's wallet balance.
      */
     @Query("UPDATE users SET walletBalance = walletBalance + :amount WHERE userId = :userId")

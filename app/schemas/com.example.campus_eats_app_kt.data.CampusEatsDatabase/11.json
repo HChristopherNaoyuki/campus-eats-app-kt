@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 11,
-    "identityHash": "243a0e44e92d987590d6161d5889aaf9",
+    "identityHash": "cc905f66c7883cb9106fce258545fab5",
     "entities": [
       {
         "tableName": "users",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` TEXT NOT NULL, `fullName` TEXT NOT NULL, `username` TEXT NOT NULL, `email` TEXT NOT NULL, `passwordHash` TEXT NOT NULL, `role` TEXT NOT NULL, `status` TEXT NOT NULL, `walletBalance` REAL NOT NULL, `shopName` TEXT, `shopStatus` TEXT, `bankAccountInfo` TEXT, `registrationDate` INTEGER NOT NULL, `usercode` TEXT, PRIMARY KEY(`userId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` TEXT NOT NULL, `fullName` TEXT NOT NULL, `username` TEXT NOT NULL, `email` TEXT NOT NULL, `passwordHash` TEXT NOT NULL, `role` TEXT NOT NULL, `status` TEXT NOT NULL, `walletBalance` REAL NOT NULL, `shopName` TEXT, `shopStatus` TEXT, `bankAccountInfo` TEXT, `registrationDate` INTEGER NOT NULL, `usercode` TEXT, `isSynced` INTEGER NOT NULL, `isDemo` INTEGER NOT NULL, PRIMARY KEY(`userId`))",
         "fields": [
           {
             "fieldPath": "userId",
@@ -81,6 +81,18 @@
             "fieldPath": "usercode",
             "columnName": "usercode",
             "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isSynced",
+            "columnName": "isSynced",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDemo",
+            "columnName": "isDemo",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -473,7 +485,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '243a0e44e92d987590d6161d5889aaf9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cc905f66c7883cb9106fce258545fab5')"
     ]
   }
 }
