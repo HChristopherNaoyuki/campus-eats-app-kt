@@ -1,5 +1,62 @@
 # Campus Eats - Release Notes
 
+## Version 3.0.1
+
+**Release Date:** 2026-03-30
+
+---
+
+### Overview
+
+Version 3.0.1 is a targeted release delivering core account, admin, and vendor enhancements for Campus Eats. This release introduces a generated 16-character User ID and copy control on account creation, User ID-based account recovery with strict password strength validation, explicit account suspension controls, tabular admin insight reporting, enhanced admin financial controls, actual data-driven vendor revenue reports, and live order item checking for vendors.
+
+---
+
+### New Features & Enhancements
+
+**1. Account Creation (Spec 1.1 - 1.5)**
+- Generated 16-character User ID section displayed directly above the submit button on registration.
+- Added button labelled exactly `"Copy User ID"` to copy the ID to the system clipboard before submission.
+- Preserved User ID as the unique key (`userId`) for the account.
+
+**2. Account Recovery (Spec 2.1 - 2.8)**
+- Redesigned recovery form asking for exactly three inputs: **User ID**, **New password**, and **Confirm password**.
+- Enforced password validation rules: >= 8 characters, lowercase, uppercase, digit, special character, and matching confirmation.
+- Resets password using User ID as the unique account identifier.
+
+**3. Admin User Directory (Spec 3.1 - 3.2)**
+- Added explicit **Suspend** and **Activate** action buttons in the Admin User Directory.
+
+**4. Admin Insight Reports (Spec 4.1 - 4.3)**
+- Added `AdminInsightReportsHub` displaying orders in 4 columns: **Item Number**, **Vendor Place**, **Total**, and **Order ID**.
+- Added filter with exact options: **"New to old"**, **"Month"**, and **"Year"**.
+
+**5. Admin Financial Controls (Spec 5.1 & 5.2)**
+- **Issue System Credits**: Prompts for coupon name, discount percent (max 20%), validity date (start today or later), and target user (restricted to `STUDENT` and `STANDARD` accounts).
+- **Generate Coupons**: Prompts for coupon name, discount percent (max 20%), validity date (start today or later) without a target user.
+
+**6. Vendor Financial Reports (Spec 6.1 - 6.5)**
+- `VendorReportHub` calculates item-level revenue and overall revenue strictly from actual vendor order data (`itemsJson`).
+- Prominently displays total completed revenue and top revenue item at the top.
+
+**7. Vendor Live Orders (Spec 7.1 - 7.3)**
+- Responsive live orders list where each row features a **Check** button.
+- Clicking Check opens an itemized modal listing exact items picked by the user for order preparation.
+
+---
+
+### Technical Details
+
+**Version Code:** 4
+
+**Version Name:** 3.0.1
+
+**Minimum SDK:** API 24 (Android 7.0 Nougat)
+
+**Target SDK:** API 37 (Android 15)
+
+---
+
 ## Version 2.0.0
 
 **Release Date:** 2026-08-13
