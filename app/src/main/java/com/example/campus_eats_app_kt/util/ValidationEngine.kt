@@ -26,6 +26,23 @@ object ValidationEngine
     }
 
     /**
+     * SPEC v3.0.1 Section 2.2 - 2.6 Recovery Password Validation:
+     * - Minimum 8 characters long
+     * - Contains lowercase letters
+     * - Contains uppercase letters
+     * - Contains at least one digit
+     * - Contains at least one special character
+     */
+    fun isValidRecoveryPassword(password: String): Boolean
+    {
+        return password.length >= 8 &&
+                password.any { it.isLowerCase() } &&
+                password.any { it.isUpperCase() } &&
+                password.any { it.isDigit() } &&
+                password.any { !it.isLetterOrDigit() }
+    }
+
+    /**
      * Requirement: Test price validation (positive values)
      */
     fun isValidPrice(price: Double): Boolean

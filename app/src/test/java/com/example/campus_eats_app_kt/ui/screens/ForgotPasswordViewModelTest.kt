@@ -18,7 +18,7 @@ import org.junit.Test
 
 /**
  * ForgotPasswordViewModelTest verifies the account recovery logic.
- * Finding 7: Updated to verify Email-based recovery.
+ * SPEC v3.0.1 Section 2 compliance.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ForgotPasswordViewModelTest
@@ -42,19 +42,19 @@ class ForgotPasswordViewModelTest
     }
 
     /**
-     * Requirement: Test successful password reset email dispatch
+     * SPEC 2.1 - 2.8: Test successful password reset by User ID
      */
     @Test
-    fun sendRecoveryEmail_withValidEmail_emitsSuccessState() = runTest {
+    fun resetPassword_withValidUserIdAndPassword_emitsSuccessState() = runTest {
         // Given
-        coEvery { authRepository.sendRecoveryEmail("aisha.govender@campuseats.test") } returns Result.success(Unit)
+        coEvery { authRepository.resetPasswordByUserId("USER123456789012", "Pass1234!") } returns Result.success(Unit)
 
         // Then
         viewModel.resetState.test {
             assertEquals(ResetState.Idle, awaitItem())
 
             // When
-            viewModel.sendRecoveryEmail("aisha.govender@campuseats.test")
+            viewModel.resetPassword("USER123456789012", "Pass1234!", "Pass1234!")
 
             assertEquals(ResetState.Loading, awaitItem())
             assertEquals(ResetState.Success, awaitItem())
@@ -63,45 +63,38 @@ class ForgotPasswordViewModelTest
     }
 
     /**
-     * Requirement: Test reset failure due to network or missing account
+     * SPEC 2.7: Test password mismatch validation
      */
     @Test
-    fun sendRecoveryEmail_withFailure_emitsErrorState() = runTest {
-        // Given
-        coEvery {
-            authRepository.sendRecoveryEmail("missing@test.com")
-        } returns Result.failure(Exception("Failed to send email"))
-
-        // Then
+    fun resetPassword_withMismatchedPasswords_emitsErrorState() = runTest {
         viewModel.resetState.test {
             assertEquals(ResetState.Idle, awaitItem())
 
-            // When
-            viewModel.sendRecoveryEmail("missing@test.com")
+            viewModel.resetPassword("USER123456789012", "Pass1234!", "DifferentPass!")
 
-            assertEquals(ResetState.Loading, awaitItem())
             val error = awaitItem()
             assertTrue(error is ResetState.Error)
-            assertEquals("Failed to send email", (error as ResetState.Error).message)
+            assertEquals("New password and confirm password must match.", (error as ResetState.Error).message)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     /**
-     * Requirement: Test empty email validation
+     * SPEC 2.2 - 2.6: Test weak password validation
      */
     @Test
-    fun sendRecoveryEmail_withEmptyEmail_emitsErrorState() = runTest {
-        // Then
+    fun resetPassword_withWeakPassword_emitsErrorState() = runTest {
         viewModel.resetState.test {
             assertEquals(ResetState.Idle, awaitItem())
 
-            // When
-            viewModel.sendRecoveryEmail("")
+            viewModel.resetPassword("USER123456789012", "weak", "weak")
 
             val error = awaitItem()
             assertTrue(error is ResetState.Error)
-            assertEquals("Please enter your registered email address.", (error as ResetState.Error).message)
+            assertEquals(
+                "Password must be at least 8 characters long and contain uppercase, lowercase, a digit, and a special character.",
+                (error as ResetState.Error).message
+            )
             cancelAndIgnoreRemainingEvents()
         }
     }

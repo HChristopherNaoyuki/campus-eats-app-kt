@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -47,6 +48,7 @@ import androidx.compose.material.icons.rounded.Receipt
 import androidx.compose.material.icons.rounded.RemoveShoppingCart
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material.icons.rounded.Store
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -57,6 +59,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -108,6 +111,7 @@ import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.LanguageManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -685,6 +689,7 @@ fun ActivityScreenTab(
     menuRepository: MenuRepository,
     onNavigateToCheckout: () -> Unit,
     onReturnHome: () -> Unit,
+    adminViewModel: AdminViewModel? = null,
 )
 {
     var currentHubView by remember { mutableStateOf("Main") }
@@ -865,6 +870,7 @@ fun ActivityScreenTab(
                     "VendorReports" -> VendorReportHub(userId, orderRepository)
                     "AdminReceipts" -> AdminReceiptsHub(orderRepository)
                     "AdminSummary" -> AdminGlobalSummary(orderRepository)
+                    "AdminReports" -> AdminInsightReportsHub(orderRepository, adminViewModel)
                     "OrderDetail" -> OrderDetailWindow(
                         order = selectedOrder,
                         role = userRole,
@@ -967,21 +973,17 @@ fun AdminUserManagement(viewModel: AdminViewModel)
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            text = "${user.role} • ${user.status}",
+                            text = "User ID: ${user.userId} • ${user.role} • ${user.status}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.outline,
                         )
                     }
-                    Row()
+                    OutlinedButton(
+                        onClick = { viewModel.toggleUserStatus(user) },
+                        shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+                    )
                     {
-                        IconButton(onClick = { viewModel.toggleUserStatus(user) })
-                        {
-                            Icon(
-                                imageVector = if (user.status == UserStatus.ACTIVE) Icons.Rounded.People else Icons.Rounded.Add,
-                                contentDescription = "Toggle Status",
-                                tint = if (user.status == UserStatus.ACTIVE) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                            )
-                        }
+                        Text(if (user.status == UserStatus.ACTIVE) "Suspend" else "Activate")
                     }
                 }
             }
@@ -2122,10 +2124,43 @@ fun VendorOrderHub(
     val orders by remember(vendorId) { orderRepository.getOrdersForVendor(vendorId) }.collectAsStateWithLifecycle(initialValue = emptyList())
     val locale = LocalConfiguration.current.locales[0]
     val coroutineScope = rememberCoroutineScope()
+    var orderForChecking by remember { mutableStateOf<OrderEntity?>(null) }
 
     val activeOrders = remember(orders)
     {
         orders.filter { (it.status != OrderStatus.COMPLETED) && (it.status != OrderStatus.CANCELLED) }
+    }
+
+    if (orderForChecking != null)
+    {
+        val checkedOrder = orderForChecking!!
+        val checkedItems = remember(checkedOrder) {
+            try { Json.decodeFromString<List<CartItemEntity>>(checkedOrder.itemsJson) } catch (_: Exception) { emptyList() }
+        }
+
+        AlertDialog(
+            onDismissRequest = { orderForChecking = null },
+            title = { Text(text = "Order #${checkedOrder.orderId} Items") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small)) {
+                    Text(text = "Picked Items for Preparation:", fontWeight = FontWeight.Bold)
+                    checkedItems.forEach { item ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(text = "${item.quantity}x ${item.name}")
+                            Text(text = "R${String.format(locale, "%.2f", item.price * item.quantity)}")
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { orderForChecking = null }) {
+                    Text("Close")
+                }
+            },
+        )
     }
 
     if (activeOrders.isEmpty())
@@ -2153,14 +2188,29 @@ fun VendorOrderHub(
                         verticalAlignment = Alignment.CenterVertically,
                     )
                     {
-                        Column()
+                        Column(modifier = Modifier.weight(1f))
                         {
                             Text(text = "Order #${order.orderId}", fontWeight = FontWeight.Bold)
                             Text(text = "R${String.format(locale, "%.2f", order.totalAmount)}")
                         }
                         
-                        Row()
+                        Row(verticalAlignment = Alignment.CenterVertically)
                         {
+                            // SPEC 7.2 & 7.3: Check button to show items picked
+                            OutlinedButton(
+                                onClick = { orderForChecking = order },
+                                modifier = Modifier.padding(end = DesignSystem.Spacing.small),
+                            )
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.CheckCircle,
+                                    contentDescription = "Check Items",
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Check")
+                            }
+
                             IconButton(
                                 onClick = {
                                     coroutineScope.launch()
@@ -2174,30 +2224,6 @@ fun VendorOrderHub(
                                     imageVector = Icons.Rounded.Close,
                                     contentDescription = "Reject",
                                     tint = MaterialTheme.colorScheme.error,
-                                )
-                            }
-                            
-                            IconButton(
-                                onClick = {
-                                    coroutineScope.launch()
-                                    {
-                                        val nextStatus = when (order.status)
-                                        {
-                                            OrderStatus.PENDING -> OrderStatus.ACCEPTED
-                                            OrderStatus.ACCEPTED -> OrderStatus.PREPARING
-                                            OrderStatus.PREPARING -> OrderStatus.READY
-                                            OrderStatus.READY -> OrderStatus.COMPLETED
-                                            else -> order.status
-                                        }
-                                        try { orderRepository.updateOrderStatus(order, nextStatus) } catch (_: Exception) {}
-                                    }
-                                },
-                            )
-                            {
-                                Icon(
-                                    imageVector = Icons.Rounded.CheckCircle,
-                                    contentDescription = "Progress",
-                                    tint = MaterialTheme.colorScheme.primary,
                                 )
                             }
                         }
@@ -2235,6 +2261,8 @@ fun VendorReportHub(
         revenueMap.asSequence().map { it.key to it.value }.sortedByDescending { it.second }.toList()
     }
 
+    val topRevenueItem = itemRevenue.firstOrNull()
+
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.large),
@@ -2245,7 +2273,7 @@ fun VendorReportHub(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
         )
         {
-            Column()
+            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
             {
                 Text(
                     text = "Total Completed Revenue",
@@ -2256,6 +2284,15 @@ fun VendorReportHub(
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Black,
                 )
+                if (topRevenueItem != null)
+                {
+                    Text(
+                        text = "Top Revenue Item: ${topRevenueItem.first} (R${String.format(locale, "%.2f", topRevenueItem.second)})",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
         }
 
@@ -2267,20 +2304,123 @@ fun VendorReportHub(
 
         Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
         {
-            itemRevenue.forEach { (name, revenue) ->
-                HIGCard(modifier = Modifier.fillMaxWidth())
-                {
+            if (itemRevenue.isEmpty())
+            {
+                Text("No item sales recorded.", color = MaterialTheme.colorScheme.outline)
+            }
+            else
+            {
+                itemRevenue.forEach { (name, revenue) ->
+                    HIGCard(modifier = Modifier.fillMaxWidth())
+                    {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        )
+                        {
+                            Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                            Text(
+                                text = "R${String.format(locale, "%.2f", revenue)}",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AdminInsightReportsHub(
+    orderRepository: OrderRepository,
+    adminViewModel: AdminViewModel?,
+)
+{
+    val orders by remember { orderRepository.getAllOrders() }.collectAsStateWithLifecycle(initialValue = emptyList())
+    val users by (adminViewModel?.users ?: remember { MutableStateFlow(emptyList<UserEntity>()) }).collectAsStateWithLifecycle(initialValue = emptyList())
+    val locale = LocalConfiguration.current.locales[0]
+
+    val vendorMap = remember(users) {
+        users.filter { it.role == UserRole.VENDOR }.associateBy({ it.userId }, { it.shopName ?: it.fullName })
+    }
+
+    val filterOptions = listOf("New to old", "Month", "Year")
+    var selectedFilter by remember { mutableStateOf("New to old") }
+
+    val filteredOrders = remember(orders, selectedFilter) {
+        val now = Calendar.getInstance()
+        val currentMonth = now.get(Calendar.MONTH)
+        val currentYear = now.get(Calendar.YEAR)
+
+        val list = when (selectedFilter) {
+            "Month" -> orders.filter { order ->
+                val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
+                cal.get(Calendar.MONTH) == currentMonth && cal.get(Calendar.YEAR) == currentYear
+            }
+            "Year" -> orders.filter { order ->
+                val cal = Calendar.getInstance().apply { timeInMillis = order.timestamp }
+                cal.get(Calendar.YEAR) == currentYear
+            }
+            else -> orders // "New to old"
+        }
+        list.sortedByDescending { it.timestamp }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(DesignSystem.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+    )
+    {
+        MinimalDropdown(
+            label = "Filter Orders",
+            selectedOption = selectedFilter,
+            options = filterOptions,
+            onOptionSelected = { selectedFilter = it },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        // Column Headers
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = DesignSystem.Spacing.small, vertical = DesignSystem.Spacing.small),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        )
+        {
+            Text("Item Number", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Text("Vendor Place", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1.2f))
+            Text("Total", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Text("Order ID", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1.5f))
+        }
+
+        HorizontalDivider()
+
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
+            modifier = Modifier.fillMaxSize(),
+        )
+        {
+            items(filteredOrders) { order ->
+                val itemCount = remember(order.itemsJson) {
+                    try {
+                        val items = Json.decodeFromString<List<CartItemEntity>>(order.itemsJson)
+                        items.sumOf { it.quantity }
+                    } catch (_: Exception) { 1 }
+                }
+                val vendorPlace = vendorMap[order.vendorId] ?: "Campus Vendor"
+
+                HIGCard(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                    )
-                    {
-                        Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                        Text(
-                            text = "R${String.format(locale, "%.2f", revenue)}",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(text = itemCount.toString(), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                        Text(text = vendorPlace, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1.2f))
+                        Text(text = "R${String.format(locale, "%.2f", order.totalAmount)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        Text(text = order.orderId, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline, modifier = Modifier.weight(1.5f))
                     }
                 }
             }

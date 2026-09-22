@@ -41,6 +41,7 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
         password: String,
         role: UserRole,
         shopName: String? = null,
+        userId: String? = null,
     )
     {
         // Preliminary input validation
@@ -72,6 +73,7 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
                     password = password,
                     role = role,
                     shopName = shopName,
+                    userId = userId,
                 )
 
                 result.onSuccess()

@@ -41,7 +41,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -57,6 +59,7 @@ import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGSegmentedControl
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
+import com.example.campus_eats_app_kt.util.IdGenerator
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
@@ -82,6 +85,10 @@ fun RegistrationScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var selectedRole by remember { mutableStateOf(UserRole.STUDENT) }
     var shopName by remember { mutableStateOf("") }
+
+    val generatedUserId = remember { IdGenerator.generateUserId() }
+    val clipboardManager = LocalClipboardManager.current
+    var isUserIdCopied by remember { mutableStateOf(false) }
 
     val registrationState by viewModel.registrationState.collectAsStateWithLifecycle()
 
@@ -236,6 +243,42 @@ fun RegistrationScreen(
                 )
             }
 
+            // SPEC v3.0.1 Section 1: Section before "Create Account" submit control displaying 16-char User ID & Copy button
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = DesignSystem.Spacing.small),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
+            )
+            {
+                Text(
+                    text = "User ID: $generatedUserId",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                OutlinedButton(
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(generatedUserId))
+                        isUserIdCopied = true
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+                )
+                {
+                    Text("Copy User ID")
+                }
+                if (isUserIdCopied)
+                {
+                    Text(
+                        text = "User ID copied!",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+
             // Standard registration trigger
             HIGButton(
                 onClick = {
@@ -258,12 +301,13 @@ fun RegistrationScreen(
                     else
                     {
                         viewModel.register(
-                            fullName,
-                            username,
-                            email,
-                            password,
-                            selectedRole,
-                            shopName.takeIf { selectedRole == UserRole.VENDOR },
+                            fullName = fullName,
+                            username = username,
+                            email = email,
+                            password = password,
+                            role = selectedRole,
+                            shopName = shopName.takeIf { selectedRole == UserRole.VENDOR },
+                            userId = generatedUserId,
                         )
                     }
                 },

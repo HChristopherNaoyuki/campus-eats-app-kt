@@ -56,6 +56,7 @@ class AuthRepository(
         password: String,
         role: UserRole,
         shopName: String? = null,
+        userId: String? = null,
     ): Result<UserEntity>
     {
         Log.d(tag, "Initiating offline-first registration for: $email")
@@ -69,8 +70,8 @@ class AuthRepository(
                 throw Exception("Email already exists.")
             }
 
-            // Note: Per Finding 22, we use the encryptPassword utility for secure storage.
-            val campusUserId = IdGenerator.generateUserId()
+            // SPEC v3.0.1 Section 1.5: User ID is the unique key for the account
+            val campusUserId = userId.takeIf { !it.isNullOrBlank() } ?: IdGenerator.generateUserId()
             val user = UserEntity(
                 userId = campusUserId,
                 fullName = fullName,
@@ -354,6 +355,24 @@ class AuthRepository(
         {
             connectivityManager.ensureInternet()
             firebaseAuth.sendPasswordResetEmail(email).await()
+            Result.success(Unit)
+        }
+        catch (e: Exception)
+        {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * SPEC v3.0.1 Section 2: Account Recovery by User ID
+     */
+    suspend fun resetPasswordByUserId(userId: String, newPassword: String): Result<Unit>
+    {
+        return try
+        {
+            val user = userDao.getUserById(userId) ?: throw Exception("User ID not found.")
+            val newHash = DatabaseSeeder.encryptPassword(newPassword)
+            userDao.updateUser(user.copy(passwordHash = newHash, isSynced = false))
             Result.success(Unit)
         }
         catch (e: Exception)

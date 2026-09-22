@@ -13,7 +13,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Email
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.campus_eats_app_kt.ui.components.HIGButton
@@ -41,8 +43,8 @@ import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 
 /**
- * ForgotPasswordScreen allows users to initiate an account recovery flow.
- * Finding 7: Updated to support standard Firebase Email-based recovery.
+ * ForgotPasswordScreen allows users to recover account using User ID and set a new password.
+ * SPEC v3.0.1 Section 2 compliance.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +55,10 @@ fun ForgotPasswordScreen(
     viewModel: ForgotPasswordViewModel,
 )
 {
-    var email by remember { mutableStateOf(value = "") }
+    var userId by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
     val resetState by viewModel.resetState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -61,7 +66,7 @@ fun ForgotPasswordScreen(
     {
         if (resetState is ResetState.Success)
         {
-            Toast.makeText(context, "Recovery email sent. Please check your inbox.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Password reset successfully. You may now log in.", Toast.LENGTH_LONG).show()
             onResetSuccess()
         }
     }
@@ -105,7 +110,7 @@ fun ForgotPasswordScreen(
             )
 
             Text(
-                text = "Enter your registered university email to receive a secure recovery link.",
+                text = "Enter your 16-character User ID and your new password.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier
@@ -113,13 +118,39 @@ fun ForgotPasswordScreen(
                     .padding(bottom = DesignSystem.Spacing.medium),
             )
 
+            // SPEC 2.1 Input 1: User ID
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("University Email") },
+                value = userId,
+                onValueChange = { userId = it },
+                label = { Text("User ID") },
                 modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+            )
+
+            // SPEC 2.1 Input 2: New password
+            OutlinedTextField(
+                value = newPassword,
+                onValueChange = { newPassword = it },
+                label = { Text("New password") },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+            )
+
+            // SPEC 2.1 Input 3: Confirm password
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = { Text("Confirm password") },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
                 shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
             )
@@ -138,9 +169,9 @@ fun ForgotPasswordScreen(
 
             HIGButton(
                 onClick = {
-                    viewModel.sendRecoveryEmail(email)
+                    viewModel.resetPassword(userId, newPassword, confirmPassword)
                 },
-                text = "Send Recovery Email",
+                text = "Reset Password",
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,

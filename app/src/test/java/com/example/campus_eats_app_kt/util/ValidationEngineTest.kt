@@ -35,6 +35,21 @@ class ValidationEngineTest
     }
 
     /**
+     * SPEC v3.0.1: Test recovery password validation rules (8+ chars, lowercase, uppercase, digit, special char)
+     */
+    @Test
+    fun isValidRecoveryPassword_verifiesRules()
+    {
+        assertTrue(ValidationEngine.isValidRecoveryPassword("Pass123!"))
+        assertTrue(ValidationEngine.isValidRecoveryPassword("aB3#5678"))
+        assertFalse(ValidationEngine.isValidRecoveryPassword("pass123!")) // missing uppercase
+        assertFalse(ValidationEngine.isValidRecoveryPassword("PASS123!")) // missing lowercase
+        assertFalse(ValidationEngine.isValidRecoveryPassword("PassWord!")) // missing digit
+        assertFalse(ValidationEngine.isValidRecoveryPassword("PassWord1")) // missing special char
+        assertFalse(ValidationEngine.isValidRecoveryPassword("P1!a"))      // short (< 8 chars)
+    }
+
+    /**
      * Requirement: Test price validation (positive values)
      */
     @Test

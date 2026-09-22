@@ -175,6 +175,7 @@ fun MainScreen(
                     menuRepository = menuRepository,
                     onNavigateToCheckout = onNavigateToCheckout,
                     onReturnHome = { selectedTab = 0 },
+                    adminViewModel = adminViewModel,
                 )
 
                 3 -> SettingsScreenTab(
