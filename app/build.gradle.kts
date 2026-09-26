@@ -20,12 +20,20 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Uses default ~/.android/debug.keystore created automatically by AGP
+        }
+    }
+
     buildTypes {
         debug {
+            signingConfig = signingConfigs.getByName("debug")
             buildConfigField("boolean", "ENABLE_DEMO_DATA", "true")
             buildConfigField("String", "GOOGLE_CLIENT_ID", "\"project-google-sso.apps.googleusercontent.com\"")
         }
         release {
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             buildConfigField("boolean", "ENABLE_DEMO_DATA", "false")
