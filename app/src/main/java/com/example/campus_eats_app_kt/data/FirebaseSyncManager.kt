@@ -23,8 +23,16 @@ import kotlinx.coroutines.tasks.await
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * FirebaseSyncManager handles continuous online data synchronization with Firebase Realtime Database.
- * Operates on a 10-second interval, checking connectivity and handling security rules and permission errors.
+ * FirebaseSyncManager serves as the single, authoritative background data synchronizer
+ * between local Room storage and Firebase Realtime Database.
+ *
+ * Operational features:
+ * 1. Executes a continuous loop targeted at approximately 10 second intervals.
+ * 2. Checks active network connectivity before initiating database writes.
+ * 3. Applies exponential backoff on failure (1s, 2s, 4s, 8s, up to a 60s cap).
+ * 4. Only transmits unsynced records identified by flags (isSynced == false / isPendingSync == true).
+ * 5. Clears local unsynced flags only after successful write completion in Firebase.
+ * 6. Utilizes centralized exception handling via FirebaseExceptionHandler.
  */
 class FirebaseSyncManager(
     private val userDao: UserDao,
@@ -38,18 +46,28 @@ class FirebaseSyncManager(
 {
     private val tag = "FirebaseSyncManager"
 
+    // Base interval for regular periodic synchronization loops in seconds
+    private val baseIntervalSeconds = 10L
+
+    // Maximum backoff duration allowed during repeated failure recovery
+    private val maxBackoffSeconds = 60L
+
     /**
-     * Starts the continuous background synchronization loop.
-     * The loop runs every 10 seconds while the provided CoroutineScope remains active.
+     * Starts the continuous background synchronization loop in the provided CoroutineScope.
+     * Operates continuously until the underlying CoroutineScope is cancelled.
      */
     fun startContinuousSync(scope: CoroutineScope)
     {
         scope.launch()
         {
-            Log.i(tag, "Starting continuous 10-second Realtime Database synchronization loop.")
+            Log.i(tag, "Starting continuous Realtime Database synchronization loop.")
+
+            var currentBackoffSeconds = 1L
 
             while (isActive)
             {
+                var cycleHasErrors = false
+
                 try
                 {
                     if (connectivityManager.hasInternetConnection())
@@ -66,26 +84,51 @@ class FirebaseSyncManager(
                 }
                 catch (e: DatabaseException)
                 {
+                    cycleHasErrors = true
                     handleDatabaseError(e)
                 }
                 catch (e: Exception)
                 {
-                    Log.w(tag, "Unexpected error during synchronization cycle: ${e.message}")
+                    cycleHasErrors = true
+                    val parsedMessage = FirebaseExceptionHandler.parse(e)
+                    Log.w(tag, "Synchronization error encountered: $parsedMessage", e)
                 }
 
-                // Wait for the 10-second interval before next sync iteration
-                delay(10.seconds)
+                // Calculate next loop delay based on execution success or failure
+                val delayTimeSeconds = if (cycleHasErrors)
+                {
+                    val activeDelay = currentBackoffSeconds
+                    // Exponential backoff doubling up to maximum cap
+                    currentBackoffSeconds = (currentBackoffSeconds * 2L).coerceAtMost(maxBackoffSeconds)
+                    Log.i(tag, "Exponential backoff engaged. Waiting $activeDelay seconds before retry.")
+                    activeDelay
+                }
+                else
+                {
+                    // Reset exponential backoff state after a clean cycle
+                    currentBackoffSeconds = 1L
+                    baseIntervalSeconds
+                }
+
+                delay(delayTimeSeconds.seconds)
             }
         }
     }
 
     /**
-     * Synchronizes local unsynced user records to the 'users/$campus_user_id' node.
-     * Enforces security rules: 'ADMIN' role string, passwordHash, and email constraints.
+     * Synchronizes local unsynced user records to the 'users/$userId' node.
+     * Sets local isSynced flag to true upon successful Firebase write.
      */
     private suspend fun syncUsersNode()
     {
         val unsyncedUsers = userDao.getUnsyncedUsers()
+        if (unsyncedUsers.isEmpty())
+        {
+            return
+        }
+
+        Log.d(tag, "Found ${unsyncedUsers.size} unsynced user records. Initiating cloud sync.")
+
         for (user in unsyncedUsers)
         {
             try
@@ -99,53 +142,55 @@ class FirebaseSyncManager(
                 userDao.markAsSynced(user.userId)
                 Log.d(tag, "Successfully synchronized user record for: ${user.email}")
             }
-            catch (e: DatabaseException)
-            {
-                handleDatabaseError(e)
-            }
             catch (e: Exception)
             {
-                Log.w(tag, "Failed to sync user ${user.email}: ${e.message}")
+                val parsedMessage = FirebaseExceptionHandler.parse(e)
+                Log.w(tag, "Failed to sync user ${user.email}: $parsedMessage")
+                throw e
             }
         }
     }
 
     /**
-     * Synchronizes orders to the 'orders' node in Realtime Database.
+     * Synchronizes orders that are pending sync to the 'orders/$orderId' node.
+     * Updates isPendingSync flag to false upon successful Firebase write.
      */
     private suspend fun syncOrdersNode()
     {
-        try
-        {
-            val orders = orderDao.getAllOrders().first()
-            for (order in orders)
-            {
-                if (order.isPendingSync)
-                {
-                    val orderMap = mapOrderToFirebase(order)
-                    firebaseDatabase.getReference("orders")
-                        .child(order.orderId)
-                        .setValue(orderMap)
-                        .await()
+        val orders = orderDao.getAllOrders().first()
+        val pendingOrders = orders.filter { it.isPendingSync }
 
-                    orderDao.updateOrder(order.copy(isPendingSync = false))
-                    Log.d(tag, "Successfully synchronized order: ${order.orderId}")
-                }
+        if (pendingOrders.isEmpty())
+        {
+            return
+        }
+
+        Log.d(tag, "Found ${pendingOrders.size} pending orders. Initiating cloud sync.")
+
+        for (order in pendingOrders)
+        {
+            try
+            {
+                val orderMap = mapOrderToFirebase(order)
+                firebaseDatabase.getReference("orders")
+                    .child(order.orderId)
+                    .setValue(orderMap)
+                    .await()
+
+                orderDao.updateOrder(order.copy(isPendingSync = false))
+                Log.d(tag, "Successfully synchronized order record: ${order.orderId}")
             }
-        }
-        catch (e: DatabaseException)
-        {
-            handleDatabaseError(e)
-        }
-        catch (e: Exception)
-        {
-            Log.w(tag, "Failed during order synchronization: ${e.message}")
+            catch (e: Exception)
+            {
+                val parsedMessage = FirebaseExceptionHandler.parse(e)
+                Log.w(tag, "Failed to sync order ${order.orderId}: $parsedMessage")
+                throw e
+            }
         }
     }
 
     /**
-     * Synchronizes user feedback entries to the 'feedback' node in Realtime Database.
-     * Enforces rule constraints: userId matches auth.uid, lowercase type and status.
+     * Synchronizes feedback records to the 'feedback/$feedbackId' node.
      */
     private suspend fun syncFeedbackNode()
     {
@@ -153,30 +198,27 @@ class FirebaseSyncManager(
         try
         {
             val feedbackList = feedbackDao.getAllFeedback().first()
-            for (feedback in feedbackList)
+            val userFeedback = feedbackList.filter { it.userId == currentUser.uid }
+
+            for (feedback in userFeedback)
             {
-                if (feedback.userId == currentUser.uid)
-                {
-                    val feedbackMap = mapFeedbackToFirebase(feedback)
-                    firebaseDatabase.getReference("feedback")
-                        .child(feedback.feedbackId.toString())
-                        .setValue(feedbackMap)
-                        .await()
-                }
+                val feedbackMap = mapFeedbackToFirebase(feedback)
+                firebaseDatabase.getReference("feedback")
+                    .child(feedback.feedbackId.toString())
+                    .setValue(feedbackMap)
+                    .await()
             }
-        }
-        catch (e: DatabaseException)
-        {
-            handleDatabaseError(e)
         }
         catch (e: Exception)
         {
-            Log.w(tag, "Failed during feedback synchronization: ${e.message}")
+            val parsedMessage = FirebaseExceptionHandler.parse(e)
+            Log.w(tag, "Failed feedback sync cycle: $parsedMessage")
+            throw e
         }
     }
 
     /**
-     * Synchronizes promotional coupons to the 'coupons' node.
+     * Synchronizes promotional coupons to the 'coupons/$code' node.
      */
     private suspend fun syncCouponsNode()
     {
@@ -192,35 +234,26 @@ class FirebaseSyncManager(
                     .await()
             }
         }
-        catch (e: DatabaseException)
-        {
-            handleDatabaseError(e)
-        }
         catch (e: Exception)
         {
-            Log.w(tag, "Failed during coupon synchronization: ${e.message}")
+            val parsedMessage = FirebaseExceptionHandler.parse(e)
+            Log.w(tag, "Failed coupon sync cycle: $parsedMessage")
+            throw e
         }
     }
 
     /**
-     * Handles PERMISSION_DENIED and other DatabaseExceptions gracefully without throwing.
+     * Handles Firebase DatabaseException instances by parsing error messages and logging appropriately.
      */
     private fun handleDatabaseError(exception: DatabaseException)
     {
-        val message = exception.message ?: ""
-        if (message.contains("Permission denied", ignoreCase = true))
-        {
-            Log.e(tag, "PERMISSION_DENIED: Current authenticated credentials lack write access for this node.")
-        }
-        else
-        {
-            Log.w(tag, "Realtime Database Exception: ${exception.localizedMessage}")
-        }
+        val parsedMessage = FirebaseExceptionHandler.parse(exception)
+        Log.e(tag, "Firebase Realtime Database error encountered: $parsedMessage", exception)
     }
 
     /**
-     * Maps UserEntity to Map matching Firebase validation rules.
-     * Sets 'role' to 'ADMIN' for ADMINISTRATOR, passwordHash to '[FIREBASE_SSO]'.
+     * Maps UserEntity into a Firebase Realtime Database map representation.
+     * Passwords are never sent to the remote database and are mapped to [FIREBASE_SSO].
      */
     private fun mapUserToFirebase(user: UserEntity): Map<String, Any?>
     {
@@ -242,7 +275,7 @@ class FirebaseSyncManager(
     }
 
     /**
-     * Maps OrderEntity to Map for Realtime Database persistence.
+     * Maps OrderEntity into a Firebase Realtime Database map representation.
      */
     private fun mapOrderToFirebase(order: OrderEntity): Map<String, Any?>
     {
@@ -261,8 +294,7 @@ class FirebaseSyncManager(
     }
 
     /**
-     * Maps FeedbackEntity to Map matching 'feedback' node validation rules.
-     * Enforces lowercase 'type' ("complaint" or "compliment") and 'status' ("pending").
+     * Maps FeedbackEntity into a Firebase Realtime Database map representation.
      */
     private fun mapFeedbackToFirebase(feedback: FeedbackEntity): Map<String, Any?>
     {
@@ -280,7 +312,7 @@ class FirebaseSyncManager(
     }
 
     /**
-     * Maps CouponEntity to Map for Realtime Database persistence.
+     * Maps CouponEntity into a Firebase Realtime Database map representation.
      */
     private fun mapCouponToFirebase(coupon: CouponEntity): Map<String, Any?>
     {

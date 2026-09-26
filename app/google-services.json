@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "64265928399",
+    "firebase_url": "https://campus-eats-db-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "campus-eats-db",
     "storage_bucket": "campus-eats-db.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.example.campus_eats_app_kt"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.campus_eats_app_kt",
+            "certificate_hash": "32118ac6523289186bd0d286da3ea403e2cca188"
+          }
+        },
+        {
+          "client_id": "64265928399-k9qvcvf2e17vh61f98591d860v8md05q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD8iJkQ9WckUp8SUpSMLM-9JILwsDfzHHE"
@@ -20,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "64265928399-k9qvcvf2e17vh61f98591d860v8md05q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

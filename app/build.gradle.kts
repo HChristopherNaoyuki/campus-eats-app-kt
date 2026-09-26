@@ -30,14 +30,14 @@ android {
         debug {
             signingConfig = signingConfigs.getByName("debug")
             buildConfigField("boolean", "ENABLE_DEMO_DATA", "true")
-            buildConfigField("String", "GOOGLE_CLIENT_ID", "\"project-google-sso.apps.googleusercontent.com\"")
+            buildConfigField("String", "GOOGLE_CLIENT_ID", "\"64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com\"")
         }
         release {
             signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             buildConfigField("boolean", "ENABLE_DEMO_DATA", "false")
-            buildConfigField("String", "GOOGLE_CLIENT_ID", "\"project-google-sso.apps.googleusercontent.com\"")
+            buildConfigField("String", "GOOGLE_CLIENT_ID", "\"64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

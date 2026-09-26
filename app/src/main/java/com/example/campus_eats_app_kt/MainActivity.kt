@@ -1,7 +1,6 @@
 package com.example.campus_eats_app_kt
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -30,6 +29,7 @@ import com.example.campus_eats_app_kt.data.CouponRepository
 import com.example.campus_eats_app_kt.data.DebitCardRepository
 import com.example.campus_eats_app_kt.data.FeedbackRepository
 import com.example.campus_eats_app_kt.data.FirebaseDatabaseProvider
+import com.example.campus_eats_app_kt.data.FirebaseSyncManager
 import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
@@ -39,6 +39,7 @@ import com.example.campus_eats_app_kt.ui.components.NetworkStatusBanner
 import com.example.campus_eats_app_kt.ui.navigation.Route
 import com.example.campus_eats_app_kt.ui.screens.AddEditMenuItemScreen
 import com.example.campus_eats_app_kt.ui.screens.AddEditMenuViewModel
+import com.example.campus_eats_app_kt.ui.screens.AdminViewModel
 import com.example.campus_eats_app_kt.ui.screens.CartScreen
 import com.example.campus_eats_app_kt.ui.screens.CartViewModel
 import com.example.campus_eats_app_kt.ui.screens.CheckoutScreen
@@ -49,7 +50,6 @@ import com.example.campus_eats_app_kt.ui.screens.ForgotPasswordViewModel
 import com.example.campus_eats_app_kt.ui.screens.LandingScreen
 import com.example.campus_eats_app_kt.ui.screens.LoginScreen
 import com.example.campus_eats_app_kt.ui.screens.LoginViewModel
-import com.example.campus_eats_app_kt.ui.screens.AdminViewModel
 import com.example.campus_eats_app_kt.ui.screens.MainScreen
 import com.example.campus_eats_app_kt.ui.screens.MenuBrowseViewModel
 import com.example.campus_eats_app_kt.ui.screens.OrderConfirmationScreen
@@ -65,7 +65,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 /**
  * MainActivity serves as the entry point for the Campus Eats application.
- * Hardened in Batch 2 with navigation guards and suspension checks.
+ * Manages dependency wiring, top-level navigation graphs, and UI theme initializations.
  */
 class MainActivity : ComponentActivity()
 {
@@ -81,6 +81,16 @@ class MainActivity : ComponentActivity()
         val apiService = RetrofitClient.instance
         val firebaseAuth = FirebaseAuth.getInstance()
         val firebaseDatabase = FirebaseDatabaseProvider.instance
+
+        val firebaseSyncManager = FirebaseSyncManager(
+            userDao = database.userDao(),
+            orderDao = database.orderDao(),
+            feedbackDao = database.feedbackDao(),
+            couponDao = database.couponDao(),
+            connectivityManager = connectivityManager,
+            firebaseAuth = firebaseAuth,
+            firebaseDatabase = firebaseDatabase,
+        )
 
         val menuRepository = MenuRepository(
             menuItemDao = database.menuItemDao(),
@@ -105,6 +115,7 @@ class MainActivity : ComponentActivity()
             firebaseAuth = firebaseAuth,
             firebaseDatabase = firebaseDatabase,
             orderRepository = orderRepository,
+            firebaseSyncManager = firebaseSyncManager,
         )
         val adminRepository = AdminRepository(
             userDao = database.userDao(),
@@ -112,8 +123,11 @@ class MainActivity : ComponentActivity()
             connectivityManager = connectivityManager,
             firebaseDatabase = firebaseDatabase,
         )
-        val statsRepository =
-            StatsRepository(database.userDao(), database.menuItemDao(), database.orderDao())
+        val statsRepository = StatsRepository(
+            database.userDao(),
+            database.menuItemDao(),
+            database.orderDao(),
+        )
         val feedbackRepository = FeedbackRepository(
             feedbackDao = database.feedbackDao(),
             userDao = database.userDao(),
@@ -123,7 +137,7 @@ class MainActivity : ComponentActivity()
         val couponRepository = CouponRepository(database.couponDao())
         val debitCardRepository = DebitCardRepository(database.debitCardDao())
 
-        setContent() 
+        setContent()
         {
             LaunchedEffect(Unit)
             {
@@ -133,33 +147,44 @@ class MainActivity : ComponentActivity()
             val networkStatus by connectivityObserver.observe()
                 .collectAsState(initial = NetworkConnectivityObserver.Status.Available)
 
-            CampusEatsAppTheme() 
+            CampusEatsAppTheme()
             {
                 val backStack = rememberNavBackStack(Route.Splash)
 
-                Column(modifier = Modifier.fillMaxSize()) 
+                Column(modifier = Modifier.fillMaxSize())
                 {
                     NetworkStatusBanner(status = networkStatus)
 
                     NavDisplay(
                         backStack = backStack,
-                        // Finding 20: Pop only when size > 1, otherwise call finish()
-                        onBack = { if (backStack.size > 1) backStack.removeLastOrNull() else finish() },
+                        onBack = {
+                            if (backStack.size > 1)
+                            {
+                                backStack.removeLastOrNull()
+                            }
+                            else
+                            {
+                                finish()
+                            }
+                        },
                         entryDecorators = listOf(
                             rememberSaveableStateHolderNavEntryDecorator(),
                             rememberViewModelStoreNavEntryDecorator(),
                         ),
                         modifier = Modifier.weight(1f),
-                        entryProvider = entryProvider() 
+                        entryProvider = entryProvider()
                         {
-                            entry<Route.Splash>() 
+                            entry<Route.Splash>()
                             {
-                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) 
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                )
                                 {
                                     CircularProgressIndicator()
                                 }
 
-                                LaunchedEffect(Unit) 
+                                LaunchedEffect(Unit)
                                 {
                                     if (authRepository.isUserAuthenticated())
                                     {
@@ -169,7 +194,6 @@ class MainActivity : ComponentActivity()
                                             val user = authRepository.getUserByEmail(email)
                                             if (user != null)
                                             {
-                                                // Finding 8: Check status after auto-login
                                                 if (user.status == UserStatus.SUSPENDED)
                                                 {
                                                     authRepository.logout()
@@ -188,7 +212,7 @@ class MainActivity : ComponentActivity()
                                 }
                             }
 
-                            entry<Route.Landing>() 
+                            entry<Route.Landing>()
                             {
                                 LandingScreen(
                                     onLoginClick = { backStack.add(Route.Login) },
@@ -197,11 +221,15 @@ class MainActivity : ComponentActivity()
                                 )
                             }
 
-                            entry<Route.Login>() 
+                            entry<Route.Login>()
                             {
                                 val viewModel: LoginViewModel = viewModel(
-                                    factory = viewModelFactory {
-                                        initializer { LoginViewModel(authRepository) }
+                                    factory = viewModelFactory
+                                    {
+                                        initializer<LoginViewModel>
+                                        {
+                                            LoginViewModel(authRepository)
+                                        }
                                     },
                                 )
                                 LoginScreen(
@@ -215,16 +243,29 @@ class MainActivity : ComponentActivity()
                                     },
                                     onRegisterClick = { backStack.add(Route.Register()) },
                                     onForgotPasswordClick = { backStack.add(Route.ForgotPassword) },
-                                    onBackClick = { if (backStack.size > 1) backStack.removeLastOrNull() else finish() },
+                                    onBackClick = {
+                                        if (backStack.size > 1)
+                                        {
+                                            backStack.removeLastOrNull()
+                                        }
+                                        else
+                                        {
+                                            finish()
+                                        }
+                                    },
                                     viewModel = viewModel,
                                 )
                             }
 
-                            entry<Route.Register>() 
+                            entry<Route.Register>()
                             {
                                 val viewModel: RegistrationViewModel = viewModel(
-                                    factory = viewModelFactory {
-                                        initializer { RegistrationViewModel(authRepository) }
+                                    factory = viewModelFactory
+                                    {
+                                        initializer<RegistrationViewModel>
+                                        {
+                                            RegistrationViewModel(authRepository)
+                                        }
                                     },
                                 )
                                 RegistrationScreen(
@@ -236,11 +277,15 @@ class MainActivity : ComponentActivity()
                                 )
                             }
 
-                            entry<Route.ForgotPassword>() 
+                            entry<Route.ForgotPassword>()
                             {
                                 val viewModel: ForgotPasswordViewModel = viewModel(
-                                    factory = viewModelFactory {
-                                        initializer { ForgotPasswordViewModel(authRepository) }
+                                    factory = viewModelFactory
+                                    {
+                                        initializer<ForgotPasswordViewModel>
+                                        {
+                                            ForgotPasswordViewModel(authRepository)
+                                        }
                                     },
                                 )
                                 ForgotPasswordScreen(
@@ -250,11 +295,13 @@ class MainActivity : ComponentActivity()
                                 )
                             }
 
-                            entry<Route.Main>() 
+                            entry<Route.Main>()
                             { route ->
                                 val adminViewModel: AdminViewModel = viewModel(
-                                    factory = viewModelFactory {
-                                        initializer {
+                                    factory = viewModelFactory
+                                    {
+                                        initializer<AdminViewModel>
+                                        {
                                             AdminViewModel(
                                                 adminRepository,
                                                 authRepository,
@@ -277,6 +324,7 @@ class MainActivity : ComponentActivity()
                                     feedbackRepository = feedbackRepository,
                                     couponRepository = couponRepository,
                                     debitCardRepository = debitCardRepository,
+                                    firebaseSyncManager = firebaseSyncManager,
                                     onLogout = {
                                         authRepository.logout()
                                         backStack.clear()
@@ -296,11 +344,15 @@ class MainActivity : ComponentActivity()
                                 )
                             }
 
-                            entry<Route.VendorMenuManagement>() 
+                            entry<Route.VendorMenuManagement>()
                             { route ->
                                 val viewModel: VendorMenuViewModel = viewModel(
-                                    factory = viewModelFactory {
-                                        initializer { VendorMenuViewModel(menuRepository, route.vendorId) }
+                                    factory = viewModelFactory
+                                    {
+                                        initializer<VendorMenuViewModel>
+                                        {
+                                            VendorMenuViewModel(menuRepository, route.vendorId)
+                                        }
                                     },
                                 )
                                 VendorMenuManagementScreen(
@@ -311,11 +363,15 @@ class MainActivity : ComponentActivity()
                                 )
                             }
 
-                            entry<Route.AddEditMenuItem>() 
+                            entry<Route.AddEditMenuItem>()
                             { route ->
                                 val viewModel: AddEditMenuViewModel = viewModel(
-                                    factory = viewModelFactory {
-                                        initializer { AddEditMenuViewModel(menuRepository, route.vendorId, route.itemId) }
+                                    factory = viewModelFactory
+                                    {
+                                        initializer<AddEditMenuViewModel>
+                                        {
+                                            AddEditMenuViewModel(menuRepository, route.vendorId, route.itemId)
+                                        }
                                     },
                                 )
                                 AddEditMenuItemScreen(
@@ -324,11 +380,15 @@ class MainActivity : ComponentActivity()
                                 )
                             }
 
-                            entry<Route.CustomerMenuBrowse>() 
+                            entry<Route.CustomerMenuBrowse>()
                             { route ->
                                 val viewModel: MenuBrowseViewModel = viewModel(
-                                    factory = viewModelFactory {
-                                        initializer { MenuBrowseViewModel(menuRepository, cartRepository, route.userId, route.vendorId) }
+                                    factory = viewModelFactory
+                                    {
+                                        initializer<MenuBrowseViewModel>
+                                        {
+                                            MenuBrowseViewModel(menuRepository, cartRepository, route.userId, route.vendorId)
+                                        }
                                     },
                                 )
                                 CustomerMenuBrowseScreen(
@@ -338,11 +398,13 @@ class MainActivity : ComponentActivity()
                                 )
                             }
 
-                            entry<Route.Cart>() 
+                            entry<Route.Cart>()
                             { route ->
                                 val viewModel: CartViewModel = viewModel(
-                                    factory = viewModelFactory {
-                                        initializer {
+                                    factory = viewModelFactory
+                                    {
+                                        initializer<CartViewModel>
+                                        {
                                             CartViewModel(
                                                 cartRepository,
                                                 authRepository,
@@ -358,11 +420,13 @@ class MainActivity : ComponentActivity()
                                 )
                             }
 
-                            entry<Route.Checkout>() 
+                            entry<Route.Checkout>()
                             { route ->
                                 val viewModel: CheckoutViewModel = viewModel(
-                                    factory = viewModelFactory {
-                                        initializer {
+                                    factory = viewModelFactory
+                                    {
+                                        initializer<CheckoutViewModel>
+                                        {
                                             CheckoutViewModel(
                                                 cartRepository,
                                                 orderRepository,
@@ -374,7 +438,7 @@ class MainActivity : ComponentActivity()
                                 )
                                 CheckoutScreen(
                                     onBackClick = { backStack.removeLastOrNull() },
-                                        onOrderPlaced = { orderId ->
+                                    onOrderPlaced = { orderId ->
                                         val nextRoute = Route.OrderConfirmation(
                                             orderId,
                                             route.userId,
@@ -390,7 +454,7 @@ class MainActivity : ComponentActivity()
                                 )
                             }
 
-                            entry<Route.OrderConfirmation>() 
+                            entry<Route.OrderConfirmation>()
                             { route ->
                                 OrderConfirmationScreen(
                                     orderId = route.orderId,

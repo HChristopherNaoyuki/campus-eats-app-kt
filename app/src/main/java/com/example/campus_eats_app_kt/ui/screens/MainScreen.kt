@@ -29,6 +29,7 @@ import com.example.campus_eats_app_kt.data.CartRepository
 import com.example.campus_eats_app_kt.data.CouponRepository
 import com.example.campus_eats_app_kt.data.DebitCardRepository
 import com.example.campus_eats_app_kt.data.FeedbackRepository
+import com.example.campus_eats_app_kt.data.FirebaseSyncManager
 import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
@@ -39,7 +40,7 @@ import com.example.campus_eats_app_kt.util.LanguageManager
 
 /**
  * MainScreen is the primary navigation hub after authentication.
- * It manages the bottom navigation bar and displays exactly 4 buttons for all roles:
+ * It manages the bottom navigation bar and displays four navigation destinations:
  * Home, Browse, Orders, and Settings.
  */
 @Composable
@@ -55,6 +56,7 @@ fun MainScreen(
     feedbackRepository: FeedbackRepository,
     couponRepository: CouponRepository,
     debitCardRepository: DebitCardRepository,
+    firebaseSyncManager: FirebaseSyncManager? = null,
     onLogout: () -> Unit,
     onNavigateToCheckout: () -> Unit,
     onNavigateToVendorMenu: (String) -> Unit,
@@ -68,10 +70,17 @@ fun MainScreen(
         UserRole.entries.find { it.name == role } ?: UserRole.STANDARD
     }
 
-    // Requirement: Synchronize permitted data with the database every 10 seconds.
+    // Continuous 10 second Realtime Database background synchronization loop
     LaunchedEffect(userId)
     {
-        authRepository.startBackgroundSync(userId, this)
+        if (firebaseSyncManager != null)
+        {
+            firebaseSyncManager.startContinuousSync(this)
+        }
+        else
+        {
+            authRepository.startBackgroundSync(userId, this)
+        }
     }
 
     Scaffold(
@@ -86,7 +95,6 @@ fun MainScreen(
             HIGTopAppBar(title = title)
         },
         bottomBar = {
-            // Requirement: Dynamic Tab Bars with exactly 4 buttons.
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -106,28 +114,24 @@ fun MainScreen(
                     tonalElevation = 0.dp,
                 )
                 {
-                    // Home Tab
                     NavigationBarItem(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
                         icon = { Icon(Icons.Rounded.Home, contentDescription = "Home") },
                         label = { Text(LanguageManager.getString("Home", "Tuis")) },
                     )
-                    // Browse Tab
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
                         icon = { Icon(Icons.Rounded.Search, contentDescription = "Browse") },
                         label = { Text(LanguageManager.getString("Browse", "Snuffel")) },
                     )
-                    // Orders Tab
                     NavigationBarItem(
                         selected = selectedTab == 2,
                         onClick = { selectedTab = 2 },
                         icon = { Icon(Icons.Rounded.History, contentDescription = "Orders") },
                         label = { Text(LanguageManager.getString("Orders", "Bestellings")) },
                     )
-                    // Settings Tab
                     NavigationBarItem(
                         selected = selectedTab == 3,
                         onClick = { selectedTab = 3 },
