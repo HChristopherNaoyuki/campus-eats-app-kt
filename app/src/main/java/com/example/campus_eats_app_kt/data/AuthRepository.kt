@@ -41,6 +41,7 @@ class AuthRepository(
     private val firebaseAuth: FirebaseAuth,
     private val firebaseDatabase: FirebaseDatabase,
     private val orderRepository: OrderRepository,
+    private val firebaseSyncManager: FirebaseSyncManager? = null,
 )
 {
     private val tag = "AuthRepository"
@@ -98,6 +99,7 @@ class AuthRepository(
      */
     fun startBackgroundSync(userId: String, scope: CoroutineScope)
     {
+        firebaseSyncManager?.startContinuousSync(scope)
         scope.launch()
         {
             while (isActive)
