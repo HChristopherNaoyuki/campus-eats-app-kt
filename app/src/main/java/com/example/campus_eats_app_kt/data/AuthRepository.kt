@@ -94,7 +94,7 @@ class AuthRepository(
     }
 
     /**
-     * Requirement: Backup local Room data to Firebase every 30 seconds.
+     * Continuous 10-second background synchronization loop.
      */
     fun startBackgroundSync(userId: String, scope: CoroutineScope)
     {
@@ -102,8 +102,8 @@ class AuthRepository(
         {
             while (isActive)
             {
-                // Requirement: 30-second backup interval
-                delay(30.seconds)
+                // Continuous 10-second backup interval
+                delay(10.seconds)
                 try
                 {
                     if (connectivityManager.hasInternetConnection())
