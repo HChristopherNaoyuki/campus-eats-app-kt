@@ -15,8 +15,8 @@ import java.util.Locale
 import java.util.TimeZone
 
 /**
- * FeedbackRepository handles the collection and categorization of user feedback.
- * Finding 5: Hardened for crash resilience with input validation and safe network sync.
+ * FeedbackRepository manages user feedback collection and synchronization.
+ * Handles validation, Room persistence, and Firebase Realtime Database sync.
  */
 class FeedbackRepository(
     private val feedbackDao: FeedbackDao,
@@ -25,25 +25,29 @@ class FeedbackRepository(
     private val firebaseDatabase: FirebaseDatabase,
 )
 {
-    private fun getDateFormat() = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply()
-    {
+    private fun getDateFormat() = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
 
     /**
-     * Retrieves all feedback entries from the database.
+     * Retrieves all feedback entries from local Room storage.
      */
     fun getAllFeedback(): Flow<List<FeedbackEntity>> = feedbackDao.getAllFeedback()
 
     /**
-     * Persists a new feedback entry.
-     * Enforces validation and authoritative cloud synchronization.
+     * Submits a new user feedback entry.
+     * Validates input, saves to Room, and syncs to Firebase Realtime Database.
      */
     suspend fun submitFeedback(userId: String, subject: String, message: String, type: FeedbackType)
     {
-        // Finding 5: Input validation
-        if (subject.length < 3) throw Exception("Subject must be at least 3 characters.")
-        if (message.length < 10) throw Exception("Feedback details must be at least 10 characters.")
+        if (subject.length < 3)
+        {
+            throw Exception("Subject must be at least 3 characters.")
+        }
+        if (message.length < 10)
+        {
+            throw Exception("Feedback details must be at least 10 characters.")
+        }
 
         val user = userDao.getUserById(userId) ?: throw Exception("User profile not found.")
         val now = getDateFormat().format(Date())
@@ -60,27 +64,26 @@ class FeedbackRepository(
             updatedAt = now,
         )
 
-        // 1. Persist locally first as a "Pending" record
+        // Save locally first for offline-first resilience
         feedbackDao.insertFeedback(feedback)
 
-        // 2. Authoritative Sync to RTDB
+        // Synchronize to Firebase Realtime Database
         try
         {
             connectivityManager.ensureInternet()
-            // Finding 6: Use explicit mapping for Firebase compatibility
             firebaseDatabase.getReference("feedback").push()
                 .setValue(mapFeedbackToMap(feedback))
                 .await()
         }
         catch (_: Exception)
         {
-            // Finding 5: Map failure to user-friendly error but maintain local record
             throw Exception("Offline mode: Feedback saved locally and will sync later.")
         }
     }
 
     /**
-     * Finding 6: Manual mapper to ensure correct field naming and types in RTDB.
+     * Maps FeedbackEntity to a Map matching Firebase Realtime Database validation rules.
+     * Enforces lowercase strings for type ("complaint" or "compliment") and status ("pending").
      */
     private fun mapFeedbackToMap(feedback: FeedbackEntity): Map<String, Any?>
     {
@@ -91,10 +94,9 @@ class FeedbackRepository(
             "message" to feedback.message,
             "userName" to feedback.userName,
             "userEmail" to feedback.userEmail,
-            "status" to feedback.status.name,
+            "status" to feedback.status.name.lowercase(),
             "createdAt" to feedback.createdAt,
             "updatedAt" to feedback.updatedAt,
         )
     }
-
 }
