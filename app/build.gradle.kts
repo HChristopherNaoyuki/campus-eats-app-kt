@@ -40,7 +40,7 @@ android {
             buildConfigField("String", "GOOGLE_CLIENT_ID", "\"64265928399-k9qvcvf2e17vh61f98591d860v8md05q.apps.googleusercontent.com\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }

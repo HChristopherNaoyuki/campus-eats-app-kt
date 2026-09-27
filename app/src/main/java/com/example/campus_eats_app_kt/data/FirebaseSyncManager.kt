@@ -191,11 +191,13 @@ class FirebaseSyncManager(
     }
 
     /**
-     * Synchronizes feedback records to the 'feedback/$feedbackId' node using stable feedbackId keys.
-     * Early returns when the local feedback collection is empty.
+     * Synchronizes feedback records to the 'feedback/$feedbackId' node for the active session user.
+     * Early returns when no user is authenticated or when the local feedback collection is empty.
      */
     private suspend fun syncFeedbackNode()
     {
+        val currentUser = firebaseAuth.currentUser ?: return
+
         try
         {
             val feedbackList = feedbackDao.getAllFeedback().first()
@@ -204,7 +206,9 @@ class FirebaseSyncManager(
                 return
             }
 
-            for (feedback in feedbackList)
+            val userFeedback = feedbackList.filter { it.userId == currentUser.uid }
+
+            for (feedback in userFeedback)
             {
                 val feedbackMap = mapFeedbackToFirebase(feedback)
                 firebaseDatabase.getReference("feedback")
@@ -263,7 +267,7 @@ class FirebaseSyncManager(
 
     /**
      * Maps UserEntity into a Firebase Realtime Database map representation.
-     * Passwords are never sent to the remote database and are mapped to [FIREBASE_SSO].
+     * Passwords are never sent to the remote database and are mapped to the placeholder string "FIREBASE_SSO".
      */
     private fun mapUserToFirebase(user: UserEntity): Map<String, Any?>
     {
