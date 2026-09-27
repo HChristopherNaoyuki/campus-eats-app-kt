@@ -30,9 +30,10 @@ import kotlin.time.Duration.Companion.seconds
  * 1. Executes a continuous loop targeted at approximately 10 second intervals.
  * 2. Checks active network connectivity before initiating database writes.
  * 3. Applies exponential backoff on failure (1s, 2s, 4s, 8s, up to a 60s cap).
- * 4. Only transmits unsynced records identified by flags (isSynced == false / isPendingSync == true).
- * 5. Clears local unsynced flags only after successful write completion in Firebase.
- * 6. Utilizes centralized exception handling via FirebaseExceptionHandler.
+ * 4. Transmits unsynced user/order records identified by local pending flags.
+ * 5. Synchronizes system feedback and coupons using idempotent key-based writes.
+ * 6. Clears local unsynced flags only after successful write completion in Firebase.
+ * 7. Utilizes centralized exception handling via FirebaseExceptionHandler.
  */
 class FirebaseSyncManager(
     private val userDao: UserDao,
@@ -190,17 +191,20 @@ class FirebaseSyncManager(
     }
 
     /**
-     * Synchronizes feedback records to the 'feedback/$feedbackId' node.
+     * Synchronizes feedback records to the 'feedback/$feedbackId' node using stable feedbackId keys.
+     * Early returns when the local feedback collection is empty.
      */
     private suspend fun syncFeedbackNode()
     {
-        val currentUser = firebaseAuth.currentUser ?: return
         try
         {
             val feedbackList = feedbackDao.getAllFeedback().first()
-            val userFeedback = feedbackList.filter { it.userId == currentUser.uid }
+            if (feedbackList.isEmpty())
+            {
+                return
+            }
 
-            for (feedback in userFeedback)
+            for (feedback in feedbackList)
             {
                 val feedbackMap = mapFeedbackToFirebase(feedback)
                 firebaseDatabase.getReference("feedback")
@@ -219,12 +223,18 @@ class FirebaseSyncManager(
 
     /**
      * Synchronizes promotional coupons to the 'coupons/$code' node.
+     * Early returns when the local coupons collection is empty.
      */
     private suspend fun syncCouponsNode()
     {
         try
         {
             val coupons = couponDao.getAllCoupons().first()
+            if (coupons.isEmpty())
+            {
+                return
+            }
+
             for (coupon in coupons)
             {
                 val couponMap = mapCouponToFirebase(coupon)

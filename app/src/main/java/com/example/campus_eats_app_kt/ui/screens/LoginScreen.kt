@@ -1,7 +1,6 @@
 package com.example.campus_eats_app_kt.ui.screens
 
 import androidx.compose.foundation.BorderStroke
-import com.example.campus_eats_app_kt.util.LanguageManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,7 +30,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,23 +51,25 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.campus_eats_app_kt.BuildConfig
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
+import com.example.campus_eats_app_kt.util.LanguageManager
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
 
 /**
  * LoginScreen provides the UI for user authentication.
- * It adheres to Apple's Human Interface Guidelines (HIG) by using generous whitespace,
- * clear typography, and consistent spacing units.
+ * Adheres to human interface design standards by utilizing generous whitespace,
+ * structured typography, and clear visual hierarchy.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginSuccess: (String, String) -> Unit, // userId, role
+    onLoginSuccess: (String, String) -> Unit,
     onRegisterClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     onBackClick: () -> Unit,
@@ -83,7 +83,7 @@ fun LoginScreen(
 
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
 
-    // Reactive navigation triggered by authentication success
+    // Reactive navigation triggered upon authentication success
     LaunchedEffect(loginState)
     {
         if (loginState is LoginState.Success)
@@ -140,7 +140,6 @@ fun LoginScreen(
                     .padding(bottom = DesignSystem.Spacing.medium),
             )
 
-            // Principle: Aesthetic Integrity - Purposeful inputs with clear icons
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -176,7 +175,6 @@ fun LoginScreen(
                     shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
                 )
 
-                // Contextual link for recovery
                 TextButton(
                     onClick = onForgotPasswordClick,
                     modifier = Modifier.align(Alignment.End),
@@ -195,7 +193,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Principle: Feedback - Real-time error reporting
             if (loginState is LoginState.Error)
             {
                 Text(
@@ -207,7 +204,6 @@ fun LoginScreen(
                 )
             }
 
-            // Principle: Feedback - Action status indicators
             HIGButton(
                 onClick = { viewModel.login(email, password) },
                 text = LanguageManager.getString("Login", "Teken In"),
@@ -217,39 +213,44 @@ fun LoginScreen(
                 enabled = loginState !is LoginState.Loading,
             )
 
-            // Requirement: Google Single Sign-On.
-            // A clearly visible authentication button for Google SSO.
             val context = LocalContext.current
             val coroutineScope = rememberCoroutineScope()
-            
+
             OutlinedButton(
                 onClick = {
                     coroutineScope.launch()
                     {
-                        try 
+                        try
                         {
                             val credentialManager = CredentialManager.create(context)
+
+                            // Note: setServerClientId requires Web OAuth Client ID (client_type 3)
                             val googleIdOption = GetGoogleIdOption.Builder()
                                 .setFilterByAuthorizedAccounts(filterByAuthorizedAccounts = false)
                                 .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
+                                .setAutoSelectEnabled(autoSelectEnabled = false)
                                 .build()
 
                             val request = GetCredentialRequest.Builder()
                                 .addCredentialOption(googleIdOption)
                                 .build()
 
-                            val result = credentialManager.getCredential(context, request)
+                            val result = credentialManager.getCredential(request = request, context = context)
                             val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
-                            
-                            viewModel.signInWithGoogle(credential.idToken) 
-                        } 
+
+                            viewModel.signInWithGoogle(credential.idToken)
+                        }
                         catch (_: NoCredentialException)
                         {
-                            viewModel.setError(LanguageManager.getString("No accounts found.", "Geen rekeninge gevind nie."))
+                            viewModel.setError(LanguageManager.getString("No Google account selected or credentials available.", "Geen Google-rekening gekies of geloofsbriewe beskikbaar nie."))
                         }
-                        catch (e: GetCredentialException) 
+                        catch (e: GetCredentialException)
                         {
                             viewModel.setError("Google SSO failed: ${e.message}")
+                        }
+                        catch (e: Exception)
+                        {
+                            viewModel.setError("Authentication error: ${e.message}")
                         }
                     }
                 },
@@ -262,19 +263,19 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.onSurface,
                 ),
                 enabled = loginState !is LoginState.Loading,
-            ) 
+            )
             {
-                Row(verticalAlignment = Alignment.CenterVertically) 
+                Row(verticalAlignment = Alignment.CenterVertically)
                 {
-                    if (loginState is LoginState.Loading) 
+                    if (loginState is LoginState.Loading)
                     {
                         CircularProgressIndicator(
                             modifier = Modifier.size(18.dp),
                             strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
-                    } 
-                    else 
+                    }
+                    else
                     {
                         Icon(
                             imageVector = Icons.Rounded.Person,
