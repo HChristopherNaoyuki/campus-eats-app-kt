@@ -256,6 +256,7 @@ class AuthRepository(
 
     /**
      * Maps UserEntity to a map suitable for Firebase Realtime Database serialization.
+     * Includes passwordHash sentinel value "FIREBASE_SSO" to satisfy security rules.
      */
     private fun mapToFirebase(user: UserEntity): Map<String, Any?>
     {
@@ -265,6 +266,7 @@ class AuthRepository(
             "username" to user.username,
             "email" to user.email,
             "role" to if (user.role == UserRole.ADMINISTRATOR) "ADMIN" else user.role.name,
+            "passwordHash" to "[FIREBASE_SSO]",
             "status" to user.status.name,
             "walletBalance" to user.walletBalance,
             "shopName" to user.shopName,

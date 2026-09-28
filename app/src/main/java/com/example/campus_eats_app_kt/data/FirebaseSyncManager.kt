@@ -15,6 +15,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseException
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
@@ -53,13 +54,22 @@ class FirebaseSyncManager(
     // Maximum backoff duration allowed during repeated failure recovery
     private val maxBackoffSeconds = 60L
 
+    // Tracks the active synchronization job to prevent duplicate concurrent loops
+    private var syncJob: Job? = null
+
     /**
      * Starts the continuous background synchronization loop in the provided CoroutineScope.
      * Operates continuously until the underlying CoroutineScope is cancelled.
      */
     fun startContinuousSync(scope: CoroutineScope)
     {
-        scope.launch()
+        if (syncJob?.isActive == true)
+        {
+            Log.d(tag, "Synchronization loop already active. Skipping duplicate start request.")
+            return
+        }
+
+        syncJob = scope.launch()
         {
             Log.i(tag, "Starting continuous Realtime Database synchronization loop.")
 
