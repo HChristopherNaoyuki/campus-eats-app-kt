@@ -1281,6 +1281,8 @@ fun SettingsScreenTab(
             // Language Selection Group
             HIGCard(modifier = Modifier.fillMaxWidth())
             {
+                val context = LocalContext.current
+
                 Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
                 {
                     Text(
@@ -1297,25 +1299,17 @@ fun SettingsScreenTab(
                         FilterChip(
                             selected = LanguageManager.currentLanguage.value == "English",
                             onClick = {
-                                LanguageManager.currentLanguage.value = "English"
+                                LanguageManager.setLanguage(context, "English")
                             },
-                            label = { Text("English") },
+                            label = { Text(LanguageManager.getString("English", "Engels")) },
                         )
                         
                         FilterChip(
                             selected = LanguageManager.currentLanguage.value == "Afrikaans",
                             onClick = {
-                                LanguageManager.currentLanguage.value = "Afrikaans"
+                                LanguageManager.setLanguage(context, "Afrikaans")
                             },
-                            label = { Text("Afrikaans") },
-                        )
-
-                        FilterChip(
-                            selected = LanguageManager.currentLanguage.value == "isiZulu",
-                            onClick = {
-                                LanguageManager.currentLanguage.value = "isiZulu"
-                            },
-                            label = { Text("isiZulu") },
+                            label = { Text(LanguageManager.getString("Afrikaans", "Afrikaans")) },
                         )
                     }
                 }

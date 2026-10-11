@@ -59,6 +59,7 @@ import com.example.campus_eats_app_kt.ui.screens.VendorMenuManagementScreen
 import com.example.campus_eats_app_kt.ui.screens.VendorMenuViewModel
 import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 import com.example.campus_eats_app_kt.util.DatabaseSeeder
+import com.example.campus_eats_app_kt.util.LanguageManager
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.example.campus_eats_app_kt.util.NetworkConnectivityObserver
 import com.google.firebase.auth.FirebaseAuth
@@ -141,6 +142,7 @@ class MainActivity : ComponentActivity()
         {
             LaunchedEffect(Unit)
             {
+                LanguageManager.initialize(applicationContext)
                 DatabaseSeeder.seed(applicationContext)
             }
 
