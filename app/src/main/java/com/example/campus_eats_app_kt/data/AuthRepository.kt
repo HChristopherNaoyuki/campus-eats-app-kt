@@ -25,8 +25,9 @@ import kotlinx.coroutines.tasks.await
  *
  * Architecture principles:
  * 1. User registration uses local-first insertion into Room database with isSynced set to false.
- * 2. Background synchronization is delegated to FirebaseSyncManager to avoid duplicate sync loops.
- * 3. Supports Google Single Sign-In via Credential Manager token exchange with Firebase Auth.
+ * 2. Establishes Firebase Auth session and mirrors user profile to cloud database when online.
+ * 3. Background synchronization is delegated to FirebaseSyncManager to avoid duplicate sync loops.
+ * 4. Supports Google Single Sign-In via Credential Manager token exchange with Firebase Auth.
  */
 class AuthRepository(
     private val userDao: UserDao,
@@ -42,6 +43,7 @@ class AuthRepository(
 
     /**
      * Registers a new user locally in Room storage (offline-first architecture).
+     * Attempts online Firebase Auth creation and Realtime Database mirror if network is available.
      */
     suspend fun register(
         fullName: String,
@@ -53,7 +55,7 @@ class AuthRepository(
         userId: String? = null,
     ): Result<UserEntity>
     {
-        Log.d(tag, "Initiating offline-first registration for: $email")
+        Log.d(tag, "Initiating registration for: $email")
         return try
         {
             if (!ValidationEngine.isValidEmail(email))
@@ -71,6 +73,37 @@ class AuthRepository(
             }
 
             val campusUserId = userId.takeIf { !it.isNullOrBlank() } ?: IdGenerator.generateUserId()
+            var isSyncedCloud = false
+
+            if (connectivityManager.hasInternetConnection())
+            {
+                try
+                {
+                    firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                    val userMap = mapOf(
+                        "userId" to campusUserId,
+                        "fullName" to fullName,
+                        "username" to username,
+                        "email" to email,
+                        "role" to if (role == UserRole.ADMINISTRATOR) "ADMIN" else role.name,
+                        "passwordHash" to "[FIREBASE_SSO]",
+                        "status" to UserStatus.ACTIVE.name,
+                        "walletBalance" to 0.0,
+                        "shopName" to if (role == UserRole.VENDOR) shopName else null,
+                        "shopStatus" to if (role == UserRole.VENDOR) ShopStatus.OPEN.name else null,
+                        "bankAccountInfo" to null,
+                        "registrationDate" to System.currentTimeMillis(),
+                        "usercode" to null,
+                    )
+                    firebaseDatabase.getReference("users").child(campusUserId).setValue(userMap).await()
+                    isSyncedCloud = true
+                }
+                catch (e: Exception)
+                {
+                    Log.w(tag, "Online Firebase registration mirror skipped: ${e.message}")
+                }
+            }
+
             val user = UserEntity(
                 userId = campusUserId,
                 fullName = fullName,
@@ -80,7 +113,7 @@ class AuthRepository(
                 role = role,
                 shopName = if (role == UserRole.VENDOR) shopName else null,
                 shopStatus = if (role == UserRole.VENDOR) ShopStatus.OPEN else null,
-                isSynced = false,
+                isSynced = isSyncedCloud,
             )
 
             userDao.insertUser(user)
@@ -161,6 +194,7 @@ class AuthRepository(
 
     /**
      * Authenticates an existing user using email and password credentials.
+     * Establishes a Firebase Auth session when online to satisfy cloud security rules.
      */
     suspend fun login(email: String, password: String): Result<UserEntity>
     {
@@ -175,6 +209,26 @@ class AuthRepository(
                 {
                     throw Exception("Account suspended.")
                 }
+
+                if (connectivityManager.hasInternetConnection() && firebaseAuth.currentUser == null)
+                {
+                    try
+                    {
+                        firebaseAuth.signInWithEmailAndPassword(email, password).await()
+                    }
+                    catch (_: Exception)
+                    {
+                        try
+                        {
+                            firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                        }
+                        catch (_: Exception)
+                        {
+                            Log.w(tag, "Firebase Auth session creation skipped during offline/local login.")
+                        }
+                    }
+                }
+
                 return Result.success(localUser)
             }
 
