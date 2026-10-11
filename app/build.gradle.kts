@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.campus_eats_app_kt"
         minSdk = 24
         targetSdk = 37
-        versionCode = 4
-        versionName = "3.0.1"
+        versionCode = 5
+        versionName = "3.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -30,14 +30,18 @@ android {
         debug {
             signingConfig = signingConfigs.getByName("debug")
             buildConfigField("boolean", "ENABLE_DEMO_DATA", "true")
-            buildConfigField("String", "GOOGLE_CLIENT_ID", "\"64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com\"")
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"64265928399-k9qvcvf2e17vh61f98591d860v8md05q.apps.googleusercontent.com\"")
+            buildConfigField("String", "GOOGLE_ANDROID_CLIENT_ID", "\"64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com\"")
+            buildConfigField("String", "GOOGLE_CLIENT_ID", "\"64265928399-k9qvcvf2e17vh61f98591d860v8md05q.apps.googleusercontent.com\"")
         }
         release {
             signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             buildConfigField("boolean", "ENABLE_DEMO_DATA", "false")
-            buildConfigField("String", "GOOGLE_CLIENT_ID", "\"64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com\"")
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"64265928399-k9qvcvf2e17vh61f98591d860v8md05q.apps.googleusercontent.com\"")
+            buildConfigField("String", "GOOGLE_ANDROID_CLIENT_ID", "\"64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com\"")
+            buildConfigField("String", "GOOGLE_CLIENT_ID", "\"64265928399-k9qvcvf2e17vh61f98591d860v8md05q.apps.googleusercontent.com\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
