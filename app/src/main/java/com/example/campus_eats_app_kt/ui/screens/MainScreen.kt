@@ -87,10 +87,10 @@ fun MainScreen(
         topBar = {
             val title = when (selectedTab)
             {
-                0 -> LanguageManager.getString("Home", "Tuis")
-                1 -> LanguageManager.getString("Browse", "Snuffel")
-                2 -> LanguageManager.getString("Orders", "Bestellings")
-                else -> LanguageManager.getString("Settings", "Instellings")
+                0 -> LanguageManager.getString("Home", "Tuis", "Ikhaya")
+                1 -> LanguageManager.getString("Browse", "Snuffel", "Bheka")
+                2 -> LanguageManager.getString("Orders", "Bestellings", "Iziyalo")
+                else -> LanguageManager.getString("Settings", "Instellings", "Izilungiselelo")
             }
             HIGTopAppBar(title = title)
         },
@@ -118,25 +118,25 @@ fun MainScreen(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
                         icon = { Icon(Icons.Rounded.Home, contentDescription = "Home") },
-                        label = { Text(LanguageManager.getString("Home", "Tuis")) },
+                        label = { Text(LanguageManager.getString("Home", "Tuis", "Ikhaya")) },
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
                         icon = { Icon(Icons.Rounded.Search, contentDescription = "Browse") },
-                        label = { Text(LanguageManager.getString("Browse", "Snuffel")) },
+                        label = { Text(LanguageManager.getString("Browse", "Snuffel", "Bheka")) },
                     )
                     NavigationBarItem(
                         selected = selectedTab == 2,
                         onClick = { selectedTab = 2 },
                         icon = { Icon(Icons.Rounded.History, contentDescription = "Orders") },
-                        label = { Text(LanguageManager.getString("Orders", "Bestellings")) },
+                        label = { Text(LanguageManager.getString("Orders", "Bestellings", "Iziyalo")) },
                     )
                     NavigationBarItem(
                         selected = selectedTab == 3,
                         onClick = { selectedTab = 3 },
                         icon = { Icon(Icons.Rounded.Settings, contentDescription = "Settings") },
-                        label = { Text(LanguageManager.getString("Settings", "Instellings")) },
+                        label = { Text(LanguageManager.getString("Settings", "Instellings", "Izilungiselelo")) },
                     )
                 }
             }

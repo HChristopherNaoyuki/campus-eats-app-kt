@@ -4,8 +4,8 @@ import androidx.compose.runtime.mutableStateOf
 
 /**
  * LanguageManager provides global multi-language support for the application.
- * It manages the user-selected language preference (English or Afrikaans) 
- * and handles dynamic string lookup.
+ * Manages the user-selected language preference (English, Afrikaans, or isiZulu)
+ * and resolves localized strings dynamically across UI chrome components.
  */
 object LanguageManager
 {
@@ -13,21 +13,20 @@ object LanguageManager
     var currentLanguage = mutableStateOf("English")
 
     /**
-     * Resolves the string value based on the current selected language.
-     * 
+     * Resolves the string value based on the current selected language state.
+     *
      * @param en The English version of the text.
      * @param af The Afrikaans version of the text.
-     * @return The text corresponding to the current language.
+     * @param zu The isiZulu version of the text (defaults to English if omitted).
+     * @return The localized text corresponding to currentLanguage.value.
      */
-    fun getString(en: String, af: String): String
+    fun getString(en: String, af: String, zu: String = en): String
     {
-        return if (currentLanguage.value == "English") 
+        return when (currentLanguage.value)
         {
-            en
-        } 
-        else 
-        {
-            af
+            "Afrikaans" -> af
+            "isiZulu" -> zu
+            else -> en
         }
     }
 }

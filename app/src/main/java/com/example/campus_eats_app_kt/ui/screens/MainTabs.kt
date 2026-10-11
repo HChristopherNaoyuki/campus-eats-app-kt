@@ -1309,6 +1309,14 @@ fun SettingsScreenTab(
                             },
                             label = { Text("Afrikaans") },
                         )
+
+                        FilterChip(
+                            selected = LanguageManager.currentLanguage.value == "isiZulu",
+                            onClick = {
+                                LanguageManager.currentLanguage.value = "isiZulu"
+                            },
+                            label = { Text("isiZulu") },
+                        )
                     }
                 }
             }
