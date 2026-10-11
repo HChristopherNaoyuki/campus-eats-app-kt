@@ -20,11 +20,29 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
  */
 object LanguageManager
 {
+    const val ENGLISH = "English"
+    const val AFRIKAANS = "Afrikaans"
+
     private val LANGUAGE_KEY = stringPreferencesKey("selected_language")
 
     // The current selected language state, default is English.
-    var currentLanguage = mutableStateOf("English")
+    var currentLanguage = mutableStateOf(ENGLISH)
         private set
+
+    /**
+     * Normalizes the language string to ensure only English or Afrikaans is applied.
+     */
+    fun normalize(language: String): String
+    {
+        return if (language.equals(AFRIKAANS, ignoreCase = true))
+        {
+            AFRIKAANS
+        }
+        else
+        {
+            ENGLISH
+        }
+    }
 
     /**
      * Initializes the language manager by reading the saved language preference from DataStore.
@@ -32,8 +50,8 @@ object LanguageManager
     suspend fun initialize(context: Context)
     {
         val preferences = context.dataStore.data.first()
-        val savedLanguage = preferences[LANGUAGE_KEY] ?: "English"
-        currentLanguage.value = savedLanguage
+        val savedLanguage = preferences[LANGUAGE_KEY] ?: ENGLISH
+        currentLanguage.value = normalize(savedLanguage)
     }
 
     /**
@@ -41,12 +59,13 @@ object LanguageManager
      */
     fun setLanguage(context: Context, language: String)
     {
-        currentLanguage.value = language
+        val normalizedLanguage = normalize(language)
+        currentLanguage.value = normalizedLanguage
         CoroutineScope(Dispatchers.IO).launch()
         {
             context.dataStore.edit()
             { preferences ->
-                preferences[LANGUAGE_KEY] = language
+                preferences[LANGUAGE_KEY] = normalizedLanguage
             }
         }
     }
@@ -62,7 +81,7 @@ object LanguageManager
      */
     fun getString(en: String, af: String, zu: String = en): String
     {
-        return if (currentLanguage.value == "Afrikaans")
+        return if (currentLanguage.value == AFRIKAANS)
         {
             af
         }

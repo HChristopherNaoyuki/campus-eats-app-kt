@@ -1297,17 +1297,17 @@ fun SettingsScreenTab(
                     )
                     {
                         FilterChip(
-                            selected = LanguageManager.currentLanguage.value == "English",
+                            selected = LanguageManager.currentLanguage.value == LanguageManager.ENGLISH,
                             onClick = {
-                                LanguageManager.setLanguage(context, "English")
+                                LanguageManager.setLanguage(context, LanguageManager.ENGLISH)
                             },
                             label = { Text(LanguageManager.getString("English", "Engels")) },
                         )
                         
                         FilterChip(
-                            selected = LanguageManager.currentLanguage.value == "Afrikaans",
+                            selected = LanguageManager.currentLanguage.value == LanguageManager.AFRIKAANS,
                             onClick = {
-                                LanguageManager.setLanguage(context, "Afrikaans")
+                                LanguageManager.setLanguage(context, LanguageManager.AFRIKAANS)
                             },
                             label = { Text(LanguageManager.getString("Afrikaans", "Afrikaans")) },
                         )
