@@ -1,5 +1,145 @@
 # Campus Eats - Release Notes
 
+## Version 3.1.0
+
+**Release Date:** 2026-04-02
+
+---
+
+### Overview
+
+Version 3.1.0 is a comprehensive technical update for the Campus Eats Android platform. This release resolves critical Single Sign-On credential exchange issues, integrates persistent dual-language support, establishes a single session-gated cloud synchronizer with exponential backoff, adds local order status transition notifications, and hardens network connectivity validation across the application.
+
+---
+
+### Added Features
+
+**1. Persistent Dual-Language Localization**
+- Integrated Jetpack DataStore preferences (`campus_eats_language`) in `LanguageManager` to persist user language selection across application restarts.
+- Initialized saved language preference at startup in `MainActivity` before UI composition.
+- Provided UI language selection controls for English and Afrikaans in `SettingsScreenTab`. UI chrome (tabs, labels, buttons, headers, dialogs, empty states, and error prompts) updates immediately upon selection.
+- Ensured domain entities (food item titles, descriptions, shop names, user names, and customer feedback text) remain as stored without modification.
+
+**2. Local Order Status Transition Notifications**
+- Implemented `NotificationHelper` and registered notification channel `campus_eats_orders` at application launch in `MainActivity`.
+- Added `POST_NOTIFICATIONS` permission declaration in `AndroidManifest.xml`.
+- Triggered localized local push notifications whenever an order status transition occurs in `OrderRepository` (Accepted, Preparing, Ready, Completed).
+
+**3. Enhanced Network Connectivity Validation**
+- Updated `NetworkConnectivityManager` to inspect both `NET_CAPABILITY_INTERNET` and `NET_CAPABILITY_VALIDATED` network capabilities.
+- Added `ACCESS_NETWORK_STATE` permission declaration in `AndroidManifest.xml` to allow capability checking and eliminate false positives from captive portals.
+
+---
+
+### Improvements
+
+**1. Single Authoritative Synchronizer Engine**
+- Refactored `FirebaseSyncManager` to manage continuous cloud synchronization using a single coroutine `Job` guard, preventing duplicate concurrent sync loops.
+- Gated synchronization cycles on active network connectivity and authenticated Firebase sessions (`firebaseAuth.currentUser != null`).
+- Applied exponential backoff logic (1s doubling up to 60s cap) on transient database or network failures.
+- Ensured local pending flags (`isSynced` / `isPendingSync`) are cleared only after successful `setValue` / `await()` completion in Firebase Realtime Database.
+
+**2. Authentication Session Establishment**
+- Updated `AuthRepository.register` to create a Firebase Auth user (`createUserWithEmailAndPassword`) and mirror profile data to `users/{userId}` in Firebase Realtime Database when online.
+- Updated `AuthRepository.login` to establish a Firebase Auth session after local SHA-256 password hash validation when online, ensuring subsequent cloud writes satisfy `auth != null` rules.
+
+**3. Explicit Client ID Exposure in Build Configuration**
+- Updated `app/build.gradle.kts` to expose distinct build fields for `GOOGLE_WEB_CLIENT_ID` (`64265928399-k9qvcvf2e17vh61f98591d860v8md05q.apps.googleusercontent.com`), `GOOGLE_ANDROID_CLIENT_ID` (`64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com`), and backward-compatible `GOOGLE_CLIENT_ID`.
+
+---
+
+### Bug Fixes
+
+- Fixed Google SSO authentication failures by supplying the Web OAuth Client ID (`GOOGLE_WEB_CLIENT_ID`) to Credential Manager's `GetGoogleIdOption.setServerClientId` in `LoginScreen` and `RegistrationScreen`.
+- Fixed feedback synchronization by filtering feedback entries for the active session user and serializing entries under stable `feedbackId` keys.
+- Added missing `passwordHash` field (`"[FIREBASE_SSO]"`) in `AuthRepository.mapToFirebase` to satisfy user node security rule validations.
+- Added trailing comma in `buildTypes.release.proguardFiles` in `app/build.gradle.kts` to resolve build script analyzer warnings.
+- Fixed KDoc comment formatting in `FirebaseSyncManager` to prevent unresolved symbol warnings.
+
+---
+
+### Breaking Changes
+
+- None. All database schemas and repository public contracts remain backward compatible with prior 3.x releases.
+
+---
+
+### Dependencies and Compatibility
+
+- Minimum SDK: API 24 (Android 7.0 Nougat)
+- Target SDK: API 37 (Android 15)
+- Kotlin Version: 2.0.x
+- Added Dependency: `androidx.datastore:datastore-preferences`
+
+---
+
+### Technical Details
+
+**Version Code:** 5
+
+**Version Name:** 3.1.0
+
+**Package Name:** com.example.campus_eats_app_kt
+
+---
+
+### Installation Instructions
+
+**For First-Time Installation:**
+
+1. Download the APK file from the provided repository artifacts.
+2. Enable "Install from Unknown Sources" in device settings.
+3. Open the APK file on your Android device.
+4. Tap "Install" and confirm the installation.
+5. Launch the application and log in using demo credentials or Google SSO.
+
+**For Upgrading Existing Installation:**
+
+1. Run `./gradlew :app:assembleDebug` or install the updated APK over the existing version (`adb install -r`).
+2. Local database schema and DataStore preferences automatically migrate upon launch.
+
+---
+
+### APK Information
+
+**Debug APK:**
+- Filename: campus-eats-debug-3.1.0.apk
+- Purpose: Development and testing
+- Signing: Debug keystore
+
+**Release APK:**
+- Filename: campus-eats-release-3.1.0.apk
+- Purpose: Production distribution
+- Signing: Release keystore
+
+---
+
+### CI/CD Workflow Information
+
+**Workflow Name:** CI
+
+**Trigger Events:**
+- Push to master branch
+- Pull request to master branch
+- Manual dispatch (workflow_dispatch)
+
+**Workflow Steps:**
+1. Checkout repository code
+2. Set up JDK 17
+3. Make Gradle wrapper executable
+4. Run unit tests
+5. Build debug APK
+6. Build release APK
+7. Upload build artifacts
+
+---
+
+### Contributors
+
+- **Naoyuki Christopher H.** - Lead Full Stack Engineer
+
+---
+
 ## Version 3.0.1
 
 **Release Date:** 2026-03-30
@@ -8,52 +148,7 @@
 
 ### Overview
 
-Version 3.0.1 is a targeted release delivering core account, admin, and vendor enhancements for Campus Eats. This release introduces a generated 16-character User ID and copy control on account creation, User ID-based account recovery with strict password strength validation, explicit account suspension controls, tabular admin insight reporting, enhanced admin financial controls, actual data-driven vendor revenue reports, and live order item checking for vendors.
-
----
-
-### New Features & Enhancements
-
-**1. Account Creation (Spec 1.1 - 1.5)**
-- Generated 16-character User ID section displayed directly above the submit button on registration.
-- Added button labelled exactly `"Copy User ID"` to copy the ID to the system clipboard before submission.
-- Preserved User ID as the unique key (`userId`) for the account.
-
-**2. Account Recovery (Spec 2.1 - 2.8)**
-- Redesigned recovery form asking for exactly three inputs: **User ID**, **New password**, and **Confirm password**.
-- Enforced password validation rules: >= 8 characters, lowercase, uppercase, digit, special character, and matching confirmation.
-- Resets password using User ID as the unique account identifier.
-
-**3. Admin User Directory (Spec 3.1 - 3.2)**
-- Added explicit **Suspend** and **Activate** action buttons in the Admin User Directory.
-
-**4. Admin Insight Reports (Spec 4.1 - 4.3)**
-- Added `AdminInsightReportsHub` displaying orders in 4 columns: **Item Number**, **Vendor Place**, **Total**, and **Order ID**.
-- Added filter with exact options: **"New to old"**, **"Month"**, and **"Year"**.
-
-**5. Admin Financial Controls (Spec 5.1 & 5.2)**
-- **Issue System Credits**: Prompts for coupon name, discount percent (max 20%), validity date (start today or later), and target user (restricted to `STUDENT` and `STANDARD` accounts).
-- **Generate Coupons**: Prompts for coupon name, discount percent (max 20%), validity date (start today or later) without a target user.
-
-**6. Vendor Financial Reports (Spec 6.1 - 6.5)**
-- `VendorReportHub` calculates item-level revenue and overall revenue strictly from actual vendor order data (`itemsJson`).
-- Prominently displays total completed revenue and top revenue item at the top.
-
-**7. Vendor Live Orders (Spec 7.1 - 7.3)**
-- Responsive live orders list where each row features a **Check** button.
-- Clicking Check opens an itemized modal listing exact items picked by the user for order preparation.
-
----
-
-### Technical Details
-
-**Version Code:** 4
-
-**Version Name:** 3.0.1
-
-**Minimum SDK:** API 24 (Android 7.0 Nougat)
-
-**Target SDK:** API 37 (Android 15)
+Version 3.0.1 delivered account, admin, and vendor enhancements including 16-character User ID generation, copy control, User ID account recovery, admin insight reporting, financial controls, vendor revenue calculation, and live order item inspection.
 
 ---
 
@@ -65,79 +160,7 @@ Version 3.0.1 is a targeted release delivering core account, admin, and vendor e
 
 ### Overview
 
-Version 2.0.0 is a major milestone for Campus Eats, introducing a complete technical overhaul and a
-refined visual identity. This release shifts the application from a purely local prototype to a
-hybrid offline-first model, fully integrated with the Fake Restaurant API. The user interface has
-been redesigned for professional clarity, and core vendor fulfillment workflows have been
-established.
-
----
-
-### New Features
-
-**Fake Restaurant API Integration**
-Implemented full-stack integration for all 15 Documented API endpoints. The application now
-synchronizes restaurants, user accounts, and master orders with the remote server while maintaining
-local transaction integrity.
-
-**Vendor Fulfillment System**
-Introduced a comprehensive order management interface for vendors. Shop owners can now view live
-orders, access itemized customer receipts, and update order statuses (Accepted, Preparing, Ready,
-Completed) in real-time.
-
-**UI/UX Redesign (Minimalist HIG)**
-Complete visual refinement following professional design standards.
-
-- Standardized color palette: Black, Orange, White, and Action Blue.
-- Redesigned Landing, Registration, and Login screens.
-- Implemented a 5-tab navigation structure (Home, Browse, Orders, Reports, Settings).
-- Introduced HIG-compliant components: Segmented Controls, custom cards, and refined headers.
-
-**Dynamic Marketplace**
-The home dashboard now features a live vendor marketplace. Shops are retrieved dynamically from the
-API and local database, featuring real-time status indicators (Open/Closed).
-
----
-
-### Enhancements
-
-**Dependency Injection & Testability**
-Refactored the data layer to use repository-based dependency injection. Network services are now
-injected into repositories, allowing for 100% mockable unit tests and improved codebase
-maintainability.
-
-**CI/CD Pipeline Optimization**
-Streamlined the GitHub Actions workflow.
-
-- Enabled Gradle dependency caching for faster execution.
-- Enforced strict linting and compilation checks.
-- Synchronized unit tests with the new DI architecture.
-
-**Technical Documentation Suite**
-Produced a complete technical manual including System Architecture, Data Layer schema, Presentation
-Layer standards, and CI/CD configuration guides.
-
----
-
-### Bug Fixes
-
-- Fixed a critical test regression in `MenuRepositoryTest` caused by improper mock handling of
-  `MenuItemEntity`.
-- Resolved a compilation error in `MainActivity` related to missing `UserDao` dependencies.
-- Corrected various UI state glitches during role-based navigation transitions.
-- Standardized brace placement to Allman style across all modified files.
-
----
-
-### Technical Details
-
-**Version Code:** 2
-
-**Version Name:** 2.0.0
-
-**Minimum SDK:** API 24 (Android 7.0 Nougat)
-
-**Target SDK:** API 37 (Android 15)
+Version 2.0.0 provided a complete technical overhaul shifting to a hybrid offline-first architecture with Fake Restaurant API integration, vendor fulfillment workflow, and a minimalist HIG Compose UI redesign.
 
 ---
 
@@ -149,390 +172,4 @@ Layer standards, and CI/CD configuration guides.
 
 ### Overview
 
-This is the initial release of Campus Eats, an offline-first Android
-mobile application built for Rosebank International University College.
-The application provides comprehensive food ordering, vendor management,
-and administrative oversight capabilities within a university campus
-environment.
-
-This release establishes the core functionality for all user roles and
-implements the complete user journey from registration to order
-completion.
-
----
-
-### New Features
-
-**User Registration and Authentication**
-Users can register with their full name, email address, and password.
-The system generates a unique 16-character User ID formatted as
-XXXX-XXXX-XXXX-XXXX. Users can log in using their email and password,
-and the system implements role-based access control to determine the
-appropriate interface.
-
-**Role-Based Interfaces**
-The application supports four distinct user roles:
-
-- Admin: Full system oversight and management
-- Student: Food ordering with student discount
-- Standard User: Food ordering without discount
-- Vendor: Menu management and order processing
-
-**Admin Dashboard**
-Comprehensive administrative interface including user management,
-vendor management, order management, system-wide analytics, and
-reporting capabilities. The dashboard displays key metrics including
-all-time earnings, total users, active vendors, and revenue statistics.
-
-**Student and Standard User Features**
-Complete ordering workflow including vendor browsing, cart management,
-fee calculations, checkout with pickup time selection, payment method
-options, order confirmation, and order tracking. Receipt viewing with
-filtering and sorting capabilities.
-
-**Vendor Features**
-Menu item management with add, edit, and delete capabilities. Order
-management with status tracking (Pending, Accepted, Preparing, Ready,
-Completed, Cancelled). Revenue reporting and analytics.
-
-**Fee Calculation Engine**
-Automated calculation of subtotal, tax (20%), service fees (tiered),
-student discounts (2.5%), and rounding adjustment to the next R5.
-
-**Offline-First Architecture**
-All data stored locally using Room Database, ensuring reliable access
-even without internet connectivity.
-
-**User ID System**
-16-character alphanumeric User ID format (XXXX-XXXX-XXXX-XXXX) with
-copy functionality for secure storage and account recovery.
-
----
-
-### Enhancements
-
-This is the initial release; no enhancements are applicable at this time.
-
----
-
-### Bug Fixes
-
-This is the initial release; no bug fixes are applicable at this time.
-
----
-
-### Known Issues
-
-**Issue 1**
-No known issues have been identified at the time of this release.
-Any issues discovered post-release will be documented and addressed
-in subsequent updates.
-
----
-
-### Technical Details
-
-**Version Code:** 1
-
-**Version Name:** 1.0
-
-**Minimum SDK:** API 24 (Android 7.0 Nougat)
-
-**Target SDK:** API 37 (Android 15)
-
-**File Size:** [size in MB - to be filled after build]
-
-**Package Name:** com.example.campus_eats_app_kt
-
-**Signature Hash:** [SHA-1 or SHA-256 hash - to be filled after signing]
-
----
-
-### Installation Instructions
-
-**For First-Time Installation:**
-
-1. Download the APK file from the provided link
-2. Enable "Install from Unknown Sources" in device settings
-3. Open the APK file on your Android device
-4. Tap "Install" and confirm the installation
-5. Open the application and register or log in
-
-**For Upgrading Existing Installation:**
-This is the initial release; no upgrade path is applicable.
-
-**For Play Store Users:**
-
-1. Open the Google Play Store on your device
-2. Search for "Campus Eats"
-3. Tap the "Install" button
-4. Wait for the download and installation to complete
-
----
-
-### APK Information
-
-**Debug APK:**
-
-- Filename: campus-eats-debug-2.0.0.apk
-- File Size: [size in MB]
-- Purpose: Testing and development
-- Signing: Debug keystore
-
-**Release APK:**
-
-- Filename: campus-eats-release-2.0.0.apk
-- File Size: [size in MB]
-- Purpose: Production distribution
-- Signing: Release keystore
-
-**App Bundle (AAB):**
-
-- Filename: campus-eats-2.0.0.aab
-- File Size: [size in MB]
-- Purpose: Google Play Store submission
-
-**Artifact Links:**
-
-- Debug APK: campus-eats-debug-apk (from GitHub Actions)
-- Release APK: campus-eats-release-apk (from GitHub Actions)
-- AAB Bundle: campus-eats-release-aab (from GitHub Actions)
-
----
-
-### CI/CD Workflow Information
-
-**Workflow Name:** CI
-
-**Trigger Events:**
-
-- Push to master branch
-- Pull request to master branch
-- Manual dispatch (workflow_dispatch)
-
-**Workflow Steps:**
-
-1. Checkout repository code
-2. Set up JDK 17 (Zulu distribution)
-3. Make Gradle wrapper executable
-4. Run unit tests
-5. Build debug APK
-6. Build release APK
-7. Build release AAB
-8. Upload debug APK artifact
-9. Upload release APK artifact
-10. Upload release AAB artifact
-
-**Artifact Names:**
-
-- campus-eats-debug-apk
-- campus-eats-release-apk
-- campus-eats-release-aab
-
----
-
-### Changelog
-
-**Version 1.0.0 (2026-01-15)**
-
-- Initial release of Campus Eats application
-- Implemented user registration and authentication
-- Implemented role-based access control for Admin, Student,
-  Standard, and Vendor roles
-- Implemented admin dashboard with user, vendor, and order management
-- Implemented student and standard user ordering workflow
-- Implemented vendor menu and order management
-- Implemented fee calculation engine (tax, service fees, discounts)
-- Implemented offline-first architecture with Room Database
-- Implemented 16-character User ID system with copy functionality
-- Implemented receipt viewing with filtering and sorting
-- Implemented order tracking and status management
-- Implemented reporting and analytics capabilities
-- Implemented feedback submission system
-- Implemented CI/CD pipeline with GitHub Actions
-
----
-
-### Contributors
-
-We thank the following contributors for their work on this release:
-
-- **Naoyuki Christopher H.** - Lead Developer
-    - Application architecture and design
-    - Full-stack Android development
-    - Database design and implementation
-    - Business logic implementation
-    - UI/UX design and implementation
-    - Testing and quality assurance
-    - Documentation
-    - CI/CD pipeline implementation
-
----
-
-### Download Links
-
-| File Type   | Artifact Name           | Link                       |
-|-------------|-------------------------|----------------------------|
-| Debug APK   | campus-eats-debug-apk   | [GitHub Actions Artifacts] |
-| Release APK | campus-eats-release-apk | [GitHub Actions Artifacts] |
-| App Bundle  | campus-eats-release-aab | [GitHub Actions Artifacts] |
-
----
-
-### Checksums
-
-| File Type   | MD5    | SHA-1  | SHA-256 |
-|-------------|--------|--------|---------|
-| Debug APK   | [hash] | [hash] | [hash]  |
-| Release APK | [hash] | [hash] | [hash]  |
-| App Bundle  | [hash] | [hash] | [hash]  |
-
----
-
-### Support and Contact
-
-For support inquiries, bug reports, or feature requests, please use the
-following channels:
-
-- GitHub Issues: [repository issues link]
-- Email: [support email address]
-- Documentation: [documentation link]
-
----
-
-### License and Copyright
-
-Copyright (c) 2026 Naoyuki Christopher H.
-
-All rights reserved. This software and its documentation are proprietary
-and confidential. Unauthorized copying, distribution, or use of this
-software is strictly prohibited without prior written permission.
-
----
-
-## APK DOCUMENTATION
-
-### APK File Naming Convention
-
-**Format:** application-name-buildtype-version.apk
-
-**Examples:**
-
-- campus-eats-debug-2.0.0.apk
-- campus-eats-release-2.0.0.apk
-- campus-eats-2.0.0.aab
-
-### APK Contents
-
-The APK contains the following main components:
-
-**Classes.dex**
-
-- Compiled Kotlin bytecode
-- All application logic and business rules
-- Repository and ViewModel implementations
-
-**AndroidManifest.xml**
-
-- Application permissions (Internet, Storage, etc.)
-- Activity and service declarations
-- Application metadata and version information
-
-**Resources.arsc**
-
-- Compiled resources (strings, dimensions, colors)
-- Layout files and drawable references
-- Theme and style definitions
-
-**assets/**
-
-- Static application assets
-- Configuration files
-- JSON data files
-- Database migration scripts
-
-**lib/**
-
-- Native libraries for supported architectures
-- ARM, ARM64, x86, x86_64 binaries
-
-**META-INF/**
-
-- Certificate and signature information
-- Manifest file
-- Security metadata
-
-### APK Verification
-
-To verify the APK integrity before installation:
-
-1. **Verify File Checksum:**
-   ```bash
-   md5sum campus-eats-release-2.0.0.apk
-   sha1sum campus-eats-release-2.0.0.apk
-   sha256sum campus-eats-release-2.0.0.apk
-   ```
-
-2. **Verify APK Signature:**
-   ```bash
-   keytool -printcert -jarfile campus-eats-release-2.0.0.apk
-   ```
-
-3. **Verify APK Contents:**
-   ```bash
-   unzip -l campus-eats-release-2.0.0.apk
-   ```
-
-### APK Installation Commands
-
-**Using ADB:**
-
-```bash
-adb install campus-eats-release-2.0.0.apk
-```
-
-**Using ADB with Reinstall:**
-
-```bash
-adb install -r campus-eats-release-2.0.0.apk
-```
-
-**Using ADB with Downgrade:**
-
-```bash
-adb install -d campus-eats-release-2.0.0.apk
-```
-
-**Installation on Device:**
-
-1. Copy APK to device storage
-2. Open file manager and navigate to APK location
-3. Tap the APK file
-4. Follow the installation prompts
-
----
-
-## RELEASE CHECKLIST
-
-Before finalizing the release, verify the following:
-
-- [ ] All code changes are committed and merged to master
-- [ ] CI/CD workflow runs successfully
-- [ ] All unit tests pass in CI pipeline
-- [ ] Application builds without errors
-- [ ] Debug APK is generated successfully
-- [ ] Release APK is generated successfully
-- [ ] Release AAB is generated successfully
-- [ ] Application installs on target devices
-- [ ] Application launches without crashes
-- [ ] All new features function as expected
-- [ ] No critical bugs remain unresolved
-- [ ] APK is signed with release keystore
-- [ ] APK size is within acceptable limits
-- [ ] Release notes are complete and accurate
-- [ ] Artifacts are uploaded successfully
-- [ ] Developer attribution is correctly included
-
----
-
-*END OF DOCUMENT*
+Initial release establishing core features for Students, Vendors, and Administrators with local Room database storage, fee calculation engine, and initial UI screens.

@@ -1,4 +1,4 @@
-# Campus Eats - Mobile Campus Dining Platform (v3.0.1)
+# Campus Eats - Mobile Campus Dining Platform (v3.1.0)
 
 ## Table of Contents
 
@@ -12,7 +12,7 @@
 6. [Testing Instructions](#6-testing-instructions)
 7. [Sample Coupons](#7-sample-coupons)
 8. [Functional Features](#8-functional-features)
-9. [AI Usage & Contributions Policy](#ai-usage--contributions-policy)
+9. [AI Usage & Contributions Policy](#9-ai-usage--contributions-policy)
 10. [Commit Message Convention](#10-commit-message-convention)
 
 ---
@@ -21,7 +21,7 @@
 
 Campus Eats is a production-quality Android application designed to modernize and streamline the dining experience within university ecosystems. Specifically tailored for Rosebank International South Africa, the platform facilitates seamless interaction between students, food vendors, and administrators.
 
-The application addresses common campus dining inefficiencies, such as long queues and manual transaction recording, by providing a reliable, digital-first solution. It leverages a centralized REST API to ensure data consistency across multiple devices while maintaining an offline-first architecture for resilience.
+The application addresses common campus dining inefficiencies, such as long queues and manual transaction recording, by providing a reliable, digital-first solution. It leverages a hybrid offline-first architecture powered by a local Room database, Firebase Realtime Database for cloud synchronization, Firebase Authentication for credentials, and a secondary REST API client for catalog integration.
 
 This repository supports the following academic modules:
 
@@ -65,16 +65,19 @@ The video presents the application in operation, including the primary user work
 
 ## 4. Technical Overview
 
-The application is built using modern Android development practices and libraries:
+The application is built using modern Android development practices, architecture patterns, and Jetpack libraries:
 
 * Language: Kotlin 2.x
-* UI Framework: Jetpack Compose with Material 3
-* Architecture: Model-View-ViewModel (MVVM) with the Repository pattern
-* Persistence: Room Database for local caching and offline support
-* Networking: Retrofit 2.x for REST API communication
-* Backend: Firebase Realtime Database and Firebase Authentication
-* Security: SHA-256 password encryption and RBAC (Role-Based Access Control)
-* Multi-language Support: English and Afrikaans
+* UI Framework: Jetpack Compose with Material 3 and Navigation 3
+* Architecture: Model-View-ViewModel (MVVM) with Repository Pattern and Dependency Wiring
+* Persistence: Room Database for local offline storage and Jetpack DataStore Preferences for setting storage
+* Cloud Backend: Firebase Realtime Database with 10 MB disk persistence enabled
+* Authentication: Firebase Authentication with Credential Manager for Google Single Sign-On (SSO)
+* Synchronizer: Single background coroutine engine (10-second interval, exponential backoff 1s to 60s, session-gated)
+* Networking: Retrofit 2.x for Fake Restaurant REST API communication
+* Security: SHA-256 password hashing for local accounts, sentinel SSO tokens, and Role-Based Access Control (RBAC)
+* Notifications: Local Notification Channel (campus_eats_orders) for real-time order status transition alerts
+* Localization: Dynamic UI chrome language switching (English and Afrikaans) persisted via DataStore
 
 ---
 
@@ -99,15 +102,16 @@ The following demo accounts are provided to facilitate testing and demonstration
 
 ## 6. Testing Instructions
 
-To verify the application functionality, follow these steps:
+To verify application functionality, follow these steps:
 
 1. Clone the repository and open the project in Android Studio.
 2. Synchronize the project with Gradle files.
-3. Start an Android Emulator (API 24 or higher) or connect a physical device.
-4. Build and run the application.
-5. On the first launch, the application seeds the local database with sample data.
-6. Use the credentials provided in the Demo Accounts section to log in.
-7. Perform role-specific workflows such as placing an order (Student) or fulfilling an order (Vendor).
+3. Start an Android Emulator (API 24 or higher with Google Play Services) or connect a physical device.
+4. Build and run the application (`./gradlew :app:assembleDebug`).
+5. On initial launch, the application seeds the local Room database with sample data and loads saved language preferences.
+6. Use the credentials provided in the Demo Accounts section to log in, or use Continue with Google.
+7. Perform role-specific workflows such as placing an order (Student), managing menus and updating status (Vendor), or administrative moderation (Admin).
+8. Toggle network connectivity to observe offline operation and automatic background synchronization upon reconnection.
 
 ---
 
@@ -123,32 +127,27 @@ Administrators can use the following sample coupons for testing:
 
 ## 8. Functional Features
 
-* Secure Authentication: Email and password login, plus Google Single Sign-On (SSO).
-* Offline-First Registration: User registration is performed locally in the Room Database without a network dependency.
-* Automated Cloud Backup: Local user records and orders are automatically backed up to Firebase every 30 seconds via a background synchronization loop.
-* Role-Based Access Control: Specialized dashboards for Students, Vendors, and Administrators.
-* Responsive UI: Dynamic layouts that adapt to both phone and tablet sizes.
-* Order Management: Itemized ordering with platform-native time selection.
-* Financial Reporting: Real-time revenue tracking and item-level sales breakdowns.
-* Analytics: Visual spending charts and structured JSON data export.
-* System Moderation: Administrative tools for user status management and credit issuance.
+* Secure Authentication: Local SHA-256 hashed email/password sign-in plus Google Single Sign-On (SSO) via Credential Manager.
+* Offline-First Architecture: Instant local registration, cart management, and order placement in Room database.
+* Automated Cloud Synchronization: Single background synchronizer loop syncing unsynced records to Firebase Realtime Database every 10 seconds with exponential backoff on network errors.
+* Local Order Notifications: Real-time status transition alerts delivered through Android notification channels on order progress updates.
+* Persistent Localization: Dynamic UI language switching for English and Afrikaans persisted across application restarts with Jetpack DataStore.
+* Role-Based Interfaces: Customized dashboards for Students, Vendors, and Administrators.
+* Account Management: 16-character User ID generation, copy-to-clipboard control, and User ID account recovery with password strength validation.
+* Vendor Fulfillment System: Live order tracking, itemized receipt inspection, and order status updates (Accepted, Preparing, Ready, Completed).
+* Administrative Oversight: User suspension controls, tabular order insight reporting, system credit issuance, and coupon generation.
+* REST API Catalog: Secondary Retrofit integration for restaurant catalog browsing.
 
 ---
 
-## AI Usage & Contributions Policy
+## 9. AI Usage & Contributions Policy
 
-We welcome the use of AI tools to assist developers, but
-we enforce strict human accountability:
+We welcome the use of AI tools to assist developers, but we enforce strict human accountability:
 
-* **No Fully AI-Generated PRs:** This project does not accept entirely
-  machine-generated pull requests.
-* **Human Oversight:** You must personally understand, verify, and take 100%
-  responsibility for every single line of code you submit.
-* **Never Let the LLM Think for You:** AI models make logical mistakes and
-  cannot be held accountable for security flaws or bugs.
-* **Disclosure:** If a significant portion of your contribution was generated
-  by an AI assistant, please explicitly note it in your Pull Request
-  description.
+* **No Fully AI-Generated PRs:** This project does not accept entirely machine-generated pull requests.
+* **Human Oversight:** You must personally understand, verify, and take 100% responsibility for every single line of code you submit.
+* **Never Let the LLM Think for You:** AI models make logical mistakes and cannot be held accountable for security flaws or bugs.
+* **Disclosure:** If a significant portion of your contribution was generated by an AI assistant, please explicitly note it in your Pull Request description.
 
 ---
 
@@ -192,5 +191,3 @@ OR CONTRIBUTORS.
 ---
 
 *END OF DOCUMENT*
-
----
