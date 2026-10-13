@@ -1,4 +1,4 @@
-# Campus Eats - Mobile Campus Dining Platform (v3.1.0)
+# Campus Eats - Mobile Campus Dining Platform (v4.0.0)
 
 ## Table of Contents
 
