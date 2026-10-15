@@ -1,4 +1,4 @@
-# Campus Eats - Mobile Campus Dining Platform (v4.0.0)
+# Campus Eats - Mobile Campus Dining Platform (v5.0.0)
 
 ## Table of Contents
 
@@ -69,8 +69,9 @@ The application is built using modern Android development practices, architectur
 
 * Language: Kotlin 2.x
 * UI Framework: Jetpack Compose with Material 3 and Navigation 3
+* Image Loading: Coil Compose with fallback vector placeholders
 * Architecture: Model-View-ViewModel (MVVM) with Repository Pattern and Dependency Wiring
-* Persistence: Room Database for local offline storage and Jetpack DataStore Preferences for setting storage
+* Persistence: Room Database (version 12) for local offline storage and Jetpack DataStore Preferences for setting storage
 * Cloud Backend: Firebase Realtime Database with 10 MB disk persistence enabled
 * Authentication: Firebase Authentication with Credential Manager for Google Single Sign-On (SSO)
 * Synchronizer: Single background coroutine engine (10-second interval, exponential backoff 1s to 60s, session-gated)
@@ -110,7 +111,7 @@ To verify application functionality, follow these steps:
 4. Build and run the application (`./gradlew :app:assembleDebug`).
 5. On initial launch, the application seeds the local Room database with sample data and loads saved language preferences.
 6. Use the credentials provided in the Demo Accounts section to log in, or use Continue with Google.
-7. Perform role-specific workflows such as placing an order (Student), managing menus and updating status (Vendor), or administrative moderation (Admin).
+7. Perform role-specific workflows such as browsing food items with photographs, food names, and prices (Student/Standard), managing vendor inventory with item thumbnails (Vendor), or administrative moderation (Admin).
 8. Toggle network connectivity to observe offline operation and automatic background synchronization upon reconnection.
 
 ---
@@ -127,6 +128,7 @@ Administrators can use the following sample coupons for testing:
 
 ## 8. Functional Features
 
+* Food Item Presentation: Full-width food photographs displayed on each food item card with food name and price clearly presented below, accompanied by list thumbnails across vendor inventory and cart screens.
 * Secure Authentication: Local SHA-256 hashed email/password sign-in plus Google Single Sign-On (SSO) via Credential Manager.
 * Offline-First Architecture: Instant local registration, cart management, and order placement in Room database.
 * Automated Cloud Synchronization: Single background synchronizer loop syncing unsynced records to Firebase Realtime Database every 10 seconds with exponential backoff on network errors.
@@ -134,7 +136,7 @@ Administrators can use the following sample coupons for testing:
 * Persistent Localization: Dynamic UI language switching for English and Afrikaans persisted across application restarts with Jetpack DataStore.
 * Role-Based Interfaces: Customized dashboards for Students, Vendors, and Administrators.
 * Account Management: 16-character User ID generation, copy-to-clipboard control, and User ID account recovery with password strength validation.
-* Vendor Fulfillment System: Live order tracking, itemized receipt inspection, and order status updates (Accepted, Preparing, Ready, Completed).
+* Vendor Fulfillment System: Live order tracking, itemized receipt inspection, vendor inventory thumbnails, and order status updates.
 * Administrative Oversight: User suspension controls, tabular order insight reporting, system credit issuance, and coupon generation.
 * REST API Catalog: Secondary Retrofit integration for restaurant catalog browsing.
 

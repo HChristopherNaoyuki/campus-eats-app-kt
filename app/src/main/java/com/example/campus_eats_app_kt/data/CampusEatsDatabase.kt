@@ -25,9 +25,9 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
 /**
  * CampusEatsDatabase is the primary Room database for the application.
  * It follows an offline-first architecture, storing all user, order, and menu data locally.
- * 
+ *
  * This implementation includes robust, idempotent migrations to handle schema updates
- * without data loss or "duplicate column" crashes.
+ * without data loss or duplicate column crashes.
  */
 @Database(
     entities = [
@@ -39,7 +39,7 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
         CouponEntity::class,
         DebitCardEntity::class,
     ],
-    version = 11, // Incremented to 11 for inventory tracking on menu items
+    version = 12, // Incremented to 12 for CartItemEntity imageUrl property
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -57,6 +57,14 @@ abstract class CampusEatsDatabase : RoomDatabase()
     {
         @Volatile
         private var INSTANCE: CampusEatsDatabase? = null
+
+        private val MIGRATION_11_12 = object : Migration(11, 12)
+        {
+            override fun migrate(db: SupportSQLiteDatabase)
+            {
+                addColumnIfNotExists(db, "cart_items", "imageUrl", "TEXT")
+            }
+        }
 
         private val MIGRATION_10_11 = object : Migration(10, 11)
         {
@@ -91,22 +99,13 @@ abstract class CampusEatsDatabase : RoomDatabase()
             }
         }
 
-        /**
-         * Migration from version 6 to 7.
-         * Handles the addition of mandatory profile, fulfillment, and categorization columns.
-         * 
-         * Logic: Uses addColumnIfNotExists to prevent "duplicate column name" crashes if 
-         * the schema has already been partially modified.
-         */
         private val MIGRATION_6_7 = object : Migration(6, 7)
         {
             override fun migrate(db: SupportSQLiteDatabase)
             {
-                // Update users table with new profile requirements
                 addColumnIfNotExists(db, "users", "username", "TEXT NOT NULL DEFAULT ''")
                 addColumnIfNotExists(db, "users", "registrationDate", "INTEGER NOT NULL DEFAULT 0")
 
-                // Update orders table with fulfillment and payment metadata
                 addColumnIfNotExists(
                     db,
                     "orders",
@@ -116,19 +115,10 @@ abstract class CampusEatsDatabase : RoomDatabase()
                 addColumnIfNotExists(db, "orders", "pickupTime", "TEXT NOT NULL DEFAULT ''")
                 addColumnIfNotExists(db, "orders", "specialRequests", "TEXT")
 
-                // Update feedback table with categorization (Fixed crash target)
                 addColumnIfNotExists(db, "feedback", "type", "TEXT NOT NULL DEFAULT 'compliment'")
             }
         }
 
-        /**
-         * Safely adds a column to a table only if it does not already exist in the SQLite schema.
-         * 
-         * @param db The lower-level database access object provided by Room.
-         * @param tableName The table to check and modify.
-         * @param columnName The name of the column to potentially add.
-         * @param columnDefinition The SQL definition string (Type, Constraints, Defaults).
-         */
         private fun addColumnIfNotExists(
             db: SupportSQLiteDatabase,
             tableName: String,
@@ -136,13 +126,11 @@ abstract class CampusEatsDatabase : RoomDatabase()
             columnDefinition: String,
         )
         {
-            // Execute PRAGMA to get the list of columns in the table
             db.query("PRAGMA table_info($tableName)").use()
             { cursor ->
                 var columnExists = false
                 while (cursor.moveToNext())
                 {
-                    // The 'name' column in PRAGMA table_info result is at index 1
                     val name = cursor.getString(1)
                     if (name == columnName)
                     {
@@ -151,7 +139,6 @@ abstract class CampusEatsDatabase : RoomDatabase()
                     }
                 }
 
-                // Perform the ALTER statement only if the introspection confirms the column is missing
                 if (!columnExists)
                 {
                     db.execSQL("ALTER TABLE $tableName ADD COLUMN $columnName $columnDefinition")
@@ -159,10 +146,6 @@ abstract class CampusEatsDatabase : RoomDatabase()
             }
         }
 
-        /**
-         * Returns the singleton database instance.
-         * Uses a thread-safe double-check locking pattern to ensure only one instance exists.
-         */
         fun getDatabase(context: Context): CampusEatsDatabase
         {
             return INSTANCE ?: synchronized(this)
@@ -175,10 +158,9 @@ abstract class CampusEatsDatabase : RoomDatabase()
                     CampusEatsDatabase::class.java,
                     "campus_eats_database",
                 )
-                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
-                    // Finding 15: Preserve production data by limiting destructive fallback to legacy versions.
+                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                     .fallbackToDestructiveMigrationFrom(true, 1, 2, 3, 4, 5)
-                .build()
+                    .build()
                 INSTANCE = instance
                 instance
             }
