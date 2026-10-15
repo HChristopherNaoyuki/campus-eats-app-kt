@@ -54,12 +54,37 @@ This section lists the contributors for each academic module, together with thei
 
 ## 3. Project Demonstration Video
 
-A recorded demonstration of the Campus Eats mobile application is available online.
+Recorded video demonstrations and project metadata for each supported academic module are available below.
 
-* Title: OPSC6312 and XISD6329: POE Campus Eats Mobile App Part 2
-* Link: https://youtu.be/XHF5T_HrPOI
+### 3.1 XISD6329 Demonstration
 
-The video presents the application in operation, including the primary user workflows for each role.
+* **Title:** XISD6329: Part 2 Demo
+* **Module Code:** XISD6329
+* **Module Name:** Work Integrated Learning 3B
+* **Release Notes:** Campus Eats v5.0.0
+* **Release Version:** v5.0.0
+* **Release Date:** 2026-10-15
+* **Live Website Link:** https://campus-eats-platform.lovable.app/
+* **Website GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-platform.git
+* **Mobile App GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-app-kt
+* **APK Installation Link:** https://github.com/HChristopherNaoyuki/campus-eats-app-kt/releases
+* **YouTube Demonstration Video:** https://youtu.be/FFEtJBy7guA
+
+---
+
+### 3.2 OPSC6312 Demonstration
+
+* **Title:** OPSC6312: Part 2 Demo
+* **Module Code:** OPSC6312
+* **Module Name:** Open Source Coding (Intermediate)
+* **Release Notes:** Campus Eats v3.0.0
+* **Release Version:** v3.0.0
+* **Release Date:** 2026-09-17
+* **Live Website Link:** https://campus-eats-platform.lovable.app/
+* **Website GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-platform.git
+* **Mobile App GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-app-kt
+* **APK Installation Link:** https://github.com/HChristopherNaoyuki/campus-eats-app-kt/releases
+* **YouTube Demonstration Video:** https://youtu.be/XHF5T_HrPOI
 
 ---
 
