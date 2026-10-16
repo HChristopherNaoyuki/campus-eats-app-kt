@@ -1,5 +1,41 @@
 # Campus Eats - Release Notes
 
+## Version 6.0.0
+
+**Release Date:** 2026-10-16
+
+---
+
+### Overview
+
+Version 6.0.0 is a major visual and operational update for the Campus Eats Android platform. This release aligns the application's color palette with the web platform design tokens (Warm Orange `#ED5A1E`, Accent Green `#309C5E`, and Warm Off-White `#FAF7F5`), introduces an in-app user-controlled appearance mode (System, Light, Dark) persisted via Jetpack DataStore, updates documentation, and increments the release version to 6.0.0 (versionCode 8).
+
+---
+
+### Added Features & Enhancements
+
+**1. Website Theme Palette Alignment**
+- Replaced grayscale primary color tokens with the official website brand palette across [Color.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/ui/theme/Color.kt) and [Theme.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/ui/theme/Theme.kt).
+- Configured Light Mode tokens: Primary Warm Orange (`#ED5A1E`), Accent Green (`#309C5E`), Background (`#FAF7F5`), and Deep Brown-Gray Foreground (`#231A16`).
+- Configured Dark Mode tokens: High-contrast Stone Background (`#1C1917`), Surface (`#292524`), Primary Warm Orange (`#F97316`), and Light On-Surface (`#F5F5F4`).
+
+**2. In-App Light / Dark Mode Appearance Control**
+- Created `ThemeManager` ([ThemeManager.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/util/ThemeManager.kt)) to manage appearance modes (`System`, `Light`, `Dark`) persisted using Jetpack DataStore (`campus_eats_theme`).
+- Added appearance selection controls in `SettingsScreenTab` ([MainTabs.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/ui/screens/MainTabs.kt)) with localized labels for English and Afrikaans (`System/Stelsel`, `Light/Lig`, `Dark/Donker`).
+- Wired `ThemeManager.initialize(applicationContext)` and `CampusEatsAppTheme(darkTheme = darkTheme)` in [MainActivity.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/MainActivity.kt) so theme preference is evaluated on cold start before first frame composition.
+
+---
+
+### Technical Details
+
+**Version Code:** 8
+
+**Version Name:** 6.0.0
+
+**Package Name:** com.example.campus_eats_app_kt
+
+---
+
 ## Version 5.0.0
 
 **Release Date:** 2026-10-15
@@ -8,31 +44,7 @@
 
 ### Overview
 
-Version 5.0.0 is a major feature update for the Campus Eats Android platform. This release enhances food item presentation for all user roles (Students, Standard Users, and Vendors) by displaying food photographs above clear food names and prices. This release also introduces Room database schema version 12 to persist cart item image URLs and updates documentation for version 5.0.0 (versionCode 7).
-
----
-
-### Added Features & Enhancements
-
-**1. Food Item Presentation (AC-4)**
-- Created `FoodItemImage` and `FoodItemThumbnail` UI components (`ui/components/FoodItemImage.kt`) using Coil `AsyncImage` with a restaurant icon fallback.
-- Updated Customer Menu Browse to render food item photographs directly above food names and prices.
-- Updated Vendor Inventory List to render item thumbnails beside food names, categories, prices, and stock counts.
-- Updated Cart Screen and Home Cart Preview to render food thumbnails alongside names and prices.
-
-**2. Room Database Schema Version 12**
-- Updated `CartItemEntity` to store `imageUrl`.
-- Added migration `MIGRATION_11_12` in `CampusEatsDatabase` to add the `imageUrl` column to table `cart_items` without data loss.
-
----
-
-### Technical Details
-
-**Version Code:** 7
-
-**Version Name:** 5.0.0
-
-**Package Name:** com.example.campus_eats_app_kt
+Version 5.0.0 enhanced food item presentation for all user roles (Students, Standard Users, Vendors) by displaying food photographs above food names and prices, and introduced Room database schema version 12 to persist cart item image URLs.
 
 ---
 

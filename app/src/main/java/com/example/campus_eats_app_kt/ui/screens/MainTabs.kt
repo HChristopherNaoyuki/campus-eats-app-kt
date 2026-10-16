@@ -110,6 +110,7 @@ import com.example.campus_eats_app_kt.ui.components.HIGServiceRow
 import com.example.campus_eats_app_kt.ui.theme.CampusOrange
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.LanguageManager
+import com.example.campus_eats_app_kt.util.ThemeManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -1310,6 +1311,51 @@ fun SettingsScreenTab(
                                 LanguageManager.setLanguage(context, LanguageManager.AFRIKAANS)
                             },
                             label = { Text(LanguageManager.getString("Afrikaans", "Afrikaans")) },
+                        )
+                    }
+                }
+            }
+
+            // Appearance / Theme Selection Group
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                val context = LocalContext.current
+
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+                {
+                    Text(
+                        text = LanguageManager.getString("Appearance Settings", "Voorkomsinstellings"),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+                    )
+                    {
+                        FilterChip(
+                            selected = ThemeManager.currentThemeMode.value == ThemeManager.MODE_SYSTEM,
+                            onClick = {
+                                ThemeManager.setThemeMode(context, ThemeManager.MODE_SYSTEM)
+                            },
+                            label = { Text(LanguageManager.getString("System", "Stelsel")) },
+                        )
+
+                        FilterChip(
+                            selected = ThemeManager.currentThemeMode.value == ThemeManager.MODE_LIGHT,
+                            onClick = {
+                                ThemeManager.setThemeMode(context, ThemeManager.MODE_LIGHT)
+                            },
+                            label = { Text(LanguageManager.getString("Light", "Lig")) },
+                        )
+
+                        FilterChip(
+                            selected = ThemeManager.currentThemeMode.value == ThemeManager.MODE_DARK,
+                            onClick = {
+                                ThemeManager.setThemeMode(context, ThemeManager.MODE_DARK)
+                            },
+                            label = { Text(LanguageManager.getString("Dark", "Donker")) },
                         )
                     }
                 }

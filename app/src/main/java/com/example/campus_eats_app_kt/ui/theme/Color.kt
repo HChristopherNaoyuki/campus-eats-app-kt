@@ -3,60 +3,70 @@ package com.example.campus_eats_app_kt.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * Grayscale User Interface Palette
- * Requirement: The application interface must use grayscale for color-blind accessibility.
- * All colored constants are redefined as grayscale equivalents to maintain compatibility.
+ * Campus Eats Brand Palette
+ * Aligned with website theme (src/index.css):
+ * - Primary: Warm Orange #ED5A1E (HSL 16 88% 52%)
+ * - Primary Glow: Warm Light Orange #F97316 (HSL 28 95% 60%)
+ * - Accent / Secondary: Green #309C5E (HSL 145 55% 42%)
+ * - Light Background: Warm Off-White #FAF7F5 (HSL 30 40% 98%)
+ * - Light Foreground: Deep Brown-Gray #231A16 (HSL 20 30% 12%)
+ * - Dark Background: Dark Charcoal #1C1917
  */
 
-val CampusBlack = Color(0xFF000000)
+val CampusBlack = Color(0xFF1C1917)
 val CampusWhite = Color(0xFFFFFFFF)
 
-// Grayscale constants for compatibility
-val CampusOrange = Color(0xFF424242) // Redefined as Dark Gray
-val ActionBlue = Color(0xFF616161)   // Redefined as Medium Gray
+// Primary Brand Colors
+val CampusOrange = Color(0xFFED5A1E)
+val CampusOrangeGlow = Color(0xFFF97316)
+val ActionBlue = Color(0xFF2563EB)
+val AccentGreen = Color(0xFF309C5E)
 
-/**
- * APP ICON EXCEPTION: Iconic colors for the application icon only.
- */
-val IconOrange = Color(0xFFFF5722)
+// App Icon Colors
+val IconOrange = Color(0xFFED5A1E)
 
-val PrimaryLight = Color(0xFF212121) // High contrast black/dark gray
-val OnPrimaryLight = CampusWhite
-val PrimaryContainerLight = Color(0xFFE0E0E0)
-val OnPrimaryContainerLight = Color(0xFF212121)
+// Light Theme Palette (Website Parity)
+val PrimaryLight = Color(0xFFED5A1E)
+val OnPrimaryLight = Color(0xFFFFFFFF)
+val PrimaryContainerLight = Color(0xFFFFDBCF)
+val OnPrimaryContainerLight = Color(0xFF3B0B00)
 
-val SecondaryLight = Color(0xFF616161)
-val OnSecondaryLight = CampusWhite
-val SecondaryContainerLight = Color(0xFFF5F5F5)
-val OnSecondaryContainerLight = Color(0xFF212121)
+val SecondaryLight = Color(0xFF309C5E)
+val OnSecondaryLight = Color(0xFFFFFFFF)
+val SecondaryContainerLight = Color(0xFFD2E8D8)
+val OnSecondaryContainerLight = Color(0xFF0D381E)
 
-val BackgroundLight = CampusWhite
-val OnBackgroundLight = CampusBlack
-val SurfaceLight = CampusWhite
-val OnSurfaceLight = CampusBlack
+val BackgroundLight = Color(0xFFFAF7F5)
+val OnBackgroundLight = Color(0xFF231A16)
+val SurfaceLight = Color(0xFFFFFFFF)
+val OnSurfaceLight = Color(0xFF231A16)
+val SurfaceVariantLight = Color(0xFFF2ECE9)
+val OnSurfaceVariantLight = Color(0xFF52443D)
 
-val ErrorLight = Color(0xFF424242)
-val OnErrorLight = CampusWhite
-val ErrorContainerLight = Color(0xFFE0E0E0)
-val OnErrorContainerLight = Color(0xFF212121)
+val ErrorLight = Color(0xFFBA1A1A)
+val OnErrorLight = Color(0xFFFFFFFF)
+val ErrorContainerLight = Color(0xFFFFDAD6)
+val OnErrorContainerLight = Color(0xFF410002)
 
-// Dark Theme (Grayscale)
-val PrimaryDark = CampusWhite
-val OnPrimaryDark = CampusBlack
-val PrimaryContainerDark = Color(0xFF424242)
-val OnPrimaryContainerDark = CampusWhite
+// Dark Theme Palette (Website Parity)
+val PrimaryDark = Color(0xFFF97316)
+val OnPrimaryDark = Color(0xFFFFFFFF)
+val PrimaryContainerDark = Color(0xFF7B2400)
+val OnPrimaryContainerDark = Color(0xFFFFDBCF)
 
-val SecondaryDark = Color(0xFFBDBDBD)
-val OnSecondaryDark = CampusBlack
-val SecondaryContainerDark = Color(0xFF212121)
-val OnSecondaryContainerDark = CampusWhite
+val SecondaryDark = Color(0xFF4ADE80)
+val OnSecondaryDark = Color(0xFF00391A)
+val SecondaryContainerDark = Color(0xFF16522E)
+val OnSecondaryContainerDark = Color(0xFFD2E8D8)
 
-val BackgroundDark = CampusBlack
-val OnBackgroundDark = CampusWhite
-val SurfaceDark = Color(0xFF121212)
-val OnSurfaceDark = CampusWhite
+val BackgroundDark = Color(0xFF1C1917)
+val OnBackgroundDark = Color(0xFFF5F5F4)
+val SurfaceDark = Color(0xFF292524)
+val OnSurfaceDark = Color(0xFFF5F5F4)
+val SurfaceVariantDark = Color(0xFF44403C)
+val OnSurfaceVariantDark = Color(0xFFD6D3D1)
 
-val ErrorDark = CampusWhite
-val OnErrorDark = CampusBlack
-val ErrorContainerDark = Color(0xFF424242)
-val OnErrorContainerDark = CampusWhite
+val ErrorDark = Color(0xFFFFB4AB)
+val OnErrorDark = Color(0xFF690005)
+val ErrorContainerDark = Color(0xFF93000A)
+val OnErrorContainerDark = Color(0xFFFFDAD6)

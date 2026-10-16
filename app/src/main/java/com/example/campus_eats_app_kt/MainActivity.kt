@@ -61,6 +61,7 @@ import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 import com.example.campus_eats_app_kt.util.DatabaseSeeder
 import com.example.campus_eats_app_kt.util.LanguageManager
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
+import com.example.campus_eats_app_kt.util.ThemeManager
 import com.example.campus_eats_app_kt.util.NetworkConnectivityObserver
 import com.google.firebase.auth.FirebaseAuth
 
@@ -143,13 +144,16 @@ class MainActivity : ComponentActivity()
             LaunchedEffect(Unit)
             {
                 LanguageManager.initialize(applicationContext)
+                ThemeManager.initialize(applicationContext)
                 DatabaseSeeder.seed(applicationContext)
             }
 
             val networkStatus by connectivityObserver.observe()
                 .collectAsState(initial = NetworkConnectivityObserver.Status.Available)
 
-            CampusEatsAppTheme()
+            val darkTheme = ThemeManager.shouldFollowDarkTheme()
+
+            CampusEatsAppTheme(darkTheme = darkTheme)
             {
                 val backStack = rememberNavBackStack(Route.Splash)
 
