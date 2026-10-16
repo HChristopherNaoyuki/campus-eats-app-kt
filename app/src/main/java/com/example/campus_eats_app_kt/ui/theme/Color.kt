@@ -4,22 +4,19 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * Campus Eats Brand Palette
- * Aligned with website theme (src/index.css):
- * - Primary: Warm Orange #ED5A1E (HSL 16 88% 52%)
- * - Primary Glow: Warm Light Orange #F97316 (HSL 28 95% 60%)
- * - Accent / Secondary: Green #309C5E (HSL 145 55% 42%)
- * - Light Background: Warm Off-White #FAF7F5 (HSL 30 40% 98%)
- * - Light Foreground: Deep Brown-Gray #231A16 (HSL 20 30% 12%)
- * - Dark Background: Dark Charcoal #1C1917
+ * Aligned with website theme (src/index.css) and Apple HIG Dark Mode Specification:
+ * - Light Mode: Warm Orange #ED5A1E, Accent Green #309C5E, Background #FAF7F5
+ * - Dark Mode: Soft Dark Gray Canvas #1C1C1E, Black Navigation Bar #000000,
+ *   Cream Content Boxes #F5F2EB with Dark Text #1C1C1E, Apple Red Error #FF453A.
  */
 
-val CampusBlack = Color(0xFF1C1917)
+val CampusBlack = Color(0xFF1C1C1E)
 val CampusWhite = Color(0xFFFFFFFF)
 
 // Primary Brand Colors
 val CampusOrange = Color(0xFFED5A1E)
 val CampusOrangeGlow = Color(0xFFF97316)
-val ActionBlue = Color(0xFF2563EB)
+val ActionBlue = Color(0xFF0A84FF)
 val AccentGreen = Color(0xFF309C5E)
 
 // App Icon Colors
@@ -41,32 +38,32 @@ val OnBackgroundLight = Color(0xFF231A16)
 val SurfaceLight = Color(0xFFFFFFFF)
 val OnSurfaceLight = Color(0xFF231A16)
 val SurfaceVariantLight = Color(0xFFF2ECE9)
-val OnSurfaceVariantLight = Color(0xFF52443D)
+val OnSurfaceVariantLight = Color(0xFF231A16)
 
 val ErrorLight = Color(0xFFBA1A1A)
 val OnErrorLight = Color(0xFFFFFFFF)
 val ErrorContainerLight = Color(0xFFFFDAD6)
 val OnErrorContainerLight = Color(0xFF410002)
 
-// Dark Theme Palette (Website Parity)
-val PrimaryDark = Color(0xFFF97316)
+// Dark Theme Palette (Apple HIG Parity with Cream Content Panels)
+val PrimaryDark = Color(0xFFED5A1E)
 val OnPrimaryDark = Color(0xFFFFFFFF)
-val PrimaryContainerDark = Color(0xFF7B2400)
-val OnPrimaryContainerDark = Color(0xFFFFDBCF)
+val PrimaryContainerDark = Color(0xFF2C2C2E)
+val OnPrimaryContainerDark = Color(0xFFF5F2EB)
 
-val SecondaryDark = Color(0xFF4ADE80)
-val OnSecondaryDark = Color(0xFF00391A)
-val SecondaryContainerDark = Color(0xFF16522E)
-val OnSecondaryContainerDark = Color(0xFFD2E8D8)
+val SecondaryDark = Color(0xFF309C5E)
+val OnSecondaryDark = Color(0xFFFFFFFF)
+val SecondaryContainerDark = Color(0xFF1C1C1E)
+val OnSecondaryContainerDark = Color(0xFFF5F2EB)
 
-val BackgroundDark = Color(0xFF1C1917)
+val BackgroundDark = Color(0xFF1C1C1E) // #1C1C1E soft system dark gray canvas
 val OnBackgroundDark = Color(0xFFF5F5F4)
-val SurfaceDark = Color(0xFF292524)
+val SurfaceDark = Color(0xFF2C2C2E) // #2C2C2E elevated dark surface
 val OnSurfaceDark = Color(0xFFF5F5F4)
-val SurfaceVariantDark = Color(0xFF44403C)
-val OnSurfaceVariantDark = Color(0xFFD6D3D1)
+val SurfaceVariantDark = Color(0xFFF5F2EB) // #F5F2EB cream content card fill
+val OnSurfaceVariantDark = Color(0xFF1C1C1E) // #1C1C1E primary text on cream box
 
-val ErrorDark = Color(0xFFFFB4AB)
-val OnErrorDark = Color(0xFF690005)
-val ErrorContainerDark = Color(0xFF93000A)
-val OnErrorContainerDark = Color(0xFFFFDAD6)
+val ErrorDark = Color(0xFFFF453A) // #FF453A Apple system red error
+val OnErrorDark = Color(0xFFFFFFFF)
+val ErrorContainerDark = Color(0xFF3A0007)
+val OnErrorContainerDark = Color(0xFFFFB4AB)

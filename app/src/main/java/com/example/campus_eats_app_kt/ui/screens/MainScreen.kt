@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,6 +38,7 @@ import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.LanguageManager
+import com.example.campus_eats_app_kt.util.ThemeManager
 
 /**
  * MainScreen is the primary navigation hub after authentication.
@@ -95,6 +97,15 @@ fun MainScreen(
             HIGTopAppBar(title = title)
         },
         bottomBar = {
+            val isDark = ThemeManager.shouldFollowDarkTheme()
+            val navColors = NavigationBarItemDefaults.colors(
+                selectedIconColor = if (isDark) Color(0xFFFFFFFF) else MaterialTheme.colorScheme.primary,
+                selectedTextColor = if (isDark) Color(0xFFFFFFFF) else MaterialTheme.colorScheme.primary,
+                unselectedIconColor = Color(0xFF8E8E93),
+                unselectedTextColor = Color(0xFF8E8E93),
+                indicatorColor = if (isDark) Color(0xFF2C2C2E) else MaterialTheme.colorScheme.primaryContainer,
+            )
+
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -103,14 +114,14 @@ fun MainScreen(
                         vertical = 8.dp,
                     ),
                 shape = MaterialTheme.shapes.extraLarge,
-                color = MaterialTheme.colorScheme.surface,
+                color = if (isDark) Color(0xFF000000) else MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp,
                 shadowElevation = 4.dp,
             )
             {
                 NavigationBar(
                     containerColor = Color.Transparent,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    contentColor = if (isDark) Color(0xFFFFFFFF) else MaterialTheme.colorScheme.onSurface,
                     tonalElevation = 0.dp,
                 )
                 {
@@ -119,24 +130,28 @@ fun MainScreen(
                         onClick = { selectedTab = 0 },
                         icon = { Icon(Icons.Rounded.Home, contentDescription = "Home") },
                         label = { Text(LanguageManager.getString("Home", "Tuis", "Ikhaya")) },
+                        colors = navColors,
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
                         icon = { Icon(Icons.Rounded.Search, contentDescription = "Browse") },
                         label = { Text(LanguageManager.getString("Browse", "Snuffel", "Bheka")) },
+                        colors = navColors,
                     )
                     NavigationBarItem(
                         selected = selectedTab == 2,
                         onClick = { selectedTab = 2 },
                         icon = { Icon(Icons.Rounded.History, contentDescription = "Orders") },
                         label = { Text(LanguageManager.getString("Orders", "Bestellings", "Iziyalo")) },
+                        colors = navColors,
                     )
                     NavigationBarItem(
                         selected = selectedTab == 3,
                         onClick = { selectedTab = 3 },
                         icon = { Icon(Icons.Rounded.Settings, contentDescription = "Settings") },
                         label = { Text(LanguageManager.getString("Settings", "Instellings", "Izilungiselelo")) },
+                        colors = navColors,
                     )
                 }
             }

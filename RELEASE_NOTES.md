@@ -8,18 +8,23 @@
 
 ### Overview
 
-Version 6.0.0 is a major visual and operational update for the Campus Eats Android platform. This release aligns the application's color palette with the web platform design tokens (Warm Orange `#ED5A1E`, Accent Green `#309C5E`, and Warm Off-White `#FAF7F5`), introduces an in-app user-controlled appearance mode (System, Light, Dark) persisted via Jetpack DataStore, updates documentation, and increments the release version to 6.0.0 (versionCode 8).
+Version 6.0.0 is a major visual and operational update for the Campus Eats Android platform. This release aligns the light mode color palette with web platform design tokens (Warm Orange `#ED5A1E`, Accent Green `#309C5E`, and Warm Off-White `#FAF7F5`), introduces an Apple HIG-style premium Dark Mode specification, provides in-app user-controlled appearance mode selection (System, Light, Dark) persisted via Jetpack DataStore, and increments the release version to 6.0.0 (versionCode 8).
 
 ---
 
 ### Added Features & Enhancements
 
-**1. Website Theme Palette Alignment**
+**1. Premium Apple HIG-Style Dark Mode Specification**
+- Configured soft system dark gray canvas (`#1C1C1E`) for main application backgrounds to maintain visible elevation and surface separation.
+- Configured solid black bottom navigation bar (`#000000`) featuring high-contrast white active icons and labels (`#FFFFFF`) and muted gray inactive icons (`#8E8E93`).
+- Configured cream content panels (`#F5F2EB`) with deep near-black text (`#1C1C1E`) for high-contrast card readability on dark shells.
+- Configured Apple system red (`#FF453A`) for error states.
+
+**2. Website Palette Light Theme Parity**
 - Replaced grayscale primary color tokens with the official website brand palette across [Color.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/ui/theme/Color.kt) and [Theme.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/ui/theme/Theme.kt).
 - Configured Light Mode tokens: Primary Warm Orange (`#ED5A1E`), Accent Green (`#309C5E`), Background (`#FAF7F5`), and Deep Brown-Gray Foreground (`#231A16`).
-- Configured Dark Mode tokens: High-contrast Stone Background (`#1C1917`), Surface (`#292524`), Primary Warm Orange (`#F97316`), and Light On-Surface (`#F5F5F4`).
 
-**2. In-App Light / Dark Mode Appearance Control**
+**3. In-App Light / Dark Mode Appearance Control**
 - Created `ThemeManager` ([ThemeManager.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/util/ThemeManager.kt)) to manage appearance modes (`System`, `Light`, `Dark`) persisted using Jetpack DataStore (`campus_eats_theme`).
 - Added appearance selection controls in `SettingsScreenTab` ([MainTabs.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/ui/screens/MainTabs.kt)) with localized labels for English and Afrikaans (`System/Stelsel`, `Light/Lig`, `Dark/Donker`).
 - Wired `ThemeManager.initialize(applicationContext)` and `CampusEatsAppTheme(darkTheme = darkTheme)` in [MainActivity.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/MainActivity.kt) so theme preference is evaluated on cold start before first frame composition.
