@@ -61,9 +61,9 @@ Recorded video demonstrations and project metadata for each supported academic m
 * **Title:** XISD6329: Part 2 Demo
 * **Module Code:** XISD6329
 * **Module Name:** Work Integrated Learning 3B
-* **Release Notes:** Campus Eats v5.0.0
-* **Release Version:** v5.0.0
-* **Release Date:** 2026-10-15
+* **Release Notes:** Campus Eats v6.0.0
+* **Release Version:** v6.0.0
+* **Release Date:** 2026-10-16
 * **Live Website Link:** https://campus-eats-platform.lovable.app/
 * **Website GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-platform.git
 * **Mobile App GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-app-kt
