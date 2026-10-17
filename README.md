@@ -1,4 +1,4 @@
-# Campus Eats - Mobile Campus Dining Platform (v7.0.0)
+# Campus Eats - Mobile Campus Dining Platform (v8.0.0)
 
 ## Table of Contents
 
@@ -94,8 +94,8 @@ The application is built using modern Android development practices, architectur
 
 * Language: Kotlin 2.x
 * UI Framework: Jetpack Compose with Material 3 and Navigation 3
-* Brand Palette: Warm Orange (#ED5A1E), Accent Green (#309C5E), and Warm Neutrals (#FAF7F5 / #231A16) aligned with website tokens
-* In-App Appearance: User-controlled Light, Dark, and System appearance modes persisted via Jetpack DataStore
+* Brand Palette: Warm Orange (#ED5A1E), Accent Green (#309C5E), and Warm Neutrals (#FAF7F5 / #231A16)
+* In-App Appearance: User-controlled Light, Dark (Apple HIG soft canvas #1C1C1E, black nav bar, cream panels #F5F2EB), and System modes persisted via Jetpack DataStore
 * Image Loading: Coil Compose with fallback vector placeholders
 * Architecture: Model-View-ViewModel (MVVM) with Repository Pattern and Dependency Wiring
 * Persistence: Room Database (version 12) for local offline storage and Jetpack DataStore Preferences for settings and appearance persistence
@@ -138,9 +138,13 @@ To verify application functionality, follow these steps:
 4. Build and run the application (`./gradlew :app:assembleDebug`).
 5. On initial launch, the application seeds the local Room database with sample data and loads saved language and appearance preferences.
 6. Use the credentials provided in the Demo Accounts section to log in, or use Continue with Google.
-7. Perform role-specific workflows such as browsing food items with photographs, food names, and prices (Student/Standard), managing vendor inventory with item thumbnails (Vendor), or administrative moderation (Admin).
-8. Navigate to Settings to test in-app theme selection (System, Light, Dark) and language selection (English, Afrikaans).
-9. Toggle network connectivity to observe offline operation and automatic background synchronization upon reconnection.
+7. Perform role-specific workflows:
+   - Student/Standard: Browse menu items with full-width food photos, names, and prices; add to cart; apply coupons; place order; view live receipt details.
+   - Vendor: View live orders, inspect picked item details via Check modal, update order statuses, manage inventory stock and prices.
+   - Admin: View admin home welcome header, manage users/vendors/orders, inspect Security Log audit trail, generate coupons with sample chips (`CAMPUS10`, `EATS20`, `WELCOME5`), and resolve complaints/compliments.
+8. Test navigation tab re-tap behavior (re-tapping active bottom tab returns to tab root window).
+9. Test Settings Platform Information card and tap **WEBSITE** button to launch the external web app.
+10. Toggle network connectivity to observe offline operation and automatic background synchronization upon reconnection.
 
 ---
 
@@ -156,10 +160,12 @@ Administrators can use the following sample coupons for testing:
 
 ## 8. Functional Features
 
-* Admin Home & Role Alignment: Administrator home header ("Welcome to Campus Eats - Manage users, vendors, menus, and orders for your campus food network, all in one place.") and role-specific module navigation.
-* Feedback Review & Resolution: Complete feedback loop for Administrators to review Complaints and Compliments with pending and resolved status tracking.
-* Platform Information Link: Dedicated Settings information block with a WEBSITE action button opening `https://campus-eats-platform.lovable.app/`.
-* Website Palette Theme Alignment: Replaced grayscale tokens with warm brand orange (#ED5A1E), accent green (#309C5E), and warm neutrals (#FAF7F5 / #231A16).
+* Role Alignment & Re-Tap Navigation: Navigation re-tap returns active tab to root window across Home, Browse, Orders, and Settings.
+* Admin Management & Audit Log: User Management, Vendor Management, Order Management, and real-time Security Log audit trail under Browse.
+* Feedback Loop Parity: Full feedback loop allowing Admins to review and resolve Complaints and Compliments with pending/resolved status tracking, while Non-Admins submit feedback with confirmation prompts.
+* Sample Coupon Quick-Selection: Coupon generation window includes quick-selection chips for sample coupons (`CAMPUS10`, `EATS20`, `WELCOME5`) and current coupon lists.
+* Platform Information Link: Settings information block with a WEBSITE action button launching the external website (`https://campus-eats-platform.lovable.app/`).
+* Apple HIG Dark Mode Palette: Soft dark gray canvas (#1C1C1E), black bottom navigation bar (#000000) with white active icons (#FFFFFF), and warm cream content boxes (#F5F2EB).
 * In-App Appearance Mode Control: User-selectable Light, Dark, and System theme controls in Settings, persisted across app restarts via Jetpack DataStore.
 * Food Item Presentation: Full-width food photographs displayed on each food item card with food name and price clearly presented below, accompanied by list thumbnails across vendor inventory and cart screens.
 * Secure Authentication: Local SHA-256 hashed email/password sign-in plus Google Single Sign-On (SSO) via Credential Manager.
@@ -167,11 +173,6 @@ Administrators can use the following sample coupons for testing:
 * Automated Cloud Synchronization: Single background synchronizer loop syncing unsynced records to Firebase Realtime Database every 10 seconds with exponential backoff on network errors.
 * Local Order Notifications: Real-time status transition alerts delivered through Android notification channels on order progress updates.
 * Persistent Localization: Dynamic UI language switching for English and Afrikaans persisted across application restarts with Jetpack DataStore.
-* Role-Based Interfaces: Customized dashboards for Students, Vendors, and Administrators.
-* Account Management: 16-character User ID generation, copy-to-clipboard control, and User ID account recovery with password strength validation.
-* Vendor Fulfillment System: Live order tracking, itemized receipt inspection, vendor inventory thumbnails, and order status updates.
-* Administrative Oversight: User suspension controls, tabular order insight reporting, system credit issuance, and coupon generation.
-* REST API Catalog: Secondary Retrofit integration for restaurant catalog browsing.
 
 ---
 

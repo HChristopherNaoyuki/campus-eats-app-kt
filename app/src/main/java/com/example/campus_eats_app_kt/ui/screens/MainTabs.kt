@@ -2836,6 +2836,8 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
     val successMsg = remember { mutableStateOf("") }
     val errorMsg = remember { mutableStateOf("") }
 
+    val sampleCoupons = listOf("CAMPUS10" to "10%", "EATS20" to "20%", "WELCOME5" to "5%")
+
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = expiryDate,
         selectableDates = object : SelectableDates
@@ -2877,14 +2879,39 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
     )
     {
+        Text(
+            text = LanguageManager.getString("Sample Coupons", "Monsterkoepons"),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
+        )
+        {
+            sampleCoupons.forEach { (code, disc) ->
+                FilterChip(
+                    selected = name == code,
+                    onClick = {
+                        name = code
+                        discount = disc.replace("%", "")
+                    },
+                    label = { Text("$code ($disc)") },
+                )
+            }
+        }
+
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Coupon Name") },
+            label = { Text(LanguageManager.getString("Coupon Code", "Koeponkode")) },
             modifier = Modifier.fillMaxWidth(),
             isError = name.isEmpty() && errorMsg.value.isNotEmpty(),
         )
@@ -2892,7 +2919,7 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
         OutlinedTextField(
             value = discount,
             onValueChange = { discount = it },
-            label = { Text("Coupon Discount (Max 20%)") },
+            label = { Text(LanguageManager.getString("Discount Percent (Max 20%)", "Afslagpersentasie (Maks 20%)")) },
             modifier = Modifier.fillMaxWidth(),
             isError = (discount.toDoubleOrNull() ?: 0.0) > 20.0,
         )
@@ -2903,7 +2930,7 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
         OutlinedTextField(
             value = dateStr,
             onValueChange = {},
-            label = { Text("Valid Date") },
+            label = { Text(LanguageManager.getString("Valid Date", "Geldige Datum")) },
             readOnly = true,
             modifier = Modifier
                 .fillMaxWidth()
@@ -2948,7 +2975,7 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
                     errorMsg.value = ""
                 }
             },
-            text = "Done",
+            text = LanguageManager.getString("Generate Coupon", "Genereer Koepon"),
             modifier = Modifier.fillMaxWidth(),
         )
     }

@@ -1,5 +1,65 @@
 # Campus Eats - Release Notes
 
+## Version 8.0.0
+
+**Release Date:** 2026-10-17
+
+---
+
+### Overview
+
+Version 8.0.0 delivers comprehensive role alignment with web platform modules, navigation tab re-tap behavior, enhanced coupon generation with sample chips, full feedback resolution workflow, Apple HIG dark mode tokens, and technical audit verification across database connectivity, Firebase synchronization, Google SSO, and offline resilience.
+
+---
+
+### Added Features & Technical Enhancements
+
+**1. Role & Navigation Alignment**
+- Enforced bottom tab re-tap behavior across Home, Browse, Orders, and Settings: re-tapping the active tab returns the sub-view to the tab root window.
+- Updated Administrator Home tab header: *"Welcome to Campus Eats - Manage users, vendors, menus, and orders for your campus food network, all in one place."*
+- Renamed Browse management modules for Administrators to **User Management**, **Vendor Management**, **Order Management**, and added real-time **Security Log** audit trail.
+- Renamed Orders tab system entry for Administrators to **Reports**.
+
+**2. Feedback Resolution Loop**
+- Administrators review Complaints and Compliments with pending/resolved status tracking in `AdminFeedbackWindow` and an explicit **Mark as Resolved** action button. Status changes update Room locally and sync to Firebase (`feedback/{feedbackId}/status`).
+- Vendors, Students, and Standard users submit feedback through `UserFeedbackWindow` with submission confirmation prompts.
+
+**3. Coupon Generation & Sample Selection**
+- Enhanced coupon generation window with sample coupon chips (`CAMPUS10`, `EATS20`, `WELCOME5`) and current active coupon lists.
+
+**4. Platform Information & External Website Link**
+- Added Settings platform information card with a **WEBSITE** button opening `https://campus-eats-platform.lovable.app/` via external browser intent.
+
+**5. Technical Audit & Infrastructure**
+- **Google SSO**: Verified Web OAuth Client ID (`64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com`) for Credential Manager token exchange.
+- **Synchronization**: Verified 10-second continuous sync loop with exponential backoff and `Job` lifecycle guard.
+- **Security & Password Hashing**: Verified local SHA-256 password hashing and `[FIREBASE_SSO]` sentinel flags.
+- **Offline Resilience**: Verified Room database local writes with automatic Firebase cloud sync upon network recovery.
+
+---
+
+### Technical Details
+
+**Version Code:** 10
+
+**Version Name:** 8.0.0
+
+**Package Name:** com.example.campus_eats_app_kt
+
+---
+
+## Version 7.0.0
+
+**Release Date:** 2026-10-17
+
+---
+
+### Overview
+
+Version 7.0.0 aligned role modules with web platform structures, updated administrator home copy, introduced Security Log audit trail, and added the Settings platform information link.
+
+---
+
 ## Version 6.0.0
 
 **Release Date:** 2026-10-16
@@ -8,36 +68,7 @@
 
 ### Overview
 
-Version 6.0.0 is a major visual and operational update for the Campus Eats Android platform. This release aligns the light mode color palette with web platform design tokens (Warm Orange `#ED5A1E`, Accent Green `#309C5E`, and Warm Off-White `#FAF7F5`), introduces an Apple HIG-style premium Dark Mode specification, provides in-app user-controlled appearance mode selection (System, Light, Dark) persisted via Jetpack DataStore, and increments the release version to 6.0.0 (versionCode 8).
-
----
-
-### Added Features & Enhancements
-
-**1. Premium Apple HIG-Style Dark Mode Specification**
-- Configured soft system dark gray canvas (`#1C1C1E`) for main application backgrounds to maintain visible elevation and surface separation.
-- Configured solid black bottom navigation bar (`#000000`) featuring high-contrast white active icons and labels (`#FFFFFF`) and muted gray inactive icons (`#8E8E93`).
-- Configured cream content panels (`#F5F2EB`) with deep near-black text (`#1C1C1E`) for high-contrast card readability on dark shells.
-- Configured Apple system red (`#FF453A`) for error states.
-
-**2. Website Palette Light Theme Parity**
-- Replaced grayscale primary color tokens with the official website brand palette across [Color.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/ui/theme/Color.kt) and [Theme.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/ui/theme/Theme.kt).
-- Configured Light Mode tokens: Primary Warm Orange (`#ED5A1E`), Accent Green (`#309C5E`), Background (`#FAF7F5`), and Deep Brown-Gray Foreground (`#231A16`).
-
-**3. In-App Light / Dark Mode Appearance Control**
-- Created `ThemeManager` ([ThemeManager.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/util/ThemeManager.kt)) to manage appearance modes (`System`, `Light`, `Dark`) persisted using Jetpack DataStore (`campus_eats_theme`).
-- Added appearance selection controls in `SettingsScreenTab` ([MainTabs.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/ui/screens/MainTabs.kt)) with localized labels for English and Afrikaans (`System/Stelsel`, `Light/Lig`, `Dark/Donker`).
-- Wired `ThemeManager.initialize(applicationContext)` and `CampusEatsAppTheme(darkTheme = darkTheme)` in [MainActivity.kt](file:///C:/Users/naoyu/StudioProjects/campus-eats-app-kt/app/src/main/java/com/example/campus_eats_app_kt/MainActivity.kt) so theme preference is evaluated on cold start before first frame composition.
-
----
-
-### Technical Details
-
-**Version Code:** 8
-
-**Version Name:** 6.0.0
-
-**Package Name:** com.example.campus_eats_app_kt
+Version 6.0.0 introduced the Apple HIG-style Dark Mode palette, website brand color alignment, and DataStore-persisted appearance mode selection (System, Light, Dark).
 
 ---
 
@@ -49,64 +80,4 @@ Version 6.0.0 is a major visual and operational update for the Campus Eats Andro
 
 ### Overview
 
-Version 5.0.0 enhanced food item presentation for all user roles (Students, Standard Users, Vendors) by displaying food photographs above food names and prices, and introduced Room database schema version 12 to persist cart item image URLs.
-
----
-
-## Version 4.0.0
-
-**Release Date:** 2026-04-02
-
----
-
-### Overview
-
-Version 4.0.0 introduced adaptive launcher icon branding with a solid black background and white hamburger mark, enforced Web OAuth Client ID token exchange for Google SSO, refactored feedback and coupon sync with payload fingerprinting, and updated documentation.
-
----
-
-## Version 3.1.0
-
-**Release Date:** 2026-04-02
-
----
-
-### Overview
-
-Version 3.1.0 was a comprehensive technical update for the Campus Eats Android platform resolving Single Sign-On credential exchange issues, persistent dual-language support, session-gated cloud synchronization with exponential backoff, local order status transition notifications, and validated network connectivity.
-
----
-
-## Version 3.0.1
-
-**Release Date:** 2026-03-30
-
----
-
-### Overview
-
-Version 3.0.1 delivered account, admin, and vendor enhancements including 16-character User ID generation, copy control, User ID account recovery, admin insight reporting, financial controls, vendor revenue calculation, and live order item inspection.
-
----
-
-## Version 2.0.0
-
-**Release Date:** 2026-08-13
-
----
-
-### Overview
-
-Version 2.0.0 provided a complete technical overhaul shifting to a hybrid offline-first architecture with Fake Restaurant API integration, vendor fulfillment workflow, and a minimalist HIG Compose UI redesign.
-
----
-
-## Version 1.0.0
-
-**Release Date:** 2026-01-15
-
----
-
-### Overview
-
-Initial release establishing core features for Students, Vendors, and Administrators with local Room database storage, fee calculation engine, and initial UI screens.
+Version 5.0.0 enhanced food item presentation across all user roles by displaying food photographs above food names and prices, and introduced Room schema version 12.
