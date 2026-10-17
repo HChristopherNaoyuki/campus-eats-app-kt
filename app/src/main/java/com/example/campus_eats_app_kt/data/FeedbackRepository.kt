@@ -3,8 +3,8 @@ package com.example.campus_eats_app_kt.data
 import com.example.campus_eats_app_kt.data.dao.FeedbackDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.FeedbackEntity
-import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.data.entity.FeedbackStatus
+import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
@@ -64,10 +64,8 @@ class FeedbackRepository(
             updatedAt = now,
         )
 
-        // Save locally first for offline-first resilience
         feedbackDao.insertFeedback(feedback)
 
-        // Synchronize to Firebase Realtime Database
         try
         {
             connectivityManager.ensureInternet()
@@ -78,6 +76,32 @@ class FeedbackRepository(
         catch (_: Exception)
         {
             throw Exception("Offline mode: Feedback saved locally and will sync later.")
+        }
+    }
+
+    /**
+     * Resolves a user feedback entry.
+     * Updates local Room status to RESOLVED and mirrors status change to Firebase Realtime Database.
+     */
+    suspend fun resolveFeedback(feedbackId: Long)
+    {
+        val now = getDateFormat().format(Date())
+        feedbackDao.updateFeedbackStatus(feedbackId, FeedbackStatus.RESOLVED, now)
+
+        try
+        {
+            if (connectivityManager.hasInternetConnection())
+            {
+                firebaseDatabase.getReference("feedback")
+                    .child(feedbackId.toString())
+                    .child("status")
+                    .setValue("resolved")
+                    .await()
+            }
+        }
+        catch (_: Exception)
+        {
+            // Status update persists locally in Room
         }
     }
 

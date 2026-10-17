@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 
 /**
  * AdminViewModel orchestrates administrative business logic.
- * Hardened in Batch 2 to remove dead code and ensure claim verification.
  */
 class AdminViewModel(
     private val adminRepository: AdminRepository,
@@ -97,7 +96,18 @@ class AdminViewModel(
      */
     fun getFeedbackByType(type: FeedbackType) =
         feedbackRepository.getAllFeedback().map()
-        { list -> 
-            list.filter { it.type == type } 
+        { list ->
+            list.filter { it.type == type }
         }
+
+    /**
+     * Resolves a user feedback entry.
+     */
+    fun resolveFeedback(feedbackId: Long)
+    {
+        viewModelScope.launch()
+        {
+            feedbackRepository.resolveFeedback(feedbackId)
+        }
+    }
 }

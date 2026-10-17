@@ -101,6 +101,7 @@ import com.example.campus_eats_app_kt.data.MenuRepository
 import com.example.campus_eats_app_kt.data.OrderRepository
 import com.example.campus_eats_app_kt.data.StatsRepository
 import com.example.campus_eats_app_kt.data.entity.CartItemEntity
+import com.example.campus_eats_app_kt.data.entity.FeedbackStatus
 import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.OrderStatus
@@ -2957,22 +2958,89 @@ fun AdminGenerateCouponsWindow(viewModel: AdminViewModel)
 fun AdminFeedbackWindow(viewModel: AdminViewModel, type: FeedbackType)
 {
     val feedbacks by remember(type) { viewModel.getFeedbackByType(type) }.collectAsStateWithLifecycle(initialValue = emptyList())
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),
-        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
-    )
+
+    if (feedbacks.isEmpty())
     {
-        items(feedbacks)
-        { fb ->
-            HIGCard(modifier = Modifier.fillMaxWidth())
-            {
-                Column()
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+        {
+            Text(
+                text = LanguageManager.getString("No feedback submissions found.", "Geen terugvoerindienings gevind nie."),
+                color = MaterialTheme.colorScheme.outline,
+            )
+        }
+    }
+    else
+    {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = DesignSystem.Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
+        )
+        {
+            items(feedbacks)
+            { fb ->
+                HIGCard(modifier = Modifier.fillMaxWidth())
                 {
-                    Text(text = fb.subject, fontWeight = FontWeight.Bold)
-                    Text(text = "From: ${fb.userName} (${fb.userEmail})", style = MaterialTheme.typography.labelSmall)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = fb.message, style = MaterialTheme.typography.bodySmall)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp))
+                    {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        )
+                        {
+                            Text(
+                                text = fb.subject,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Surface(
+                                shape = MaterialTheme.shapes.small,
+                                color = if (fb.status == FeedbackStatus.PENDING) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                            )
+                            {
+                                Text(
+                                    text = fb.status.name,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    color = if (fb.status == FeedbackStatus.PENDING) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "${LanguageManager.getString("From", "Van")}: ${fb.userName} (${fb.userEmail})",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+
+                        Text(
+                            text = fb.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(vertical = 4.dp),
+                        )
+
+                        if (fb.status == FeedbackStatus.PENDING)
+                        {
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.resolveFeedback(fb.feedbackId)
+                                },
+                                modifier = Modifier.align(Alignment.End),
+                            )
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.CheckCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = LanguageManager.getString("Mark as Resolved", "Merk as Opgelos"))
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.example.campus_eats_app_kt.data.entity.FeedbackEntity
+import com.example.campus_eats_app_kt.data.entity.FeedbackStatus
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -17,6 +18,12 @@ interface FeedbackDao
      */
     @Insert
     suspend fun insertFeedback(feedback: FeedbackEntity)
+
+    /**
+     * Updates the status of a feedback entry.
+     */
+    @Query("UPDATE feedback SET status = :status, updatedAt = :updatedAt WHERE feedbackId = :feedbackId")
+    suspend fun updateFeedbackStatus(feedbackId: Long, status: FeedbackStatus, updatedAt: String)
 
     /**
      * Returns a chronological stream of all system feedback.
