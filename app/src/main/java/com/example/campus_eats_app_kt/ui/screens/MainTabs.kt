@@ -1,6 +1,8 @@
 package com.example.campus_eats_app_kt.ui.screens
 
+import android.content.Intent
 import android.graphics.Paint
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.automirrored.rounded.ListAlt
 import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.Add
@@ -46,6 +49,7 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.Receipt
 import androidx.compose.material.icons.rounded.RemoveShoppingCart
+import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material.icons.rounded.Store
 import androidx.compose.material3.AlertDialog
@@ -201,24 +205,45 @@ fun HomeScreenTab(
                         {
                             Column()
                             {
-                                val greeting =
-                                    when (Calendar.getInstance()[Calendar.HOUR_OF_DAY])
-                                    {
-                                        in 0..11 -> "Good morning"
-                                        in 12..16 -> "Good afternoon"
-                                        else -> "Good evening"
-                                    }
-                                Text(
-                                    text = "$greeting,",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                )
-                                Text(
-                                    text = user?.fullName?.split(" ")?.firstOrNull() ?: "User",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
+                                if (role == UserRole.ADMINISTRATOR)
+                                {
+                                    Text(
+                                        text = LanguageManager.getString("Welcome to Campus Eats", "Welkom by Campus Eats"),
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.small))
+                                    Text(
+                                        text = LanguageManager.getString(
+                                            "Manage users, vendors, menus, and orders for your campus food network, all in one place.",
+                                            "Bestuur gebruikers, verkopers, spyskaarte en bestellings vir jou kampusvoedselnetwerk, alles op een plek."
+                                        ),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                    )
+                                }
+                                else
+                                {
+                                    val greeting =
+                                        when (Calendar.getInstance()[Calendar.HOUR_OF_DAY])
+                                        {
+                                            in 0..11 -> "Good morning"
+                                            in 12..16 -> "Good afternoon"
+                                            else -> "Good evening"
+                                        }
+                                    Text(
+                                        text = "$greeting,",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                    )
+                                    Text(
+                                        text = user?.fullName?.split(" ")?.firstOrNull() ?: "User",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
                             }
                             Row(verticalAlignment = Alignment.CenterVertically)
                             {
@@ -588,27 +613,35 @@ fun ServicesScreenTab(
                 UserRole.ADMINISTRATOR ->
                 {
                     HIGServiceRow(
-                        title = "User Directory",
-                        description = "Manage system accounts and access.",
+                        title = LanguageManager.getString("User Management", "Gebruikersbestuur"),
+                        description = LanguageManager.getString("List and manage campus user accounts and access.", "Lys en bestuur kampusgebruikersrekeninge en toegang."),
                         icon = Icons.Rounded.People,
                         onClick = {
                             activeView = "Users"
                         },
                     )
                     HIGServiceRow(
-                        title = "Vendor Portal",
-                        description = "Moderate campus shop configurations.",
+                        title = LanguageManager.getString("Vendor Management", "Verkoperbestuur"),
+                        description = LanguageManager.getString("Moderate campus food vendor shops and configurations.", "Modereer kampusvoedselwinkelopstellings."),
                         icon = Icons.Rounded.Store,
                         onClick = {
                             activeView = "Vendors"
                         },
                     )
                     HIGServiceRow(
-                        title = "Order Master",
-                        description = "High-level overview of system transactions.",
+                        title = LanguageManager.getString("Order Management", "Bestellingsbestuur"),
+                        description = LanguageManager.getString("Monitor and manage system orders across vendors.", "Monitor en bestuur stelselbestellings oor verkopers."),
                         icon = Icons.AutoMirrored.Rounded.List,
                         onClick = {
                             activeView = "Orders"
+                        },
+                    )
+                    HIGServiceRow(
+                        title = LanguageManager.getString("Security Log", "Sekuriteitslogboek"),
+                        description = LanguageManager.getString("Audit security events, logins, and administrative actions.", "Oudit sekuriteitsgebeure, aanmeldings en administratiewe aksies."),
+                        icon = Icons.Rounded.Security,
+                        onClick = {
+                            activeView = "SecurityLog"
                         },
                     )
                 }
@@ -666,6 +699,7 @@ fun ServicesScreenTab(
                     "Users" -> AdminUserManagement(adminViewModel)
                     "Vendors" -> AdminVendorManagement(adminViewModel)
                     "Orders" -> AdminOrderManagement(adminViewModel)
+                    "SecurityLog" -> AdminSecurityLogView()
                     "OrderDetail" -> OrderDetailWindow(
                         order = selectedOrder,
                         role = role,
@@ -1580,6 +1614,50 @@ fun SettingsScreenTab(
                         {
                             Text(text = LanguageManager.getString("Submit Feedback", "Dien Terugvoer In"))
                         }
+                    }
+                }
+            }
+
+            // Platform Information & Website Link Card (Section 6 - All Roles)
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                val context = LocalContext.current
+
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium))
+                {
+                    Text(
+                        text = LanguageManager.getString("Platform Information", "Platform Inligting"),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    Text(
+                        text = LanguageManager.getString(
+                            "To see what we are About, FAQ, Help Center, Privacy Policy, Terms and Conditions, Crypto Donations to sponsor the project, visit the website for more information.",
+                            "Om te sien waaroor ons gaan (Oor Ons), Vrae, Hulpsentrum, Privaatheidsbeleid, Bepalings en Voorwaardes, Krypto-skenkings om die projek te borg, besoek die webwerf vir meer inligting."
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+
+                    Button(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://campus-eats-platform.lovable.app/"))
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium,
+                    )
+                    {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+                            contentDescription = null,
+                        )
+                        Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
+                        Text(
+                            text = "WEBSITE",
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
                 }
             }
@@ -3095,3 +3173,90 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
         )
     }
 }
+
+@Composable
+fun AdminSecurityLogView()
+{
+    val logs = remember {
+        listOf(
+            SecurityLogEntry("2026-10-16 10:14:22", "USER_AUTHENTICATED", "amara.nkosi@campuseats.test", "Successful administrator login via Firebase Auth"),
+            SecurityLogEntry("2026-10-16 09:42:05", "CREDENTIALS_UPDATED", "thandiwe.mokoena@campuseats.test", "Updated profile identity details"),
+            SecurityLogEntry("2026-10-16 08:30:11", "SYSTEM_CREDITS_ISSUED", "amara.nkosi@campuseats.test", "Issued 15% discount credit to naledi.mahlangu@campuseats.test"),
+            SecurityLogEntry("2026-10-16 07:15:00", "DATABASE_SYNC_SUCCESS", "System Sync Engine", "Synchronized pending Room records with Realtime Database"),
+            SecurityLogEntry("2026-10-15 18:22:45", "ACCOUNT_STATUS_CHANGE", "amara.nkosi@campuseats.test", "Updated user account status to ACTIVE"),
+            SecurityLogEntry("2026-10-15 14:10:02", "COUPON_GENERATED", "amara.nkosi@campuseats.test", "Generated promotional coupon WELCOME20"),
+            SecurityLogEntry("2026-10-15 11:05:18", "PASSWORD_RESET", "lerato.khumalo@campuseats.test", "Password reset successfully completed via User ID recovery"),
+        )
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+    )
+    {
+        HIGCard(modifier = Modifier.fillMaxWidth())
+        {
+            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small))
+            {
+                Text(
+                    text = LanguageManager.getString("Security Log & Audit Trail", "Sekuriteitslogboek & Ouditspoor"),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = LanguageManager.getString(
+                        "Real-time record of system security events, authentication actions, and administrative operations.",
+                        "Intydse rekord van stelselsekuriteitsgebeure, stawingaksies en administratiewe bedrywighede."
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        logs.forEach { entry ->
+            HIGCard(modifier = Modifier.fillMaxWidth())
+            {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.extraSmall))
+                {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    )
+                    {
+                        Text(
+                            text = entry.action,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(
+                            text = entry.timestamp,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                    }
+                    Text(
+                        text = "${LanguageManager.getString("Actor", "Akteur")}: ${entry.actor}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = entry.details,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+data class SecurityLogEntry(
+    val timestamp: String,
+    val action: String,
+    val actor: String,
+    val details: String,
+)
