@@ -1,4 +1,4 @@
-# Campus Eats - Mobile Campus Dining Platform (v6.0.0)
+# Campus Eats - Mobile Campus Dining Platform (v7.0.0)
 
 ## Table of Contents
 
@@ -61,9 +61,9 @@ Recorded video demonstrations and project metadata for each supported academic m
 * **Title:** XISD6329: Part 2 Demo
 * **Module Code:** XISD6329
 * **Module Name:** Work Integrated Learning 3B
-* **Release Notes:** Campus Eats v6.0.0
-* **Release Version:** v6.0.0
-* **Release Date:** 2026-10-16
+* **Release Notes:** Campus Eats v5.0.0
+* **Release Version:** v5.0.0
+* **Release Date:** 2026-10-15
 * **Live Website Link:** https://campus-eats-platform.lovable.app/
 * **Website GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-platform.git
 * **Mobile App GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-app-kt
@@ -156,6 +156,9 @@ Administrators can use the following sample coupons for testing:
 
 ## 8. Functional Features
 
+* Admin Home & Role Alignment: Administrator home header ("Welcome to Campus Eats - Manage users, vendors, menus, and orders for your campus food network, all in one place.") and role-specific module navigation.
+* Feedback Review & Resolution: Complete feedback loop for Administrators to review Complaints and Compliments with pending and resolved status tracking.
+* Platform Information Link: Dedicated Settings information block with a WEBSITE action button opening `https://campus-eats-platform.lovable.app/`.
 * Website Palette Theme Alignment: Replaced grayscale tokens with warm brand orange (#ED5A1E), accent green (#309C5E), and warm neutrals (#FAF7F5 / #231A16).
 * In-App Appearance Mode Control: User-selectable Light, Dark, and System theme controls in Settings, persisted across app restarts via Jetpack DataStore.
 * Food Item Presentation: Full-width food photographs displayed on each food item card with food name and price clearly presented below, accompanied by list thumbnails across vendor inventory and cart screens.
