@@ -2,8 +2,8 @@ package com.example.campus_eats_app_kt.data
 
 import com.example.campus_eats_app_kt.data.dao.FeedbackDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
-import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.data.entity.FeedbackStatus
+import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
@@ -19,7 +19,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * FeedbackRepositoryTest verifies user feedback submission and validation compliance.
+ * FeedbackRepositoryTest verifies user feedback submission, validation compliance, and resolution logic.
  */
 class FeedbackRepositoryTest
 {
@@ -35,7 +35,7 @@ class FeedbackRepositoryTest
         username = "janedoe",
         email = "jane@example.com",
         passwordHash = "[FIREBASE_SSO]",
-        role = UserRole.STUDENT
+        role = UserRole.STUDENT,
     )
 
     @Before
@@ -58,7 +58,7 @@ class FeedbackRepositoryTest
         every { ref.child(any()) } returns ref
         every { ref.push() } returns ref
         every { ref.setValue(any()) } returns task
-        
+
         coEvery { userDao.getUserById("U1") } returns testUser
 
         repository = FeedbackRepository(feedbackDao, userDao, connectivityManager, firebaseDatabase)
@@ -79,7 +79,7 @@ class FeedbackRepositoryTest
         coVerify {
             feedbackDao.insertFeedback(
                 match {
-                    (it.userId == userId) && 
+                    (it.userId == userId) &&
                     (it.userName == testUser.fullName) &&
                     (it.userEmail == testUser.email) &&
                     (it.status == FeedbackStatus.PENDING) &&
@@ -87,6 +87,20 @@ class FeedbackRepositoryTest
                     (it.type == type)
                 },
             )
+        }
+    }
+
+    /**
+     * Requirement: Test feedback resolution updates local Room status to RESOLVED.
+     */
+    @Test
+    fun resolveFeedback_updatesStatusToResolved() = runTest {
+        val feedbackId = 101L
+
+        repository.resolveFeedback(feedbackId)
+
+        coVerify {
+            feedbackDao.updateFeedbackStatus(feedbackId, FeedbackStatus.RESOLVED, any())
         }
     }
 }
