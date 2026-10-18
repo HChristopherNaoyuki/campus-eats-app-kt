@@ -7,6 +7,8 @@ import com.example.campus_eats_app_kt.data.dao.OrderDao
 import com.example.campus_eats_app_kt.data.dao.UserDao
 import com.example.campus_eats_app_kt.data.entity.CouponEntity
 import com.example.campus_eats_app_kt.data.entity.FeedbackEntity
+import com.example.campus_eats_app_kt.data.entity.FeedbackStatus
+import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.data.entity.OrderEntity
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
@@ -201,8 +203,8 @@ class FirebaseSyncManager(
     }
 
     /**
-     * Synchronizes feedback records to the 'feedback/$feedbackId' node for the active session user.
-     * Early returns when no user is authenticated or when the local feedback collection is empty.
+     * Synchronizes feedback records to the 'feedback/$feedbackId' node.
+     * For administrators, pulls remote feedback from Firebase into local Room database.
      */
     private suspend fun syncFeedbackNode()
     {
@@ -210,12 +212,51 @@ class FirebaseSyncManager(
 
         try
         {
-            val feedbackList = feedbackDao.getAllFeedback().first()
-            if (feedbackList.isEmpty())
+            val localUser = userDao.getUserById(currentUser.uid)
+
+            // If administrator, pull remote feedback from Firebase Realtime Database into local Room store
+            if (localUser?.role == UserRole.ADMINISTRATOR)
             {
-                return
+                try
+                {
+                    val snapshot = firebaseDatabase.getReference("feedback").get().await()
+                    for (child in snapshot.children)
+                    {
+                        val subject = child.child("subject").getValue(String::class.java) ?: continue
+                        val message = child.child("message").getValue(String::class.java) ?: continue
+                        val userId = child.child("userId").getValue(String::class.java) ?: ""
+                        val userName = child.child("userName").getValue(String::class.java) ?: "User"
+                        val userEmail = child.child("userEmail").getValue(String::class.java) ?: ""
+                        val typeStr = child.child("type").getValue(String::class.java) ?: "compliment"
+                        val statusStr = child.child("status").getValue(String::class.java) ?: "pending"
+                        val createdAt = child.child("createdAt").getValue(String::class.java) ?: ""
+                        val updatedAt = child.child("updatedAt").getValue(String::class.java) ?: createdAt
+
+                        val type = if (typeStr.equals("complaint", ignoreCase = true)) FeedbackType.COMPLAINT else FeedbackType.COMPLIMENT
+                        val status = if (statusStr.equals("resolved", ignoreCase = true)) FeedbackStatus.RESOLVED else FeedbackStatus.PENDING
+
+                        val feedbackEntity = FeedbackEntity(
+                            userId = userId,
+                            type = type,
+                            subject = subject,
+                            message = message,
+                            userName = userName,
+                            userEmail = userEmail,
+                            status = status,
+                            createdAt = createdAt,
+                            updatedAt = updatedAt,
+                        )
+                        feedbackDao.insertFeedback(feedbackEntity)
+                    }
+                }
+                catch (e: Exception)
+                {
+                    Log.d(tag, "Remote feedback pull skipped: ${e.message}")
+                }
             }
 
+            // Sync user's own feedback entries
+            val feedbackList = feedbackDao.getAllFeedback().first()
             val userFeedback = feedbackList.filter { it.userId == currentUser.uid }
 
             for (feedback in userFeedback)

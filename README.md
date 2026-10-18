@@ -1,4 +1,4 @@
-# Campus Eats - Mobile Campus Dining Platform (v8.0.0)
+# Campus Eats - Mobile Campus Dining Platform (v9.0.0)
 
 ## Table of Contents
 
@@ -101,7 +101,7 @@ The application is built using modern Android development practices, architectur
 * Persistence: Room Database (version 12) for local offline storage and Jetpack DataStore Preferences for settings and appearance persistence
 * Cloud Backend: Firebase Realtime Database with 10 MB disk persistence enabled
 * Authentication: Firebase Authentication with Credential Manager for Google Single Sign-On (SSO)
-* Synchronizer: Single background coroutine engine (10-second interval, exponential backoff 1s to 60s, session-gated)
+* Synchronizer: Single background coroutine engine (10-second interval, exponential backoff 1s to 60s, session-gated, cloud feedback pull for Admins)
 * Networking: Retrofit 2.x for Fake Restaurant REST API communication
 * Security: SHA-256 password hashing for local accounts, sentinel SSO tokens, and Role-Based Access Control (RBAC)
 * Notifications: Local Notification Channel (campus_eats_orders) for real-time order status transition alerts
@@ -141,7 +141,7 @@ To verify application functionality, follow these steps:
 7. Perform role-specific workflows:
    - Student/Standard: Browse menu items with full-width food photos, names, and prices; add to cart; apply coupons; place order; view live receipt details.
    - Vendor: View live orders, inspect picked item details via Check modal, update order statuses, manage inventory stock and prices.
-   - Admin: View admin home welcome header, manage users/vendors/orders, inspect Security Log audit trail, generate coupons with sample chips (`CAMPUS10`, `EATS20`, `WELCOME5`), and resolve complaints/compliments.
+   - Admin: View admin home welcome header, manage users/vendors/orders, inspect Security Log audit trail, generate coupons with sample chips (`CAMPUS10`, `EATS20`, `WELCOME5`), and resolve complaints/compliments pulled automatically from cloud.
 8. Test navigation tab re-tap behavior (re-tapping active bottom tab returns to tab root window).
 9. Test Settings Platform Information card and tap **WEBSITE** button to launch the external web app.
 10. Toggle network connectivity to observe offline operation and automatic background synchronization upon reconnection.
@@ -160,6 +160,7 @@ Administrators can use the following sample coupons for testing:
 
 ## 8. Functional Features
 
+* Cloud Feedback Synchronization for Administrators: Real-time background pulling of cloud-submitted complaints and compliments into Room so Administrators see submissions across all devices.
 * Role Alignment & Re-Tap Navigation: Navigation re-tap returns active tab to root window across Home, Browse, Orders, and Settings.
 * Admin Management & Audit Log: User Management, Vendor Management, Order Management, and real-time Security Log audit trail under Browse.
 * Feedback Loop Parity: Full feedback loop allowing Admins to review and resolve Complaints and Compliments with pending/resolved status tracking, while Non-Admins submit feedback with confirmation prompts.
