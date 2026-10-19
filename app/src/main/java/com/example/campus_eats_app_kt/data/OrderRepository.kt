@@ -1,5 +1,6 @@
 package com.example.campus_eats_app_kt.data
 
+import android.content.Context
 import android.util.Log
 import androidx.room.withTransaction
 import com.example.campus_eats_app_kt.data.dao.CartDao
@@ -15,6 +16,7 @@ import com.example.campus_eats_app_kt.data.network.OrderItemRequest
 import com.example.campus_eats_app_kt.data.network.OrderRequest
 import com.example.campus_eats_app_kt.util.IdGenerator
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
+import com.example.campus_eats_app_kt.util.NotificationHelper
 import com.example.campus_eats_app_kt.util.OrderStatusEngine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -138,11 +140,31 @@ class OrderRepository(
 
     fun getOrdersForVendor(vendorId: String): Flow<List<OrderEntity>> = orderDao.getOrdersByVendor(vendorId)
 
-    suspend fun updateOrderStatus(order: OrderEntity, status: OrderStatus)
+    suspend fun updateOrderStatus(order: OrderEntity, status: OrderStatus, context: Context? = null)
     {
         if (OrderStatusEngine.isValidTransition(order.status, status))
         {
             orderDao.updateOrder(order.copy(status = status))
+
+            if (context != null)
+            {
+                val title = "Order #${order.orderId} Update"
+                val message = when (status)
+                {
+                    OrderStatus.ACCEPTED -> "Your order has been accepted by the vendor."
+                    OrderStatus.PREPARING -> "Your meal is currently being prepared!"
+                    OrderStatus.READY -> "Your order is ready for pickup!"
+                    OrderStatus.COMPLETED -> "Order completed. Thank you for dining with Campus Eats!"
+                    OrderStatus.CANCELLED -> "Order #${order.orderId} was cancelled."
+                    else -> "Order status updated to $status."
+                }
+                NotificationHelper.showNotification(
+                    context = context,
+                    notificationId = order.orderId.hashCode(),
+                    title = title,
+                    message = message,
+                )
+            }
         }
         else
         {

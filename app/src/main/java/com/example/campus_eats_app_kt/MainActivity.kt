@@ -62,6 +62,7 @@ import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 import com.example.campus_eats_app_kt.util.DatabaseSeeder
 import com.example.campus_eats_app_kt.util.LanguageManager
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
+import com.example.campus_eats_app_kt.util.NotificationHelper
 import com.example.campus_eats_app_kt.util.ThemeManager
 import com.example.campus_eats_app_kt.util.NetworkConnectivityObserver
 import com.google.firebase.auth.FirebaseAuth
@@ -146,6 +147,7 @@ class MainActivity : ComponentActivity()
             {
                 LanguageManager.initialize(applicationContext)
                 ThemeManager.initialize(applicationContext)
+                NotificationHelper.createNotificationChannel(applicationContext)
                 DatabaseSeeder.seed(applicationContext)
             }
 
