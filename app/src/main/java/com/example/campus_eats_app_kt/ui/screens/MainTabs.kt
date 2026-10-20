@@ -208,8 +208,10 @@ fun HomeScreenTab(
                             {
                                 if (role == UserRole.ADMINISTRATOR)
                                 {
+                                    val displayName = user?.fullName ?: "Administrator"
+                                    val displayUsername = user?.username?.let { "(@$it)" } ?: ""
                                     Text(
-                                        text = LanguageManager.getString("Welcome to Campus Eats", "Welkom by Campus Eats"),
+                                        text = LanguageManager.getString("Welcome, $displayName $displayUsername", "Welkom, $displayName $displayUsername").trim(),
                                         style = MaterialTheme.typography.headlineMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface,

@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.campus_eats_app_kt"
         minSdk = 24
         targetSdk = 37
-        versionCode = 14
-        versionName = "12.0.0"
+        versionCode = 15
+        versionName = "13.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -111,7 +111,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.retrofit)
     
-    // Credential Manager and Google ID dependencies from version catalog
+    // Credential Manager and Google ID dependencies
     implementation(libs.credentialsCore)
     implementation(libs.credentialsGoogle)
     implementation(libs.googleidAuth)
@@ -128,7 +128,6 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.runner)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
