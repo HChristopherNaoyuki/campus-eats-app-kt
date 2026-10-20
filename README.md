@@ -1,4 +1,4 @@
-# Campus Eats - Mobile Campus Dining Platform (v11.0.0)
+# Campus Eats - Mobile Campus Dining Platform (v12.0.0)
 
 ## Table of Contents
 
@@ -140,9 +140,9 @@ To verify application functionality, follow these steps:
 5. On initial launch, the application seeds the local Room database with sample data and loads saved language and appearance preferences.
 6. Use the credentials provided in the Demo Accounts section to log in, or use Continue with Google.
 7. Perform role-specific workflows:
-   - Student/Standard: Browse menu items with full-width food photos, names, and prices; add to cart; apply coupons; place order; view live receipt details.
-   - Vendor: View live orders, inspect picked item details via Check modal, update order statuses, manage inventory stock and prices.
-   - Admin: View admin home welcome header, manage users/vendors/orders, inspect Security Log audit trail, generate coupons with sample chips (`CAMPUS10`, `EATS20`, `WELCOME5`), and resolve complaints/compliments pulled automatically from cloud.
+   - Student/Standard: Browse menu items with full-width food photos, names, and prices; add to cart; apply coupons; place order; view live receipt details and pickup status.
+   - Vendor: View live orders, inspect picked item details via Check modal, update order statuses (`ACCEPTED`, `PREPARING`, `READY`, `COMPLETED`), manage inventory stock and prices, and review financial reports.
+   - Admin: View admin home welcome header, manage users/vendors/orders, inspect Security Log audit trail, generate coupons with sample chips (`CAMPUS10`, `EATS20`, `WELCOME5`), review financial system summary reports, and resolve complaints/compliments pulled automatically from cloud.
 8. Test navigation tab re-tap behavior (re-tapping active bottom tab returns to tab root window).
 9. Test Settings Platform Information card and tap **WEBSITE** button to launch the external web app.
 10. Toggle network connectivity to observe offline operation and automatic background synchronization upon reconnection.
@@ -161,6 +161,10 @@ Administrators can use the following sample coupons for testing:
 
 ## 8. Functional Features
 
+* Role Financial Controls: Authoritative financial metrics, spending breakdown by vendor, wallet balance tracking, vendor item revenue analysis, and global system revenue reporting backed by Room and Realtime Database entities.
+* Admin System Reports: System Summary and Insight Reports with ordering filter options ("New to old", "Month", "Year") sorting real database order records.
+* Vendor Order Status Updates: Live status transitions (`ACCEPTED`, `PREPARING`, `READY`, `COMPLETED`, `CANCELLED`) with automatic cloud sync and customer notifications.
+* Student & Standard Receipts: Receipt detail windows rendering current order status, pickup state, payment method, special requests, and item breakdowns.
 * Cloud Feedback Synchronization for Administrators: Real-time background pulling of cloud-submitted complaints and compliments into Room so Administrators see submissions across all devices.
 * Role Alignment & Re-Tap Navigation: Navigation re-tap returns active tab to root window across Home, Browse, Orders, and Settings.
 * Admin Management & Audit Log: User Management, Vendor Management, Order Management, and real-time Security Log audit trail under Browse.

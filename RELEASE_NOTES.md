@@ -1,5 +1,68 @@
 # Campus Eats - Release Notes
 
+## Version 12.0.0
+
+**Release Date:** 2026-10-20
+
+---
+
+### Overview
+
+Version 12.0.0 is a major feature stabilization release for the Campus Eats Android platform. This release delivers complete role financial controls, working administrator system reports, vendor live order status updates with automated customer push notifications, student receipt status and pickup tracking, cloud feedback synchronization across devices, and updated version metadata (`versionCode 14`).
+
+---
+
+### Key Features & Technical Deliverables
+
+**1. Financial Controls (All Roles)**
+- **Administrator**: Live platform revenue calculations (`AdminGlobalSummary`), order insight reports (`AdminInsightReportsHub`), wallet credit distribution, and coupon issuance backed by Room and Realtime Database entities.
+- **Vendor**: Total completed revenue, top revenue item, item-by-item sales breakdown (`VendorReportHub`), active order count, and total items offered.
+- **Student / Standard**: Total expenditure tracking, vendor spend percentage breakdown (`StudentTotalSpending`), wallet balance tracking, and payment receipts.
+
+**2. Administrator System Reports**
+- **System Summary**: Displays financial aggregates and reports in the web platform style using live database records.
+- **Insight Reports**: Features an active ordering filter ("New to old", "Month", "Year") sorting real order entities.
+
+**3. Vendor Order Status & Fulfillment**
+- Live order status updates (`ACCEPTED`, `PREPARING`, `READY`, `COMPLETED`, `CANCELLED`) in `VendorOrderHub`.
+- Order items modal via **Check** action showing picked items, quantities, special requests, and pickup times.
+- Status changes persist to Room, push to Firebase (`orders/{orderId}/status`), and post a high-priority local push notification to the customer.
+
+**4. Student & Standard Receipts**
+- `OrderDetailWindow` renders current order status, pickup state, payment method, special requests, and itemized cost breakdowns under headers "Live Status" and "Order History".
+
+**5. Cross-Device Feedback Synchronization**
+- `FirebaseSyncManager` automatically pulls remote complaints and compliments from Firebase into Room for Administrator accounts. Administrators review submissions in `AdminFeedbackWindow` and mark pending items as resolved with status updates mirrored to Firebase (`feedback/{feedbackId}/status`).
+
+**6. Technical Architecture & Verification**
+- **Google SSO**: Verified Credential Manager API with Web OAuth Client ID `64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com` and `[FIREBASE_SSO]` passwordHash sentinel flag.
+- **Synchronization**: 10-second continuous sync loop with exponential backoff and active `Job` lifecycle guard.
+- **Unit Testing**: Executed `./gradlew :app:testDebugUnitTest` with **69 passed, 0 skipped, 0 failed**.
+
+---
+
+### Technical Details
+
+**Version Code:** 14
+
+**Version Name:** 12.0.0
+
+**Package Name:** com.example.campus_eats_app_kt
+
+---
+
+## Version 11.0.0
+
+**Release Date:** 2026-10-18
+
+---
+
+### Overview
+
+Version 11.0.0 delivered Play Store release preparation, GitHub Actions CI workflow configuration, AI usage disclosures, and notification framework enhancements.
+
+---
+
 ## Version 10.0.0
 
 **Release Date:** 2026-10-18
@@ -8,46 +71,7 @@
 
 ### Overview
 
-Version 10.0.0 is a milestone release delivering full web platform parity across all user roles (Administrator, Vendor, Student, and Standard), complete feedback review and resolution loops, 10-second automatic background cloud synchronization with administrator feedback pull, tab re-tap navigation reset, Google SSO Credential Manager integration, Apple HIG dark mode tokens, and updated unit test coverage with 69 passing unit tests (`versionCode 12`).
-
----
-
-### Key Features & Technical Deliverables
-
-**1. Administrator Role & Audit Modules**
-- Administrator Home page displays the signed-in user name ("Amara Nkosi") and welcome header: *"Welcome to Campus Eats - Manage users, vendors, menus, and orders for your campus food network, all in one place."*
-- Management modules under Browse: **User Management**, **Vendor Management**, **Order Management**, and real-time **Security Log** audit trail (`AdminSecurityLogView`).
-- Orders tab modules: **Global Receipts** (receipt summary revision on row tap), **Reports** (System Summary), and **Insight Reports** (ordering filter supports "New to old", "Month", "Year").
-- **Generate Coupons**: Supports targeted user selection, item quantities, sample coupon chips (`CAMPUS10`, `EATS20`, `WELCOME5`), and active coupon lists.
-- **Feedback Review**: Cloud feedback pull in `FirebaseSyncManager` automatically loads complaints and compliments submitted across all devices into local Room storage. Administrators review submissions in `AdminFeedbackWindow` and mark pending items as resolved with status updates mirrored to Firebase (`feedback/{feedbackId}/status`).
-
-**2. Vendor Role Modules**
-- **New Menu Item**: Features 4 bottom tray navigation icons with "Add Item" control positioned above the bar.
-- **Inventory Manager**: Full inventory management with 4 bottom tray icons.
-- **Live Orders**: Tapping an order opens a detailed window displaying picked items (Check modal), special request notes, and preferred pickup times.
-- **Financial Reports**: Displays total food items count, total orders count, and total revenue metrics.
-
-**3. Student & Standard Role Modules**
-- **Live Status & Order History**: Tapping a receipt row opens a summary revision window displaying food items, special requests, pickup times, payment methods, and grand totals.
-- **Tray Navigation Reset**: Re-tapping an active bottom navigation icon immediately redirects back to that tab's root window.
-
-**4. Settings Platform Link**
-- Platform Information card with a **WEBSITE** button launching `https://campus-eats-platform.lovable.app/` via external browser intent.
-
-**5. Technical Architecture & Verification**
-- **Google SSO**: Verified Credential Manager API with Web OAuth Client ID `64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com` and `[FIREBASE_SSO]` passwordHash sentinel flag.
-- **Synchronization**: 10-second continuous sync loop with exponential backoff (1s to 60s), isolated node failure protection, and active `Job` lifecycle guard.
-- **Unit Testing**: Executed `./gradlew :app:testDebugUnitTest` with **69 passed, 0 skipped, 0 failed**.
-
----
-
-### Technical Details
-
-**Version Code:** 12
-
-**Version Name:** 10.0.0
-
-**Package Name:** com.example.campus_eats_app_kt
+Version 10.0.0 delivered full web platform parity across all user roles, complete feedback review and resolution loops, 10-second automatic background cloud synchronization with administrator feedback pull, tab re-tap navigation reset, and Apple HIG dark mode tokens.
 
 ---
 
