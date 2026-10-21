@@ -62,6 +62,14 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("androidx.concurrent:concurrent-futures:1.2.0")
+        force("androidx.concurrent:concurrent-futures-ktx:1.2.0")
+        force("com.google.errorprone:error_prone_annotations:2.30.0")
+    }
+}
+
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
