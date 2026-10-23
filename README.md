@@ -1,4 +1,4 @@
-# Campus Eats - Mobile Campus Dining Platform (v13.0.0)
+# Campus Eats - Mobile Campus Dining Platform (v14.0.0)
 
 ## Table of Contents
 
@@ -102,7 +102,7 @@ The application is built using modern Android development practices, architectur
 * Persistence: Room Database (version 12) for local offline storage and Jetpack DataStore Preferences for settings and appearance persistence
 * Cloud Backend: Firebase Realtime Database with 10 MB disk persistence enabled
 * Authentication: Firebase Authentication with Credential Manager for Google Single Sign-On (SSO)
-* Synchronizer: Single background coroutine engine (10-second interval, exponential backoff 1s to 60s, session-gated, cloud feedback pull for Admins)
+* Synchronizer: Single background coroutine engine (10-second interval, exponential backoff 1s to 60s, session-gated, isolated node exception handling, cloud feedback pull for Admins)
 * Networking: Retrofit 2.x for Fake Restaurant REST API communication (`https://fakerestaurantapi.runasp.net/`)
 * Security: SHA-256 password hashing for local accounts, sentinel SSO tokens, and Role-Based Access Control (RBAC)
 * Notifications: Local Notification Channel (campus_eats_orders) for real-time order status transition alerts
@@ -161,6 +161,8 @@ Administrators can use the following sample coupons for testing:
 
 ## 8. Functional Features
 
+* Deterministic Feedback Keying: URL-safe deterministic keys (`${userId}_${createdAt}`) generated in `FeedbackKeys.kt` ensuring idempotent cloud writes and collision-free feedback status resolution.
+* Isolated Sync Loop: Isolated `try-catch` blocks per sync node in `FirebaseSyncManager.kt` ensuring single-node failures do not abort the 10-second continuous sync engine.
 * Admin Home Session Binding: Administrator home header prominently displays the signed-in user's full name and username ("Amara Nkosi (@amara)"), aligned with student, standard, and vendor home screens.
 * Role Financial Controls: Authoritative financial metrics, spending breakdown by vendor, wallet balance tracking, vendor item revenue analysis, and global system revenue reporting backed by Room and Realtime Database entities.
 * Admin System Reports: System Summary and Insight Reports with ordering filter options ("New to old", "Month", "Year") sorting real database order records.
