@@ -36,7 +36,7 @@ class FeedbackRepository(
 
     /**
      * Submits a new user feedback entry.
-     * Validates input, saves to Room, and syncs to Firebase Realtime Database.
+     * Validates input, saves to Room, and syncs to Firebase Realtime Database with a deterministic key.
      */
     suspend fun submitFeedback(userId: String, subject: String, message: String, type: FeedbackType)
     {
@@ -69,7 +69,9 @@ class FeedbackRepository(
         try
         {
             connectivityManager.ensureInternet()
-            firebaseDatabase.getReference("feedback").push()
+            val stableKey = FeedbackKeys.keyFor(feedback)
+            firebaseDatabase.getReference("feedback")
+                .child(stableKey)
                 .setValue(mapFeedbackToMap(feedback))
                 .await()
         }
@@ -90,12 +92,17 @@ class FeedbackRepository(
 
         try
         {
-            if (connectivityManager.hasInternetConnection())
+            val entity = feedbackDao.getFeedbackById(feedbackId)
+            if (entity != null && connectivityManager.hasInternetConnection())
             {
+                val stableKey = FeedbackKeys.keyFor(entity)
+                val updates = mapOf<String, Any>(
+                    "status" to "resolved",
+                    "updatedAt" to now,
+                )
                 firebaseDatabase.getReference("feedback")
-                    .child(feedbackId.toString())
-                    .child("status")
-                    .setValue("resolved")
+                    .child(stableKey)
+                    .updateChildren(updates)
                     .await()
             }
         }
@@ -107,7 +114,7 @@ class FeedbackRepository(
 
     /**
      * Maps FeedbackEntity to a Map matching Firebase Realtime Database validation rules.
-     * Enforces lowercase strings for type ("complaint" or "compliment") and status ("pending").
+     * Enforces lowercase strings for type ("complaint" or "compliment") and status ("pending" / "resolved").
      */
     private fun mapFeedbackToMap(feedback: FeedbackEntity): Map<String, Any?>
     {

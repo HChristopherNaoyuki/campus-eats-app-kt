@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.campus_eats_app_kt"
         minSdk = 24
         targetSdk = 37
-        versionCode = 15
-        versionName = "13.0.0"
+        versionCode = 16
+        versionName = "14.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

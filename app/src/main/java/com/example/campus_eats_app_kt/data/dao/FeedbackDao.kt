@@ -2,6 +2,7 @@ package com.example.campus_eats_app_kt.data.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.campus_eats_app_kt.data.entity.FeedbackEntity
 import com.example.campus_eats_app_kt.data.entity.FeedbackStatus
@@ -14,9 +15,9 @@ import kotlinx.coroutines.flow.Flow
 interface FeedbackDao
 {
     /**
-     * Persists user feedback.
+     * Persists user feedback, ignoring conflicts.
      */
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFeedback(feedback: FeedbackEntity)
 
     /**
@@ -24,6 +25,18 @@ interface FeedbackDao
      */
     @Query("UPDATE feedback SET status = :status, updatedAt = :updatedAt WHERE feedbackId = :feedbackId")
     suspend fun updateFeedbackStatus(feedbackId: Long, status: FeedbackStatus, updatedAt: String)
+
+    /**
+     * Finds a feedback entry by user ID and creation timestamp.
+     */
+    @Query("SELECT * FROM feedback WHERE userId = :userId AND createdAt = :createdAt LIMIT 1")
+    suspend fun findByUserAndCreatedAt(userId: String, createdAt: String): FeedbackEntity?
+
+    /**
+     * Gets a feedback entry by its primary key ID.
+     */
+    @Query("SELECT * FROM feedback WHERE feedbackId = :feedbackId LIMIT 1")
+    suspend fun getFeedbackById(feedbackId: Long): FeedbackEntity?
 
     /**
      * Returns a chronological stream of all system feedback.

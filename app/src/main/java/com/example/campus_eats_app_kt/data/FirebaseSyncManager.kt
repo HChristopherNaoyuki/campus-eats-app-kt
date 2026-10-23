@@ -255,15 +255,16 @@ class FirebaseSyncManager(
                 }
             }
 
-            // Sync user's own feedback entries
+            // Sync user's own feedback entries or all entries if administrator
             val feedbackList = feedbackDao.getAllFeedback().first()
-            val userFeedback = feedbackList.filter { it.userId == currentUser.uid }
+            val userFeedback = if (localUser?.role == UserRole.ADMINISTRATOR) feedbackList else feedbackList.filter { it.userId == currentUser.uid }
 
             for (feedback in userFeedback)
             {
+                val stableKey = FeedbackKeys.keyFor(feedback)
                 val feedbackMap = mapFeedbackToFirebase(feedback)
                 firebaseDatabase.getReference("feedback")
-                    .child(feedback.feedbackId.toString())
+                    .child(stableKey)
                     .setValue(feedbackMap)
                     .await()
             }
