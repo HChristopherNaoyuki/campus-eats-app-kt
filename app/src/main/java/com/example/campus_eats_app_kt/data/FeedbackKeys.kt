@@ -15,7 +15,7 @@ object FeedbackKeys
     {
         val sanitizedUser = userId.replace(Regex("[^a-zA-Z0-9_]"), "_")
         val sanitizedTime = createdAt.replace(Regex("[^a-zA-Z0-9_]"), "_")
-        return "${sanitizedUser}_${sanitizedTime}"
+        return "${sanitizedUser}_$sanitizedTime"
     }
 
     /**
