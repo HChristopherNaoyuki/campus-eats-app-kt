@@ -21,7 +21,6 @@ import com.example.campus_eats_app_kt.util.OrderStatusEngine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.encodeToString
 
 /**
  * OrderRepository manages the order lifecycle.

@@ -93,7 +93,7 @@ class FeedbackRepository(
         try
         {
             val entity = feedbackDao.getFeedbackById(feedbackId)
-            if (entity != null && connectivityManager.hasInternetConnection())
+            if ((entity != null) && connectivityManager.hasInternetConnection())
             {
                 val stableKey = FeedbackKeys.keyFor(entity)
                 val updates = mapOf<String, Any>(

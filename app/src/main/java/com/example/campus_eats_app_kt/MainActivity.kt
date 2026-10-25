@@ -204,18 +204,15 @@ class MainActivity : ComponentActivity()
                                         if (email != null)
                                         {
                                             val user = authRepository.getUserByEmail(email)
-                                            if (user != null)
+                                            if (user?.status == UserStatus.SUSPENDED)
                                             {
-                                                if (user.status == UserStatus.SUSPENDED)
-                                                {
-                                                    authRepository.logout()
-                                                }
-                                                else
-                                                {
-                                                    backStack.add(Route.Main(user.userId, user.role.name))
-                                                    backStack.removeAt(0)
-                                                    return@LaunchedEffect
-                                                }
+                                                authRepository.logout()
+                                            }
+                                            else if (user != null)
+                                            {
+                                                backStack.add(Route.Main(user.userId, user.role.name))
+                                                backStack.removeAt(0)
+                                                return@LaunchedEffect
                                             }
                                         }
                                     }
@@ -346,12 +343,7 @@ class MainActivity : ComponentActivity()
                                     onNavigateToVendorMenu = { vendorId -> backStack.add(Route.VendorMenuManagement(vendorId)) },
                                     onNavigateToAddMenuItem = { vendorId, itemId -> backStack.add(Route.AddEditMenuItem(vendorId, itemId)) },
                                     onNavigateToMenuBrowse = { userId, vendorId ->
-                                        backStack.add(
-                                            Route.CustomerMenuBrowse(
-                                                userId,
-                                                vendorId,
-                                            ),
-                                        )
+                                        backStack.add(Route.CustomerMenuBrowse(userId, vendorId))
                                     },
                                 )
                             }

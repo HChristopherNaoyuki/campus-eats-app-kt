@@ -72,7 +72,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -3259,7 +3258,7 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
                         subject = ""
                         message = ""
                     }
-                    catch (e: Exception)
+                    catch (_: Exception)
                     {
                         Toast.makeText(context, "Submission failed: Check connection.", Toast.LENGTH_SHORT).show()
                     }
