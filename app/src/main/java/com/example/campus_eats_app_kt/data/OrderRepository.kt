@@ -110,6 +110,7 @@ class OrderRepository(
      * Flushes any pending local orders to the remote server.
      * Finding 1: Synchronization logic for offline-to-online transitions.
      */
+    @Suppress("unused")
     suspend fun syncPendingOrders(userId: String)
     {
         if (!connectivityManager.hasInternetConnection()) return

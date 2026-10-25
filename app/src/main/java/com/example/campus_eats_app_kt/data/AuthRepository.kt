@@ -31,11 +31,11 @@ import kotlinx.coroutines.tasks.await
  */
 class AuthRepository(
     private val userDao: UserDao,
-    private val apiService: FakeRestaurantApiService,
+    @Suppress("UNUSED_PARAMETER") apiService: FakeRestaurantApiService,
     private val connectivityManager: NetworkConnectivityManager,
     private val firebaseAuth: FirebaseAuth,
     private val firebaseDatabase: FirebaseDatabase,
-    private val orderRepository: OrderRepository,
+    @Suppress("UNUSED_PARAMETER") orderRepository: OrderRepository,
     private val firebaseSyncManager: FirebaseSyncManager? = null,
 )
 {
@@ -129,7 +129,7 @@ class AuthRepository(
      * Delegation shim for continuous background synchronization.
      * Deprecated for internal sync loops, delegates directly to FirebaseSyncManager.
      */
-    fun startBackgroundSync(userId: String, scope: CoroutineScope)
+    fun startBackgroundSync(@Suppress("UNUSED_PARAMETER") userId: String, scope: CoroutineScope)
     {
         Log.i(tag, "Delegating continuous background sync loop to FirebaseSyncManager.")
         firebaseSyncManager?.startContinuousSync(scope)
@@ -295,6 +295,7 @@ class AuthRepository(
             null
         }
 
+        @Suppress("UNCHECKED_CAST")
         val cloudMap = snapshot?.children?.firstOrNull()?.value as? Map<Any?, Any?>
         val cloudUser = cloudMap?.let { mapFromFirebase(it) }
 
