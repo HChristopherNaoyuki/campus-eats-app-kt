@@ -278,8 +278,12 @@ class MainActivity : ComponentActivity()
                                     },
                                 )
                                 RegistrationScreen(
-                                    onRegistrationSuccess = { _, _ ->
-                                        backStack.removeLastOrNull()
+                                    onRegistrationSuccess = { userId, role ->
+                                        backStack.add(Route.Main(userId, role))
+                                        while (backStack.size > 1)
+                                        {
+                                            backStack.removeAt(0)
+                                        }
                                     },
                                     onBackClick = { backStack.removeLastOrNull() },
                                     viewModel = viewModel,
