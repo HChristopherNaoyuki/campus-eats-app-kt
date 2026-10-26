@@ -346,10 +346,10 @@ class MainActivity : ComponentActivity()
                                     onNavigateToCheckout = { backStack.add(Route.Checkout(route.userId)) },
                                     onNavigateToVendorMenu = { vendorId -> backStack.add(Route.VendorMenuManagement(vendorId)) },
                                     onNavigateToAddMenuItem = { vendorId, itemId -> backStack.add(Route.AddEditMenuItem(vendorId, itemId)) },
-                                    onNavigateToMenuBrowse = { userId, vendorId ->
-                                        backStack.add(Route.CustomerMenuBrowse(userId, vendorId))
-                                    },
                                 )
+                                { userId, vendorId ->
+                                    backStack.add(Route.CustomerMenuBrowse(userId, vendorId))
+                                }
                             }
 
                             entry<Route.VendorMenuManagement>()
@@ -470,11 +470,11 @@ class MainActivity : ComponentActivity()
                                         backStack.clear()
                                         backStack.add(Route.Main(route.userId, route.role))
                                     },
-                                    onReturnHome = {
-                                        backStack.clear()
-                                        backStack.add(Route.Main(route.userId, route.role))
-                                    },
                                 )
+                                {
+                                    backStack.clear()
+                                    backStack.add(Route.Main(route.userId, route.role))
+                                }
                             }
                         },
                     )
