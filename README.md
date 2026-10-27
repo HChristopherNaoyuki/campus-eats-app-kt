@@ -89,6 +89,22 @@ Recorded video demonstrations and project metadata for each supported academic m
 
 ---
 
+### 3.3 OPSC6312 Part 3 Demonstration
+
+* **Title:** OPSC6312: Part 3 Demo
+* **Module Code:** OPSC6312
+* **Module Name:** Open Source Coding (Intermediate)
+* **Release Notes:** Campus Eats v13.0.0
+* **Release Version:** v13.0.0
+* **Release Date:** 2026-10-21
+* **Live Website Link:** https://campus-eats-platform.lovable.app/
+* **Website GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-platform.git
+* **Mobile App GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-app-kt
+* **APK Installation Link:** https://github.com/HChristopherNaoyuki/campus-eats-app-kt/releases
+* **YouTube Demonstration Video:** https://youtu.be/xy2XR5ymF4o
+
+---
+
 ## 4. Technical Overview
 
 The application is built using modern Android development practices, architecture patterns, and Jetpack libraries:
