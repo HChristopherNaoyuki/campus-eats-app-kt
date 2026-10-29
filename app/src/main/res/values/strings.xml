@@ -1,3 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Campus Eats</string>
+    <string name="notification_channel_name">Campus Eats Order Alerts</string>
+    <string name="notification_channel_desc">Notifications for campus food order updates and status transitions.</string>
+    <string name="website_url">https://campus-eats-platform.lovable.app/</string>
 </resources>
