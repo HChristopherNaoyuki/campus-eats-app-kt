@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -58,6 +59,7 @@ import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.ui.components.HIGButton
 import com.example.campus_eats_app_kt.ui.components.HIGSegmentedControl
 import com.example.campus_eats_app_kt.ui.components.HIGTopAppBar
+import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 import com.example.campus_eats_app_kt.ui.theme.DesignSystem
 import com.example.campus_eats_app_kt.util.IdGenerator
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -412,6 +414,169 @@ fun RegistrationScreen(
             }
 
             Spacer(modifier = Modifier.height(DesignSystem.Spacing.large))
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Registration Screen Light")
+@Composable
+fun RegistrationScreenPreview()
+{
+    CampusEatsAppTheme(darkTheme = false)
+    {
+        RegistrationScreenContentPreview()
+    }
+}
+
+@Preview(showBackground = true, name = "Registration Screen Dark")
+@Composable
+fun RegistrationScreenDarkPreview()
+{
+    CampusEatsAppTheme(darkTheme = true)
+    {
+        RegistrationScreenContentPreview()
+    }
+}
+
+@Composable
+private fun RegistrationScreenContentPreview()
+{
+    var fullName by remember { mutableStateOf("Test User") }
+    var username by remember { mutableStateOf("testuser") }
+    var email by remember { mutableStateOf("test@campuseats.test") }
+    var password by remember { mutableStateOf("Password123#") }
+    var confirmPassword by remember { mutableStateOf("Password123#") }
+    var selectedRole by remember { mutableStateOf(UserRole.STUDENT) }
+    val generatedUserId = "ABCD-1234-EFGH-5678"
+
+    Scaffold(
+        topBar = {
+            HIGTopAppBar(
+                title = LanguageManager.getString("Create Account", "Skep Rekening"),
+                navigationIcon = {
+                    IconButton(onClick = {})
+                    {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = "Back",
+                        )
+                    }
+                },
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+    )
+    { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(DesignSystem.Spacing.screenPadding)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.medium),
+        )
+        {
+            Text(
+                text = LanguageManager.getString("Join Campus Eats", "Sluit aan by Campus Eats"),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Text(
+                text = LanguageManager.getString("Select your account type to get started.", "Kies jou rekeningtipe om te begin."),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            HIGSegmentedControl(
+                options = UserRole.entries.toList(),
+                selectedOption = selectedRole,
+                onOptionSelected = { selectedRole = it },
+                labelProvider = { role ->
+                    when (role) {
+                        UserRole.STUDENT -> LanguageManager.getString("Student", "Student")
+                        UserRole.STANDARD -> LanguageManager.getString("Standard", "Standaard")
+                        UserRole.VENDOR -> LanguageManager.getString("Vendor", "Verkoper")
+                        UserRole.ADMINISTRATOR -> LanguageManager.getString("Admin", "Admin")
+                    }
+                },
+            )
+
+            OutlinedTextField(
+                value = fullName,
+                onValueChange = { fullName = it },
+                label = { Text(LanguageManager.getString("Full Legal Name", "Volle Wetlike Naam")) },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+            )
+
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text(LanguageManager.getString("Display Username", "Vertoon Gebruikersnaam")) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+            )
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text(LanguageManager.getString("University Email", "Universiteit E-pos")) },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Rounded.Email, contentDescription = null) },
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text(LanguageManager.getString("Secure Password", "Veilige Wagwoord")) },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Rounded.Lock, contentDescription = null) },
+                visualTransformation = PasswordVisualTransformation(),
+                singleLine = true,
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = DesignSystem.Spacing.small),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.small),
+            )
+            {
+                Text(
+                    text = "User ID: $generatedUserId",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                OutlinedButton(
+                    onClick = {},
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+                )
+                {
+                    Text("Copy User ID")
+                }
+            }
+
+            HIGButton(
+                onClick = {},
+                text = LanguageManager.getString("Create account", "Skep rekening"),
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            )
         }
     }
 }
