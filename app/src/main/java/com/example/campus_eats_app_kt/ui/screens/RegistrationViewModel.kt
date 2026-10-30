@@ -140,6 +140,7 @@ class RegistrationViewModel(private val authRepository: AuthRepository) : ViewMo
     /**
      * Resets the registration state to Idle.
      */
+    @Suppress("unused")
     fun resetState()
     {
         _registrationState.value = RegistrationState.Idle
