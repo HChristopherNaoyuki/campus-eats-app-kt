@@ -1,5 +1,68 @@
 # Campus Eats - Release Notes
 
+## Version 15.0.0
+
+**Release Date:** 2026-10-23
+
+---
+
+### Overview
+
+Version 15.0.0 is a production version bump and Google SSO integration verification release for the Campus Eats Android platform. This release confirms Web OAuth Client ID binding (`64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com`), ProGuard keep rules for Credential Manager classes in release builds, zero-warning build quality, 266 passing unit tests, and version metadata updates (`versionCode 17`).
+
+---
+
+### Key Features & Technical Deliverables
+
+**1. Google Single Sign-On (SSO) Verification**
+- Verified Android Credential Manager API integration with Web OAuth Client ID `64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com` in `GetGoogleIdOption`.
+- Verified ProGuard rules in `proguard-rules.pro` retaining `androidx.credentials.**` and `com.google.android.gms.auth.api.identity.**` classes.
+- Verified `passwordHash = "[FIREBASE_SSO]"` sentinel flag for Google SSO user records.
+
+**2. Zero Warnings & Build Quality**
+- IDE static analysis on all XML, Kotlin, and Gradle configuration files confirmed 0 compilation errors and 0 warnings.
+- Executed `./gradlew clean lint testDebugUnitTest assembleDebug` with status **Build finished successfully**.
+
+**3. Financial Controls & Reports (All Roles)**
+- **Administrator**: Live platform revenue calculations (`AdminGlobalSummary`), order insight reports (`AdminInsightReportsHub`), wallet credit distribution, and coupon issuance backed by Room and Realtime Database entities.
+- **Vendor**: Total completed revenue, top revenue item, item-by-item sales breakdown (`VendorReportHub`), active order count, and total items offered.
+- **Student / Standard**: Total expenditure tracking, vendor spend percentage breakdown (`StudentTotalSpending`), wallet balance tracking, and payment receipts.
+
+**4. Vendor Fulfillment & Order Notifications**
+- Vendors update live order statuses (`ACCEPTED`, `PREPARING`, `READY`, `COMPLETED`, `CANCELLED`) in `VendorOrderHub`.
+- Order items modal via **Check** action showing picked items, quantities, special requests, and pickup times.
+- Status changes persist to Room, push to Firebase (`orders/{orderId}/status`), and post a high-priority local push notification to the customer (`campus_eats_orders` channel).
+
+**5. Student & Standard Receipts**
+- `OrderDetailWindow` renders current order status, pickup state, payment method, special requests, and itemized cost breakdowns under headers "Live Status" and "Order History".
+
+**6. Cross-Device Feedback Synchronization**
+- `FirebaseSyncManager` automatically pulls remote complaints and compliments from Firebase into Room for Administrator accounts. Administrators review submissions in `AdminFeedbackWindow` and mark pending items as resolved with status updates mirrored to Firebase (`feedback/$stableKey/status`).
+
+---
+
+### Technical Details
+
+**Version Code:** 17
+
+**Version Name:** 15.0.0
+
+**Package Name:** com.example.campus_eats_app_kt
+
+---
+
+## Version 14.0.0
+
+**Release Date:** 2026-10-23
+
+---
+
+### Overview
+
+Version 14.0.0 introduced deterministic feedback keys in `FeedbackKeys.kt`, isolated node synchronization in `FirebaseSyncManager.kt`, and Play Services provider class rules.
+
+---
+
 ## Version 13.0.0
 
 **Release Date:** 2026-10-20
@@ -8,45 +71,7 @@
 
 ### Overview
 
-Version 13.0.0 is a technical audit and session-binding update for the Campus Eats Android platform. This release aligns the Administrator home header to display the signed-in user's full name and username ("Amara Nkosi (@amara)"), matching student, standard, and vendor home screen patterns, verifies database read/write performance (<3s), validates Google SSO Credential Manager integration, reinforces 10-second continuous cloud synchronization with administrator feedback pull, and increments the release version to 13.0.0 (`versionCode 15`).
-
----
-
-### Key Features & Technical Deliverables
-
-**1. Administrator Home Session Binding**
-- Updated `HomeScreenTab` in `MainTabs.kt` so the administrator home header displays the active session user's full name and username (e.g., *"Welcome, Amara Nkosi (@amara)"*), aligning with student, standard, and vendor home screen identity displays.
-
-**2. Financial Controls & Reports (All Roles)**
-- **Administrator**: Live platform revenue calculations (`AdminGlobalSummary`), order insight reports (`AdminInsightReportsHub`), wallet credit distribution, and coupon issuance backed by Room and Realtime Database entities.
-- **Vendor**: Total completed revenue, top revenue item, item-by-item sales breakdown (`VendorReportHub`), active order count, and total items offered.
-- **Student / Standard**: Total expenditure tracking, vendor spend percentage breakdown (`StudentTotalSpending`), wallet balance tracking, and payment receipts.
-
-**3. Vendor Fulfillment & Order Notifications**
-- Vendors update live order statuses (`ACCEPTED`, `PREPARING`, `READY`, `COMPLETED`, `CANCELLED`) in `VendorOrderHub`.
-- Order items modal via **Check** action showing picked items, quantities, special requests, and pickup times.
-- Status changes persist to Room, push to Firebase (`orders/{orderId}/status`), and post a high-priority local push notification to the customer.
-
-**4. Student & Standard Receipts**
-- `OrderDetailWindow` renders current order status, pickup state, payment method, special requests, and itemized cost breakdowns under headers "Live Status" and "Order History".
-
-**5. Cross-Device Feedback Synchronization**
-- `FirebaseSyncManager` automatically pulls remote complaints and compliments from Firebase into Room for Administrator accounts. Administrators review submissions in `AdminFeedbackWindow` and mark pending items as resolved with status updates mirrored to Firebase (`feedback/{feedbackId}/status`).
-
-**6. Technical Audit & Infrastructure**
-- **Google SSO**: Verified Credential Manager API with Web OAuth Client ID `64265928399-tl7gi0kkolvke8k7etaio9h66ov44hi3.apps.googleusercontent.com` and `[FIREBASE_SSO]` passwordHash sentinel flag.
-- **Synchronization**: 10-second continuous sync loop with exponential backoff and active `Job` lifecycle guard.
-- **Unit Testing**: Executed `./gradlew :app:testDebugUnitTest` with **69 passed, 0 skipped, 0 failed**.
-
----
-
-### Technical Details
-
-**Version Code:** 15
-
-**Version Name:** 13.0.0
-
-**Package Name:** com.example.campus_eats_app_kt
+Version 13.0.0 delivered administrator home session binding, Google SSO Credential Manager provider rules, and continuous cloud synchronization.
 
 ---
 
