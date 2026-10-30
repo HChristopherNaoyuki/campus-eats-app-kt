@@ -1,6 +1,8 @@
 package com.example.campus_eats_app_kt.data
 
+import com.example.campus_eats_app_kt.BuildConfig
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.Logger
 
 /**
  * FirebaseDatabaseProvider manages the singleton instance of FirebaseDatabase.
@@ -16,6 +18,11 @@ object FirebaseDatabaseProvider
      */
     val instance: FirebaseDatabase by lazy {
         FirebaseDatabase.getInstance(DATABASE_URL).apply {
+            if (BuildConfig.DEBUG)
+            {
+                setLogLevel(Logger.Level.DEBUG)
+            }
+
             // Enable local disk persistence to store cached data offline
             setPersistenceEnabled(true)
 

@@ -14,11 +14,17 @@ import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseException
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -315,6 +321,28 @@ class FirebaseSyncManager(
     {
         val parsedMessage = FirebaseExceptionHandler.parse(exception)
         Log.e(tag, "Firebase Realtime Database error encountered: $parsedMessage", exception)
+    }
+
+    /**
+     * Observes real-time connection state with Firebase Realtime Database (.info/connected).
+     * Emits true when an active connection is established, and false when disconnected.
+     */
+    @Suppress("unused")
+    fun observeConnection(): Flow<Boolean> = callbackFlow {
+        val ref = firebaseDatabase.getReference(".info/connected")
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                trySend(snapshot.getValue(Boolean::class.java) == true)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
     }
 
     /**
