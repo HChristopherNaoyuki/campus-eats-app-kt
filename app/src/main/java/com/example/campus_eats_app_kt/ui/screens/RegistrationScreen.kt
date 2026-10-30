@@ -577,6 +577,36 @@ private fun RegistrationScreenContentPreview()
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             )
+
+            OutlinedButton(
+                onClick = {},
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(DesignSystem.CornerRadius.medium),
+                border = BorderStroke(
+                    width = 2.dp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
+            )
+            {
+                Row(verticalAlignment = Alignment.CenterVertically)
+                {
+                    Icon(
+                        imageVector = Icons.Rounded.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Spacer(modifier = Modifier.width(DesignSystem.Spacing.small))
+                    Text(
+                        text = LanguageManager.getString("Continue with Google", "Gaan voort met Google"),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
         }
     }
 }
