@@ -79,7 +79,7 @@ object LanguageManager
      * @param zu Optional third string kept for backward compatibility (ignored).
      * @return The localized text corresponding to currentLanguage.value.
      */
-    fun getString(en: String, af: String, zu: String = en): String
+    fun getString(en: String, af: String, @Suppress("UNUSED_PARAMETER") zu: String = en): String
     {
         return if (currentLanguage.value == AFRIKAANS)
         {
