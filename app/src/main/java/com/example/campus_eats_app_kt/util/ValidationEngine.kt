@@ -17,12 +17,16 @@ object ValidationEngine
     }
 
     /**
-     * Requirement: Test password validation (strength requirements)
-     * Validates password strength: Minimum 8 characters.
+     * Requirement: Test password validation (strength requirements - SEC-005)
+     * Validates password strength: Minimum 8 characters, uppercase, lowercase, digit, and special character.
      */
     fun isStrongPassword(password: String): Boolean
     {
-        return password.length >= 8
+        return password.length >= 8 &&
+                password.any { it.isLowerCase() } &&
+                password.any { it.isUpperCase() } &&
+                password.any { it.isDigit() } &&
+                password.any { !it.isLetterOrDigit() }
     }
 
     /**

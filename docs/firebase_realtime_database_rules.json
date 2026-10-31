@@ -10,6 +10,7 @@
 
     "users": {
       ".indexOn": ["email", "role", "status"],
+      ".read": "auth != null && (auth.token.admin === true || query.orderByChild == 'email')",
       "$campus_user_id": {
         ".read": "auth != null && (auth.token.admin === true || auth.token.email === data.child('email').val() || data.child('userId').val() === auth.uid)",
         ".write": "auth != null && (auth.token.admin === true || (!data.exists() && (auth.token.email === newData.child('email').val() || newData.child('userId').val() === auth.uid)) || (data.exists() && (auth.token.email === data.child('email').val() || data.child('userId').val() === auth.uid)))",
@@ -31,10 +32,10 @@
           ".validate": "(newData.val() === 'STUDENT' || newData.val() === 'VENDOR' || newData.val() === 'STANDARD' || newData.val() === 'ADMIN') && (data.val() === newData.val() || auth.token.admin === true)"
         },
         "passwordHash": {
-          ".validate": "newData.val() === '[FIREBASE_SSO]'"
+          ".validate": "newData.val() === '[FIREBASE_SSO]' || newData.isString()"
         },
         "walletBalance": {
-          ".validate": "newData.isNumber() && newData.val() >= 0"
+          ".validate": "newData.isNumber() && newData.val() >= 0 && (auth.token.admin === true || !data.exists() || newData.val() <= data.val())"
         },
         "status": {
           ".validate": "!data.exists() || data.val() === newData.val() || auth.token.admin === true"
@@ -60,8 +61,8 @@
     "orders": {
       ".indexOn": ["customerId", "vendorId", "status", "timestamp"],
       "$order_id": {
-        ".read": "auth != null",
-        ".write": "auth != null",
+        ".read": "auth != null && (auth.token.admin === true || data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || data.child('customerId').val() === auth.token.email || data.child('vendorId').val() === auth.token.email)",
+        ".write": "auth != null && (auth.token.admin === true || (!data.exists() && (newData.child('customerId').val() === auth.uid || newData.child('customerId').val() === auth.token.email)) || (data.exists() && (data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || data.child('customerId').val() === auth.token.email || data.child('vendorId').val() === auth.token.email || auth.token.admin === true)))",
         ".validate": "newData.hasChildren(['orderId', 'customerId', 'vendorId', 'totalAmount', 'status'])",
 
         "orderId": {
@@ -100,8 +101,8 @@
     "feedback": {
       ".indexOn": ["userId", "type", "status", "createdAt"],
       "$feedback_id": {
-        ".read": "auth != null",
-        ".write": "auth != null",
+        ".read": "auth != null && (auth.token.admin === true || data.child('userId').val() === auth.uid)",
+        ".write": "auth != null && (auth.token.admin === true || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && (data.child('userId').val() === auth.uid || auth.token.admin === true)))",
         ".validate": "newData.hasChildren(['userId', 'type', 'subject', 'message', 'userName', 'userEmail', 'status', 'createdAt', 'updatedAt'])",
 
         "userId": {
@@ -138,14 +139,14 @@
       ".indexOn": ["isActive"],
       "$code": {
         ".read": "auth != null",
-        ".write": "auth != null",
+        ".write": "auth != null && auth.token.admin === true",
         ".validate": "newData.hasChildren(['code', 'discountPercent', 'isActive'])",
 
         "code": {
           ".validate": "newData.val() === $code"
         },
         "discountPercent": {
-          ".validate": "newData.isNumber() && newData.val() >= 0"
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
         },
         "isActive": {
           ".validate": "newData.isBoolean()"

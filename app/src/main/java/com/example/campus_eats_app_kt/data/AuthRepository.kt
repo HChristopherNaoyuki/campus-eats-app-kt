@@ -55,7 +55,7 @@ class AuthRepository(
         userId: String? = null,
     ): Result<UserEntity>
     {
-        Log.d(tag, "Initiating registration for: $email")
+        Log.d(tag, "Initiating registration for user ID: $userId")
         return try
         {
             if (!ValidationEngine.isValidEmail(email))
@@ -202,12 +202,22 @@ class AuthRepository(
         {
             val localUser = userDao.getUserByEmail(email)
             val inputHash = DatabaseSeeder.encryptPassword(password)
+            val legacyHash = DatabaseSeeder.legacySha256Password(password)
 
-            if ((localUser != null) && (localUser.passwordHash == inputHash))
+            val passwordMatches = (localUser != null) &&
+                (localUser.passwordHash == inputHash || localUser.passwordHash == legacyHash)
+
+            if (passwordMatches && (localUser != null))
             {
                 if (localUser.status == UserStatus.SUSPENDED)
                 {
                     throw Exception("Account suspended.")
+                }
+
+                // Upgrade legacy SHA-256 hash to PBKDF2 hash upon successful login (SEC-006)
+                if (localUser.passwordHash == legacyHash)
+                {
+                    userDao.insertUser(localUser.copy(passwordHash = inputHash))
                 }
 
                 if (connectivityManager.hasInternetConnection() && firebaseAuth.currentUser == null)

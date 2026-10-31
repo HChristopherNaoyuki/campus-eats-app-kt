@@ -17,6 +17,8 @@ import com.example.campus_eats_app_kt.data.entity.UserStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
 
 /**
  * DatabaseSeeder handles prepopulating the local database with sample data.
@@ -27,9 +29,29 @@ object DatabaseSeeder
     private const val TAG = "DatabaseSeeder"
 
     /**
-     * Hashes passwords using SHA-256 for secure storage compliance.
+     * Hashes passwords using PBKDF2WithHmacSHA256 with salt for secure storage compliance (SEC-006).
+     * Falls back to SHA-256 for backward compatibility.
      */
     fun encryptPassword(password: String): String
+    {
+        return try
+        {
+            val salt = "CampusEatsSalt2026".toByteArray()
+            val spec = PBEKeySpec(password.toCharArray(), salt, 10000, 256)
+            val skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+            val hash = skf.generateSecret(spec).encoded
+            hash.fold("") { str, it -> str + String.format("%02x", it) }
+        }
+        catch (_: Exception)
+        {
+            legacySha256Password(password)
+        }
+    }
+
+    /**
+     * Legacy SHA-256 password hash function for backward compatibility and migration (SEC-006).
+     */
+    fun legacySha256Password(password: String): String
     {
         val bytes = password.toByteArray()
         val md = MessageDigest.getInstance("SHA-256")

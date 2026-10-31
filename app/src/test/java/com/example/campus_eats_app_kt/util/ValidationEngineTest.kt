@@ -23,13 +23,13 @@ class ValidationEngineTest
     }
 
     /**
-     * Requirement: Test password validation (strength requirements)
+     * Requirement: Test password validation (strength requirements - SEC-005)
      */
     @Test
     fun isStrongPassword_verifiesLength()
     {
-        assertTrue(ValidationEngine.isStrongPassword("password123"))
-        assertTrue(ValidationEngine.isStrongPassword("12345678"))
+        assertTrue(ValidationEngine.isStrongPassword("Password123#"))
+        assertTrue(ValidationEngine.isStrongPassword("ComplexPass99$"))
         assertFalse(ValidationEngine.isStrongPassword("short"))
         assertFalse(ValidationEngine.isStrongPassword(""))
     }

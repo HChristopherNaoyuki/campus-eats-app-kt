@@ -159,12 +159,12 @@ class FirebaseSyncManager(
                     .await()
 
                 userDao.markAsSynced(user.userId)
-                Log.d(tag, "Successfully synchronized user record for: ${user.email}")
+                Log.d(tag, "Successfully synchronized user record for ID: ${user.userId}")
             }
             catch (e: Exception)
             {
                 val parsedMessage = FirebaseExceptionHandler.parse(e)
-                Log.w(tag, "Failed to sync user ${user.email}: $parsedMessage")
+                Log.w(tag, "Failed to sync user ID ${user.userId}: $parsedMessage")
                 throw e
             }
         }
