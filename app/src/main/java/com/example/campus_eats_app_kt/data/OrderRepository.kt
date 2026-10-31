@@ -72,19 +72,25 @@ class OrderRepository(
         }
 
         // 2. Immediate Remote Sync (Online-First mandate)
-        var remoteSyncSuccess = false
         val numericVendorId = vendorId.toIntOrNull()
         val apikey = userDao.getUserById(userId)?.usercode
 
-        if ((numericVendorId != null) && (apikey != null) && connectivityManager.hasInternetConnection())
+        val remoteSyncSuccess = if ((numericVendorId != null) && (apikey != null) && connectivityManager.hasInternetConnection())
         {
             try
             {
                 val networkItems = cartItems.map { OrderItemRequest(it.name, it.quantity) }
                 val response = apiService.createOrder(numericVendorId, apikey, OrderRequest(networkItems))
-                remoteSyncSuccess = response.isSuccessful
+                response.isSuccessful
             }
-            catch (_: Exception) { remoteSyncSuccess = false }
+            catch (_: Exception)
+            {
+                false
+            }
+        }
+        else
+        {
+            false
         }
 
         // 3. Persist Order Record with Sync Status
@@ -98,7 +104,7 @@ class OrderRepository(
             paymentMethod = paymentMethod,
             pickupTime = pickupTime,
             specialRequests = specialRequests,
-            isPendingSync = !remoteSyncSuccess
+            isPendingSync = !remoteSyncSuccess,
         )
         orderDao.insertOrder(order)
         cartDao.clearCart(userId)
