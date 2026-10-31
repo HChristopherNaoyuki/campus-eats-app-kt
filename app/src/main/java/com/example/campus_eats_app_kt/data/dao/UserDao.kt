@@ -16,9 +16,9 @@ import kotlinx.coroutines.flow.Flow
 interface UserDao
 {
     /**
-     * Inserts a new user. Aborts if the user already exists.
+     * Inserts or replaces a user record (SEC-005 & Issue 1 Fix for UNIQUE email constraint).
      */
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity)
 
     @Query("SELECT COUNT(*) FROM users")
