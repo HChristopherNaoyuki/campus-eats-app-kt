@@ -148,10 +148,11 @@ fun RegistrationScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // Requirement: Account types must include Student, Standard, Vendor, Administrator.
+            // Requirement: Public account types include Student, Standard, Vendor (SEC-004 Fix: Administrator accounts assigned via admin tool)
+            val publicRoles = remember { listOf(UserRole.STUDENT, UserRole.STANDARD, UserRole.VENDOR) }
             HIGSegmentedControl(
-                options = UserRole.entries.toList(),
-                selectedOption = selectedRole,
+                options = publicRoles,
+                selectedOption = if (selectedRole in publicRoles) selectedRole else UserRole.STUDENT,
                 onOptionSelected = { selectedRole = it },
                 labelProvider = { role ->
                     when (role) {

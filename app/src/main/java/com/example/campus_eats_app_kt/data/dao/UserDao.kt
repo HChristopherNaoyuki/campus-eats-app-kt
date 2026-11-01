@@ -1,10 +1,9 @@
 package com.example.campus_eats_app_kt.data.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import com.example.campus_eats_app_kt.data.entity.UserEntity
 import com.example.campus_eats_app_kt.data.entity.UserStatus
 import kotlinx.coroutines.flow.Flow
@@ -16,9 +15,9 @@ import kotlinx.coroutines.flow.Flow
 interface UserDao
 {
     /**
-     * Inserts or replaces a user record (SEC-005 & Issue 1 Fix for UNIQUE email constraint).
+     * Upserts a user record without triggering foreign key CASCADE deletions on child orders (SEC-015 Fix).
      */
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertUser(user: UserEntity)
 
     @Query("SELECT COUNT(*) FROM users")
