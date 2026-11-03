@@ -23,8 +23,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
 
 /**
- * OrderRepository manages the order lifecycle.
- * Hardened in Batch 3 for architectural alignment with Online-First mandate.
+ * OrderRepository manages order persistence, state progression, and synchronization.
+ * Follows an online-first architecture with offline fallback capabilities.
  */
 class OrderRepository(
     private val database: CampusEatsDatabase,
@@ -39,8 +39,9 @@ class OrderRepository(
     private val tag = "OrderRepository"
 
     /**
-     * Places a new order. 
-     * Finding 1: Enforces Online-First single source of truth (Firebase/REST).
+     * Places a new order into the database.
+     * Verifies balance and stock locally, attempts remote API synchronization when online,
+     * and flags the entity for cloud sync if remote API execution fails or is offline.
      */
     suspend fun placeOrder(
         userId: String,
@@ -52,13 +53,16 @@ class OrderRepository(
         specialRequests: String? = null,
     ): String = database.withTransaction()
     {
-        Log.d(tag, "Placing order for $userId. Online Status: ${connectivityManager.hasInternetConnection()}")
+        Log.d(tag, "Placing order for user ID: $userId. Online Status: ${connectivityManager.hasInternetConnection()}")
 
-        // 1. Local Balance & Stock Check
+        // 1. Local Balance and Stock Check
         if (paymentMethod == PaymentMethod.CAMPUS_WALLET)
         {
             val affected = userDao.debitWallet(userId, totalAmount)
-            if (affected == 0) throw Exception("Insufficient Campus Wallet balance.")
+            if (affected == 0)
+            {
+                throw Exception("Insufficient Campus Wallet balance.")
+            }
         }
 
         for (item in cartItems)
@@ -67,11 +71,14 @@ class OrderRepository(
             if (menuItem?.isInventoryTracked == true)
             {
                 val affected = menuItemDao.decrementStock(item.itemId, item.quantity)
-                if (affected == 0) throw Exception("Item '${item.name}' is out of stock.")
+                if (affected == 0)
+                {
+                    throw Exception("Item '${item.name}' is out of stock.")
+                }
             }
         }
 
-        // 2. Immediate Remote Sync (Online-First mandate)
+        // 2. Immediate Remote Sync Attempt (Online-First Mandate)
         val numericVendorId = vendorId.toIntOrNull()
         val apikey = userDao.getUserById(userId)?.usercode
 
@@ -114,12 +121,14 @@ class OrderRepository(
 
     /**
      * Flushes any pending local orders to the remote server.
-     * Finding 1: Synchronization logic for offline-to-online transitions.
      */
     @Suppress("unused")
     suspend fun syncPendingOrders(userId: String)
     {
-        if (!connectivityManager.hasInternetConnection()) return
+        if (!connectivityManager.hasInternetConnection())
+        {
+            return
+        }
 
         val pending = orderDao.getOrdersByCustomer(userId).first().filter { it.isPendingSync }
         val apikey = userDao.getUserById(userId)?.usercode ?: return
@@ -138,19 +147,32 @@ class OrderRepository(
                     orderDao.updateOrder(order.copy(isPendingSync = false))
                 }
             }
-            catch (_: Exception) {}
+            catch (_: Exception)
+            {
+                Log.w(tag, "Pending order sync skipped for order ID: ${order.orderId}")
+            }
         }
     }
 
+    /**
+     * Retrieves a reactive stream of orders for a specific customer.
+     */
     fun getOrdersForUser(userId: String): Flow<List<OrderEntity>> = orderDao.getOrdersByCustomer(userId)
 
+    /**
+     * Retrieves a reactive stream of orders assigned to a specific vendor.
+     */
     fun getOrdersForVendor(vendorId: String): Flow<List<OrderEntity>> = orderDao.getOrdersByVendor(vendorId)
 
+    /**
+     * Updates order status after validating state transitions.
+     * Flags the order entity for cloud synchronization and triggers system notifications.
+     */
     suspend fun updateOrderStatus(order: OrderEntity, status: OrderStatus, context: Context? = null)
     {
         if (OrderStatusEngine.isValidTransition(order.status, status))
         {
-            orderDao.updateOrder(order.copy(status = status))
+            orderDao.updateOrder(order.copy(status = status, isPendingSync = true))
 
             if (context != null)
             {
@@ -178,5 +200,8 @@ class OrderRepository(
         }
     }
 
+    /**
+     * Returns a reactive stream of all orders in the database.
+     */
     fun getAllOrders(): Flow<List<OrderEntity>> = orderDao.getAllOrders()
 }
