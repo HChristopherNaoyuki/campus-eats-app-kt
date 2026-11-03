@@ -19,7 +19,6 @@ class AdminRepository(
     private val firebaseDatabase: FirebaseDatabase,
 )
 {
-
     /**
      * Retrieves all registered users in the system.
      * Firebase rules restrict read access to /users if not admin or own record.
@@ -30,7 +29,7 @@ class AdminRepository(
     }
 
     /**
-     * Temporarily disables a user's access to the application.
+     * Temporarily disables a user account access to the application.
      * Restricted to authenticated administrators in Firebase rules.
      */
     suspend fun suspendUser(userId: String): Result<Unit>
@@ -51,7 +50,7 @@ class AdminRepository(
     }
 
     /**
-     * Restores a suspended user's access to the application.
+     * Restores a suspended user account access to the application.
      * Restricted to authenticated administrators in Firebase rules.
      */
     suspend fun activateUser(userId: String): Result<Unit>
@@ -72,7 +71,8 @@ class AdminRepository(
     }
 
     /**
-     * Manually adds credit to a specific user's Campus Wallet.
+     * Manually adds credit to a specific user wallet balance.
+     * Enforces numeric boundaries to prevent invalid zero or negative credit values (SEC-017).
      * Restricted to authenticated administrators in Firebase rules.
      */
     suspend fun issueCredits(userId: String, amount: Double): Result<Unit>
@@ -82,6 +82,11 @@ class AdminRepository(
             if (!authRepository.isAdmin())
             {
                 throw Exception("Unauthorized: Administrator privileges required.")
+            }
+
+            if ((amount <= 0.0) || (amount > 10000.0))
+            {
+                throw IllegalArgumentException("Credit amount must be greater than 0.00 and less than or equal to 10000.00.")
             }
 
             connectivityManager.ensureInternet()
@@ -94,6 +99,4 @@ class AdminRepository(
             }
         }
     }
-
-
 }

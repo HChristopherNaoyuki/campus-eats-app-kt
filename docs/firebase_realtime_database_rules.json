@@ -10,7 +10,7 @@
 
     "users": {
       ".indexOn": ["email", "role", "status"],
-      ".read": "auth != null && (auth.token.admin === true || query.orderByChild == 'email')",
+      ".read": "auth != null && (auth.token.admin === true || (query.orderByChild == 'email' && query.equalTo == auth.token.email))",
       "$campus_user_id": {
         ".read": "auth != null && (auth.token.admin === true || auth.token.email === data.child('email').val() || data.child('userId').val() === auth.uid)",
         ".write": "auth != null && (auth.token.admin === true || (!data.exists() && (auth.token.email === newData.child('email').val() || newData.child('userId').val() === auth.uid)) || (data.exists() && (auth.token.email === data.child('email').val() || data.child('userId').val() === auth.uid)))",
@@ -32,7 +32,7 @@
           ".validate": "(newData.val() === 'STUDENT' || newData.val() === 'VENDOR' || newData.val() === 'STANDARD' || newData.val() === 'ADMIN') && (data.val() === newData.val() || auth.token.admin === true)"
         },
         "passwordHash": {
-          ".validate": "newData.val() === '[FIREBASE_SSO]' || newData.isString()"
+          ".validate": "newData.val() === '[FIREBASE_SSO]'"
         },
         "walletBalance": {
           ".validate": "newData.isNumber() && newData.val() >= 0 && (auth.token.admin === true || !data.exists() || newData.val() <= data.val())"

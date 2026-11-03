@@ -18,10 +18,10 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@3a4e6e3d7470088a3428aad94697950c441b8004 # v5.0.0
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -44,14 +44,14 @@ jobs:
 
       - name: Upload Lint Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: lint-reports
           path: app/build/reports/lint-results-*
 
       - name: Upload Test Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: test-reports
           path: app/build/reports/tests/testDebugUnitTest/

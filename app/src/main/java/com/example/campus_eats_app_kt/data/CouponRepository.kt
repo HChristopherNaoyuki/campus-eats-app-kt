@@ -11,12 +11,13 @@ import kotlinx.coroutines.flow.first
 class CouponRepository(private val couponDao: CouponDao)
 {
     /**
-     * Retrieves all available coupons.
+     * Retrieves all available coupons in the system.
      */
     fun getAllCoupons(): Flow<List<CouponEntity>> = couponDao.getAllCoupons()
 
     /**
      * Creates a new discount coupon.
+     * Validates that the discount percentage is between 0 and 100 percent (SEC-017).
      */
     suspend fun createCoupon(
         code: String,
@@ -25,6 +26,11 @@ class CouponRepository(private val couponDao: CouponDao)
         assignedUserId: String? = null,
     )
     {
+        if ((discountPercent < 0.0) || (discountPercent > 100.0))
+        {
+            throw IllegalArgumentException("Discount percentage must be between 0.0 and 100.0 percent.")
+        }
+
         couponDao.insertCoupon(
             CouponEntity(
                 code = code,
