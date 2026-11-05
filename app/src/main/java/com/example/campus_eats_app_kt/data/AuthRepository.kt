@@ -161,10 +161,7 @@ class AuthRepository(
                 null
             }
 
-            if (existingUser != null)
-            {
-                return@coroutineScope Result.success(existingUser)
-            }
+            existingUser?.let { return@coroutineScope Result.success(it) }
 
             val campusUserId = IdGenerator.generateUserId()
             val user = UserEntity(
@@ -205,9 +202,9 @@ class AuthRepository(
             val legacyHash = DatabaseSeeder.legacySha256Password(password)
 
             val passwordMatches = (localUser != null) &&
-                (localUser.passwordHash == inputHash || localUser.passwordHash == legacyHash)
+                ((localUser.passwordHash == inputHash) || (localUser.passwordHash == legacyHash))
 
-            if (passwordMatches && (localUser != null))
+            if (passwordMatches)
             {
                 if (localUser.status == UserStatus.SUSPENDED)
                 {
@@ -220,7 +217,7 @@ class AuthRepository(
                     userDao.insertUser(localUser.copy(passwordHash = inputHash))
                 }
 
-                if (connectivityManager.hasInternetConnection() && firebaseAuth.currentUser == null)
+                if (connectivityManager.hasInternetConnection() && (firebaseAuth.currentUser == null))
                 {
                     try
                     {
@@ -349,11 +346,11 @@ class AuthRepository(
     {
         val stringMap = map.mapKeys { it.key.toString() }
         return UserEntity(
-            userId = stringMap["userId"] as? String ?: "",
-            fullName = stringMap["fullName"] as? String ?: "",
-            username = stringMap["username"] as? String ?: "",
-            email = stringMap["email"] as? String ?: "",
-            passwordHash = stringMap["passwordHash"] as? String ?: "[FIREBASE_SSO]",
+            userId = (stringMap["userId"] as? String) ?: "",
+            fullName = (stringMap["fullName"] as? String) ?: "",
+            username = (stringMap["username"] as? String) ?: "",
+            email = (stringMap["email"] as? String) ?: "",
+            passwordHash = (stringMap["passwordHash"] as? String) ?: "[FIREBASE_SSO]",
             role = when (stringMap["role"] as? String)
             {
                 "ADMIN" -> UserRole.ADMINISTRATOR
@@ -363,7 +360,7 @@ class AuthRepository(
             },
             status = try
             {
-                UserStatus.valueOf(stringMap["status"] as? String ?: "ACTIVE")
+                UserStatus.valueOf((stringMap["status"] as? String) ?: "ACTIVE")
             }
             catch (_: Exception)
             {

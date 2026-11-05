@@ -60,6 +60,7 @@
 
     "orders": {
       ".indexOn": ["customerId", "vendorId", "status", "timestamp"],
+      ".read": "auth != null && (auth.token.admin === true || (query.orderByChild == 'customerId' && query.equalTo == auth.uid) || (query.orderByChild == 'vendorId' && query.equalTo == auth.uid))",
       "$order_id": {
         ".read": "auth != null && (auth.token.admin === true || data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || data.child('customerId').val() === auth.token.email || data.child('vendorId').val() === auth.token.email)",
         ".write": "auth != null && (auth.token.admin === true || (!data.exists() && (newData.child('customerId').val() === auth.uid || newData.child('customerId').val() === auth.token.email)) || (data.exists() && (data.child('customerId').val() === auth.uid || data.child('vendorId').val() === auth.uid || data.child('customerId').val() === auth.token.email || data.child('vendorId').val() === auth.token.email || auth.token.admin === true)))",
@@ -100,6 +101,7 @@
 
     "feedback": {
       ".indexOn": ["userId", "type", "status", "createdAt"],
+      ".read": "auth != null && (auth.token.admin === true || (query.orderByChild == 'userId' && query.equalTo == auth.uid))",
       "$feedback_id": {
         ".read": "auth != null && (auth.token.admin === true || data.child('userId').val() === auth.uid)",
         ".write": "auth != null && (auth.token.admin === true || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && (data.child('userId').val() === auth.uid || auth.token.admin === true)))",
@@ -137,6 +139,7 @@
 
     "coupons": {
       ".indexOn": ["isActive"],
+      ".read": "auth != null",
       "$code": {
         ".read": "auth != null",
         ".write": "auth != null && auth.token.admin === true",
