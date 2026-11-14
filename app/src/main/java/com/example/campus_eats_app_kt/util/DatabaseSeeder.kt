@@ -17,30 +17,42 @@ import com.example.campus_eats_app_kt.data.entity.UserStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
+import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
 /**
  * DatabaseSeeder handles prepopulating the local database with sample data.
- * Requirement: All sample data must be built into the app as demo accounts.
+ * Adheres to build configuration flags to prevent demo data in release builds.
  */
 object DatabaseSeeder
 {
     private const val TAG = "DatabaseSeeder"
 
     /**
-     * Hashes passwords using PBKDF2WithHmacSHA256 with salt for secure storage compliance (SEC-006).
-     * Falls back to SHA-256 for backward compatibility.
+     * Generates a random salt string for per-user password hashing.
      */
-    fun encryptPassword(password: String): String
+    fun generateSalt(): String
+    {
+        val random = SecureRandom()
+        val saltBytes = ByteArray(16)
+        random.nextBytes(saltBytes)
+        return saltBytes.fold("") { str, it -> str + String.format("%02x", it) }
+    }
+
+    /**
+     * Hashes passwords using PBKDF2WithHmacSHA256 with per-user salt (SEC-006).
+     */
+    fun encryptPassword(password: String, userSalt: String? = null): String
     {
         return try
         {
-            val salt = "CampusEatsSalt2026".toByteArray()
-            val spec = PBEKeySpec(password.toCharArray(), salt, 10000, 256)
+            val salt = userSalt ?: "CampusEatsSalt2026"
+            val spec = PBEKeySpec(password.toCharArray(), salt.toByteArray(), 10000, 256)
             val skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
             val hash = skf.generateSecret(spec).encoded
-            hash.fold("") { str, it -> str + String.format("%02x", it) }
+            val hexHash = hash.fold("") { str, it -> str + String.format("%02x", it) }
+            "$salt:$hexHash"
         }
         catch (_: Exception)
         {
@@ -49,7 +61,7 @@ object DatabaseSeeder
     }
 
     /**
-     * Legacy SHA-256 password hash function for backward compatibility and migration (SEC-006).
+     * Legacy SHA-256 password hash function for backward compatibility migration.
      */
     fun legacySha256Password(password: String): String
     {
@@ -61,12 +73,21 @@ object DatabaseSeeder
 
     suspend fun seed(context: Context) = withContext(Dispatchers.IO)
     {
-        // Seeding is always enabled for built-in demo account requirement
+        // Guard database seeding using build configuration flags
+        if (!BuildConfig.ENABLE_DEMO_DATA)
+        {
+            Log.i(TAG, "Demo data seeding disabled in release build configuration.")
+            return@withContext
+        }
+
         val db = CampusEatsDatabase.getDatabase(context)
         val userDao = db.userDao()
 
         // Check if demo accounts already exist
-        if (userDao.getUserByEmail("amara.nkosi@campuseats.test") != null) return@withContext
+        if (userDao.getUserByEmail("amara.nkosi@campuseats.test") != null)
+        {
+            return@withContext
+        }
 
         db.withTransaction()
         {
@@ -74,7 +95,7 @@ object DatabaseSeeder
             val couponDao = db.couponDao()
             val orderDao = db.orderDao()
 
-            Log.d(TAG, "Seeding 10 authoritative built-in demo accounts...")
+            Log.d(TAG, "Seeding authoritative demo accounts...")
             val users = listOf(
                 UserEntity("ADMN4K7P2Q9XRT5M", "Amara Nkosi", "amara.nkosi", "amara.nkosi@campuseats.test", encryptPassword("Adm1n#Amara"), UserRole.ADMINISTRATOR, UserStatus.ACTIVE, 500.0, isSynced = true, isDemo = true),
                 UserEntity("ADMN8B3W6Y1ZPL4N", "Pieter van Wyk", "pieter.vanwyk", "pieter.vanwyk@campuseats.test", encryptPassword("Adm1n#Pieter"), UserRole.ADMINISTRATOR, UserStatus.ACTIVE, 500.0, isSynced = true, isDemo = true),
@@ -129,6 +150,6 @@ object DatabaseSeeder
             )
             orders.forEach { orderDao.insertOrder(it) }
         }
-        Log.d(TAG, "Database successfully pre-populated with built-in demo records.")
+        Log.d(TAG, "Database demo data seeding finished.")
     }
 }

@@ -20,7 +20,7 @@ sealed interface ResetState
 }
 
 /**
- * ForgotPasswordViewModel manages account recovery logic.
+ * ForgotPasswordViewModel manages account recovery logic via Firebase Auth email verification.
  */
 class ForgotPasswordViewModel(private val authRepository: AuthRepository) : ViewModel()
 {
@@ -28,7 +28,7 @@ class ForgotPasswordViewModel(private val authRepository: AuthRepository) : View
     val resetState: StateFlow<ResetState> = _resetState
 
     /**
-     * SPEC v3.0.1 Section 2: Password recovery by User ID.
+     * Password recovery logic with validation and repository routing.
      */
     fun resetPassword(userId: String, newPassword: String, confirmPassword: String)
     {
@@ -58,18 +58,23 @@ class ForgotPasswordViewModel(private val authRepository: AuthRepository) : View
             return
         }
 
-        viewModelScope.launch()
-        {
+        viewModelScope.launch {
             _resetState.value = ResetState.Loading
 
             try
             {
-                val result = authRepository.resetPasswordByUserId(userId, newPassword)
-                result.onSuccess()
+                val result = if (userId.contains("@"))
                 {
+                    authRepository.sendRecoveryEmail(userId)
+                }
+                else
+                {
+                    authRepository.resetPasswordByUserId(userId, newPassword)
+                }
+
+                result.onSuccess {
                     _resetState.value = ResetState.Success
-                }.onFailure()
-                {
+                }.onFailure {
                     _resetState.value = ResetState.Error(it.message ?: "Account recovery failed.")
                 }
             }
@@ -81,28 +86,25 @@ class ForgotPasswordViewModel(private val authRepository: AuthRepository) : View
     }
 
     /**
-     * Legacy trigger for Firebase recovery email.
+     * Sends password recovery email via Firebase Auth.
      */
     fun sendRecoveryEmail(email: String)
     {
-        if (email.isBlank())
+        if (email.isBlank() || !ValidationEngine.isValidEmail(email))
         {
-            _resetState.value = ResetState.Error("Please enter your registered email address.")
+            _resetState.value = ResetState.Error("Please enter a valid registered email address.")
             return
         }
 
-        viewModelScope.launch()
-        {
+        viewModelScope.launch {
             _resetState.value = ResetState.Loading
 
             try
             {
                 val result = authRepository.sendRecoveryEmail(email)
-                result.onSuccess()
-                {
+                result.onSuccess {
                     _resetState.value = ResetState.Success
-                }.onFailure()
-                {
+                }.onFailure {
                     _resetState.value = ResetState.Error(it.message ?: "Recovery email failed to send.")
                 }
             }

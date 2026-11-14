@@ -32,6 +32,9 @@ interface OrderDao
     @Query("SELECT * FROM orders WHERE customerId = :customerId ORDER BY timestamp DESC")
     fun getOrdersByCustomer(customerId: String): Flow<List<OrderEntity>>
 
+    @Query("SELECT * FROM orders WHERE orderId = :orderId LIMIT 1")
+    suspend fun getOrderById(orderId: String): OrderEntity?
+
     /**
      * Retrieves all orders assigned to a specific vendor.
      */

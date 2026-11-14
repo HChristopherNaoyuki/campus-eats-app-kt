@@ -6,9 +6,11 @@ import com.example.campus_eats_app_kt.data.entity.FeedbackEntity
 import com.example.campus_eats_app_kt.data.entity.FeedbackStatus
 import com.example.campus_eats_app_kt.data.entity.FeedbackType
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -23,6 +25,7 @@ class FeedbackRepository(
     private val userDao: UserDao,
     private val connectivityManager: NetworkConnectivityManager,
     private val firebaseDatabase: FirebaseDatabase,
+    private val firebaseAuth: FirebaseAuth? = null,
 )
 {
     private fun getDateFormat() = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
@@ -52,8 +55,11 @@ class FeedbackRepository(
         val user = userDao.getUserById(userId) ?: throw Exception("User profile not found.")
         val now = getDateFormat().format(Date())
 
+        // Align userId with active Firebase Auth uid when available (Finding 1)
+        val activeUid = firebaseAuth?.currentUser?.uid ?: userId
+
         val feedback = FeedbackEntity(
-            userId = userId,
+            userId = activeUid,
             type = type,
             subject = subject,
             message = message,
@@ -70,14 +76,17 @@ class FeedbackRepository(
         {
             connectivityManager.ensureInternet()
             val stableKey = FeedbackKeys.keyFor(feedback)
-            firebaseDatabase.getReference("feedback")
-                .child(stableKey)
-                .setValue(mapFeedbackToMap(feedback))
-                .await()
+            withTimeout(5000)
+            {
+                firebaseDatabase.getReference("feedback")
+                    .child(stableKey)
+                    .setValue(mapFeedbackToMap(feedback))
+                    .await()
+            }
         }
         catch (_: Exception)
         {
-            throw Exception("Offline mode: Feedback saved locally and will sync later.")
+            // Saved locally, will sync via FirebaseSyncManager
         }
     }
 
@@ -100,10 +109,13 @@ class FeedbackRepository(
                     "status" to "resolved",
                     "updatedAt" to now,
                 )
-                firebaseDatabase.getReference("feedback")
-                    .child(stableKey)
-                    .updateChildren(updates)
-                    .await()
+                withTimeout(5000)
+                {
+                    firebaseDatabase.getReference("feedback")
+                        .child(stableKey)
+                        .updateChildren(updates)
+                        .await()
+                }
             }
         }
         catch (_: Exception)
@@ -112,22 +124,24 @@ class FeedbackRepository(
         }
     }
 
-    /**
-     * Maps FeedbackEntity to a Map matching Firebase Realtime Database validation rules.
-     * Enforces lowercase strings for type ("complaint" or "compliment") and status ("pending" / "resolved").
-     */
-    private fun mapFeedbackToMap(feedback: FeedbackEntity): Map<String, Any?>
+    companion object
     {
-        return mapOf(
-            "userId" to feedback.userId,
-            "type" to feedback.type.name.lowercase(),
-            "subject" to feedback.subject,
-            "message" to feedback.message,
-            "userName" to feedback.userName,
-            "userEmail" to feedback.userEmail,
-            "status" to feedback.status.name.lowercase(),
-            "createdAt" to feedback.createdAt,
-            "updatedAt" to feedback.updatedAt,
-        )
+        /**
+         * Maps FeedbackEntity to a Map matching Firebase Realtime Database validation rules.
+         */
+        fun mapFeedbackToMap(feedback: FeedbackEntity): Map<String, Any?>
+        {
+            return mapOf(
+                "userId" to feedback.userId,
+                "type" to feedback.type.name.lowercase(),
+                "subject" to feedback.subject,
+                "message" to feedback.message,
+                "userName" to feedback.userName,
+                "userEmail" to feedback.userEmail,
+                "status" to feedback.status.name.lowercase(),
+                "createdAt" to feedback.createdAt,
+                "updatedAt" to feedback.updatedAt,
+            )
+        }
     }
 }

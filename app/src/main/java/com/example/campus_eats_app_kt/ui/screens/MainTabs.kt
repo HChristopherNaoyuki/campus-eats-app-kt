@@ -3273,15 +3273,16 @@ fun UserFeedbackWindow(feedbackRepository: FeedbackRepository, userId: String)
 @Composable
 fun AdminSecurityLogView()
 {
-    val logs = remember {
+    val now = remember { java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date()) }
+    val logs = remember(now) {
         listOf(
-            SecurityLogEntry("2026-10-16 10:14:22", "USER_AUTHENTICATED", "amara.nkosi@campuseats.test", "Successful administrator login via Firebase Auth"),
-            SecurityLogEntry("2026-10-16 09:42:05", "CREDENTIALS_UPDATED", "thandiwe.mokoena@campuseats.test", "Updated profile identity details"),
-            SecurityLogEntry("2026-10-16 08:30:11", "SYSTEM_CREDITS_ISSUED", "amara.nkosi@campuseats.test", "Issued 15% discount credit to naledi.mahlangu@campuseats.test"),
-            SecurityLogEntry("2026-10-16 07:15:00", "DATABASE_SYNC_SUCCESS", "System Sync Engine", "Synchronized pending Room records with Realtime Database"),
-            SecurityLogEntry("2026-10-15 18:22:45", "ACCOUNT_STATUS_CHANGE", "amara.nkosi@campuseats.test", "Updated user account status to ACTIVE"),
-            SecurityLogEntry("2026-10-15 14:10:02", "COUPON_GENERATED", "amara.nkosi@campuseats.test", "Generated promotional coupon WELCOME20"),
-            SecurityLogEntry("2026-10-15 11:05:18", "PASSWORD_RESET", "lerato.khumalo@campuseats.test", "Password reset successfully completed via User ID recovery"),
+            SecurityLogEntry(now, "USER_AUTHENTICATED", "amara.nkosi@campuseats.test", "Successful administrator login via Firebase Auth"),
+            SecurityLogEntry(now, "CREDENTIALS_UPDATED", "thandiwe.mokoena@campuseats.test", "Updated profile identity details"),
+            SecurityLogEntry(now, "SYSTEM_CREDITS_ISSUED", "amara.nkosi@campuseats.test", "Issued discount credit to customer account"),
+            SecurityLogEntry(now, "DATABASE_SYNC_SUCCESS", "Firebase Sync Engine", "Synchronized Room storage with Realtime Database"),
+            SecurityLogEntry(now, "ACCOUNT_STATUS_CHANGE", "amara.nkosi@campuseats.test", "Updated user account status"),
+            SecurityLogEntry(now, "COUPON_GENERATED", "amara.nkosi@campuseats.test", "Generated promotional coupon code"),
+            SecurityLogEntry(now, "PASSWORD_RESET", "lerato.khumalo@campuseats.test", "Password reset initiated via email verification"),
         )
     }
 

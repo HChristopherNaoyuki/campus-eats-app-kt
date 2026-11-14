@@ -41,7 +41,7 @@ class OrderRepository(
     /**
      * Places a new order into the database.
      * Verifies balance and stock locally, attempts remote API synchronization when online,
-     * and flags the entity for cloud sync if remote API execution fails or is offline.
+     * and flags the entity for cloud sync until Firebase sync completes.
      */
     suspend fun placeOrder(
         userId: String,
@@ -53,7 +53,7 @@ class OrderRepository(
         specialRequests: String? = null,
     ): String = database.withTransaction()
     {
-        Log.d(tag, "Placing order for user ID: $userId. Online Status: ${connectivityManager.hasInternetConnection()}")
+        Log.d(tag, "Placing order for customer: $userId. Online Status: ${connectivityManager.hasInternetConnection()}")
 
         // 1. Local Balance and Stock Check
         if (paymentMethod == PaymentMethod.CAMPUS_WALLET)
@@ -78,29 +78,24 @@ class OrderRepository(
             }
         }
 
-        // 2. Immediate Remote Sync Attempt (Online-First Mandate)
+        // 2. Immediate Remote API Attempt
         val numericVendorId = vendorId.toIntOrNull()
         val apikey = userDao.getUserById(userId)?.usercode
 
-        val remoteSyncSuccess = if ((numericVendorId != null) && (apikey != null) && connectivityManager.hasInternetConnection())
+        if ((numericVendorId != null) && (apikey != null) && connectivityManager.hasInternetConnection())
         {
             try
             {
                 val networkItems = cartItems.map { OrderItemRequest(it.name, it.quantity) }
-                val response = apiService.createOrder(numericVendorId, apikey, OrderRequest(networkItems))
-                response.isSuccessful
+                apiService.createOrder(numericVendorId, apikey, OrderRequest(networkItems))
             }
             catch (_: Exception)
             {
-                false
+                Log.w(tag, "Remote API order creation failed, persisting locally.")
             }
         }
-        else
-        {
-            false
-        }
 
-        // 3. Persist Order Record with Sync Status
+        // 3. Persist Order Entity (Set isPendingSync to true until Firebase push succeeds)
         val order = OrderEntity(
             orderId = IdGenerator.generateOrderId(),
             customerId = userId,
@@ -111,7 +106,7 @@ class OrderRepository(
             paymentMethod = paymentMethod,
             pickupTime = pickupTime,
             specialRequests = specialRequests,
-            isPendingSync = !remoteSyncSuccess,
+            isPendingSync = true,
         )
         orderDao.insertOrder(order)
         cartDao.clearCart(userId)

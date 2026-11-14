@@ -19,15 +19,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 
 /**
  * AuthRepository manages authentication, registration, user profile persistence, and credential security.
  *
- * Architecture principles:
+ * Principles:
  * 1. User registration uses local-first insertion into Room database with isSynced set to false.
  * 2. Establishes Firebase Auth session and mirrors user profile to cloud database when online.
- * 3. Background synchronization is delegated to FirebaseSyncManager to avoid duplicate sync loops.
- * 4. Supports Google Single Sign-In via Credential Manager token exchange with Firebase Auth.
+ * 3. Enforces 5-second timeout budget on external network calls for responsive UI.
+ * 4. Supports password hashing migration and Google SSO authentication flows.
  */
 class AuthRepository(
     private val userDao: UserDao,
@@ -55,7 +56,7 @@ class AuthRepository(
         userId: String? = null,
     ): Result<UserEntity>
     {
-        Log.d(tag, "Initiating registration for user ID: $userId")
+        Log.d(tag, "Initiating registration for user: $email")
         return try
         {
             if (!ValidationEngine.isValidEmail(email))
@@ -74,14 +75,21 @@ class AuthRepository(
 
             val campusUserId = userId.takeIf { !it.isNullOrBlank() } ?: IdGenerator.generateUserId()
             var isSyncedCloud = false
+            var firebaseUid: String? = null
 
             if (connectivityManager.hasInternetConnection())
             {
                 try
                 {
-                    firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                    withTimeout(5000)
+                    {
+                        val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                        firebaseUid = authResult.user?.uid
+                    }
+
+                    val effectiveUid = firebaseUid ?: campusUserId
                     val userMap = mapOf(
-                        "userId" to campusUserId,
+                        "userId" to effectiveUid,
                         "fullName" to fullName,
                         "username" to username,
                         "email" to email,
@@ -95,7 +103,11 @@ class AuthRepository(
                         "registrationDate" to System.currentTimeMillis(),
                         "usercode" to null,
                     )
-                    firebaseDatabase.getReference("users").child(campusUserId).setValue(userMap).await()
+
+                    withTimeout(5000)
+                    {
+                        firebaseDatabase.getReference("users").child(effectiveUid).setValue(userMap).await()
+                    }
                     isSyncedCloud = true
                 }
                 catch (e: Exception)
@@ -104,12 +116,13 @@ class AuthRepository(
                 }
             }
 
+            val salt = DatabaseSeeder.generateSalt()
             val user = UserEntity(
-                userId = campusUserId,
+                userId = firebaseUid ?: campusUserId,
                 fullName = fullName,
                 username = username,
                 email = email,
-                passwordHash = DatabaseSeeder.encryptPassword(password),
+                passwordHash = DatabaseSeeder.encryptPassword(password, salt),
                 role = role,
                 shopName = if (role == UserRole.VENDOR) shopName else null,
                 shopStatus = if (role == UserRole.VENDOR) ShopStatus.OPEN else null,
@@ -127,7 +140,6 @@ class AuthRepository(
 
     /**
      * Delegation shim for continuous background synchronization.
-     * Deprecated for internal sync loops, delegates directly to FirebaseSyncManager.
      */
     fun startBackgroundSync(@Suppress("UNUSED_PARAMETER") userId: String, scope: CoroutineScope)
     {
@@ -148,9 +160,14 @@ class AuthRepository(
         {
             connectivityManager.ensureInternet()
             val credential = GoogleAuthProvider.getCredential(idToken, null)
-            val authResult = firebaseAuth.signInWithCredential(credential).await()
+            val authResult = withTimeout(5000)
+            {
+                firebaseAuth.signInWithCredential(credential).await()
+            }
+
             val firebaseUser = authResult.user ?: throw Exception("SSO authentication failed.")
             val email = firebaseUser.email ?: throw Exception("Google account missing email address.")
+            val firebaseUid = firebaseUser.uid
 
             val existingUser = try
             {
@@ -163,9 +180,8 @@ class AuthRepository(
 
             existingUser?.let { return@coroutineScope Result.success(it) }
 
-            val campusUserId = IdGenerator.generateUserId()
             val user = UserEntity(
-                userId = campusUserId,
+                userId = firebaseUid,
                 fullName = firebaseUser.displayName ?: "Google User",
                 username = email.substringBefore("@"),
                 email = email,
@@ -176,9 +192,12 @@ class AuthRepository(
                 isSynced = true,
             )
 
-            firebaseDatabase.getReference("users").child(campusUserId)
-                .setValue(mapToFirebase(user))
-                .await()
+            withTimeout(5000)
+            {
+                firebaseDatabase.getReference("users").child(firebaseUid)
+                    .setValue(mapToFirebase(user))
+                    .await()
+            }
 
             userDao.insertUser(user)
             Result.success(user)
@@ -191,14 +210,17 @@ class AuthRepository(
 
     /**
      * Authenticates an existing user using email and password credentials.
-     * Establishes a Firebase Auth session when online to satisfy cloud security rules.
+     * Establishes a Firebase Auth session when online within a 5-second timeout budget.
      */
     suspend fun login(email: String, password: String): Result<UserEntity>
     {
         return try
         {
             val localUser = userDao.getUserByEmail(email)
-            val inputHash = DatabaseSeeder.encryptPassword(password)
+            val storedHash = localUser?.passwordHash ?: ""
+            val salt = if (storedHash.contains(":")) storedHash.substringBefore(":") else null
+
+            val inputHash = DatabaseSeeder.encryptPassword(password, salt)
             val legacyHash = DatabaseSeeder.legacySha256Password(password)
 
             val passwordMatches = (localUser != null) &&
@@ -211,27 +233,35 @@ class AuthRepository(
                     throw Exception("Account suspended.")
                 }
 
-                // Upgrade legacy SHA-256 hash to PBKDF2 hash upon successful login (SEC-006)
-                if (localUser.passwordHash == legacyHash)
+                // Upgrade legacy hash format to salted hash upon successful login (SEC-006)
+                if (localUser.passwordHash == legacyHash || salt == null)
                 {
-                    userDao.insertUser(localUser.copy(passwordHash = inputHash))
+                    val newSalt = DatabaseSeeder.generateSalt()
+                    val newHash = DatabaseSeeder.encryptPassword(password, newSalt)
+                    userDao.insertUser(localUser.copy(passwordHash = newHash))
                 }
 
                 if (connectivityManager.hasInternetConnection() && (firebaseAuth.currentUser == null))
                 {
                     try
                     {
-                        firebaseAuth.signInWithEmailAndPassword(email, password).await()
+                        withTimeout(5000)
+                        {
+                            firebaseAuth.signInWithEmailAndPassword(email, password).await()
+                        }
                     }
                     catch (_: Exception)
                     {
                         try
                         {
-                            firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                            withTimeout(5000)
+                            {
+                                firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                            }
                         }
                         catch (_: Exception)
                         {
-                            Log.w(tag, "Firebase Auth session creation skipped during offline/local login.")
+                            Log.w(tag, "Firebase Auth session creation skipped during offline login.")
                         }
                     }
                 }
@@ -240,7 +270,10 @@ class AuthRepository(
             }
 
             connectivityManager.ensureInternet()
-            firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            withTimeout(5000)
+            {
+                firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            }
             val user = resolveUserRecord(email)
 
             if (user.status == UserStatus.SUSPENDED)
@@ -266,7 +299,10 @@ class AuthRepository(
         {
             connectivityManager.ensureInternet()
             val credential = GoogleAuthProvider.getCredential(idToken, null)
-            firebaseAuth.signInWithCredential(credential).await()
+            withTimeout(5000)
+            {
+                firebaseAuth.signInWithCredential(credential).await()
+            }
             val email = firebaseAuth.currentUser?.email ?: throw Exception("Google account missing email address.")
             val user = resolveUserRecord(email)
 
@@ -291,11 +327,14 @@ class AuthRepository(
     {
         val snapshot = try
         {
-            firebaseDatabase.getReference("users")
-                .orderByChild("email")
-                .equalTo(email)
-                .get()
-                .await()
+            withTimeout(5000)
+            {
+                firebaseDatabase.getReference("users")
+                    .orderByChild("email")
+                    .equalTo(email)
+                    .get()
+                    .await()
+            }
         }
         catch (_: Exception)
         {
@@ -318,7 +357,6 @@ class AuthRepository(
 
     /**
      * Maps UserEntity to a map suitable for Firebase Realtime Database serialization.
-     * Includes passwordHash sentinel value "FIREBASE_SSO" to satisfy security rules.
      */
     private fun mapToFirebase(user: UserEntity): Map<String, Any?>
     {
@@ -387,14 +425,23 @@ class AuthRepository(
     }
 
     /**
-     * Determines if current authenticated Firebase user holds administrator claim privileges.
+     * Determines if current authenticated user has administrator status.
      */
     suspend fun isAdmin(): Boolean
     {
+        val email = getCurrentUserEmail()
+        if (email != null)
+        {
+            val user = userDao.getUserByEmail(email)
+            if (user?.role == UserRole.ADMINISTRATOR)
+            {
+                return true
+            }
+        }
         return try
         {
-            val user = firebaseAuth.currentUser ?: return false
-            val tokenResult: GetTokenResult = user.getIdToken(false).await()
+            val firebaseUser = firebaseAuth.currentUser ?: return false
+            val tokenResult: GetTokenResult = firebaseUser.getIdToken(false).await()
             tokenResult.claims["admin"] == true
         }
         catch (_: Exception)
@@ -407,6 +454,8 @@ class AuthRepository(
 
     fun getCurrentUserEmail(): String? = firebaseAuth.currentUser?.email
 
+    fun getCurrentUserUid(): String? = firebaseAuth.currentUser?.uid
+
     fun logout() = firebaseAuth.signOut()
 
     /**
@@ -417,7 +466,10 @@ class AuthRepository(
         return try
         {
             connectivityManager.ensureInternet()
-            firebaseAuth.sendPasswordResetEmail(email).await()
+            withTimeout(5000)
+            {
+                firebaseAuth.sendPasswordResetEmail(email).await()
+            }
             Result.success(Unit)
         }
         catch (e: Exception)
@@ -459,13 +511,19 @@ class AuthRepository(
             connectivityManager.ensureInternet()
             if (!newPassword.isNullOrBlank())
             {
-                firebaseAuth.currentUser?.updatePassword(newPassword)?.await()
+                withTimeout(5000)
+                {
+                    firebaseAuth.currentUser?.updatePassword(newPassword)?.await()
+                }
             }
 
             userDao.updateProfileFields(userId, fullName, username)
 
             val updates = mapOf<String, Any>("fullName" to fullName, "username" to username)
-            firebaseDatabase.getReference("users").child(userId).updateChildren(updates).await()
+            withTimeout(5000)
+            {
+                firebaseDatabase.getReference("users").child(userId).updateChildren(updates).await()
+            }
             Result.success(Unit)
         }
         catch (e: Exception)
@@ -485,8 +543,11 @@ class AuthRepository(
             val user = userDao.getUserById(userId) ?: throw Exception("User not found.")
             userDao.updateUser(user.copy(bankAccountInfo = bankInfo))
 
-            firebaseDatabase.getReference("users").child(userId).child("bankAccountInfo")
-                .setValue(bankInfo).await()
+            withTimeout(5000)
+            {
+                firebaseDatabase.getReference("users").child(userId).child("bankAccountInfo")
+                    .setValue(bankInfo).await()
+            }
             Result.success(Unit)
         }
         catch (e: Exception)
@@ -505,7 +566,10 @@ class AuthRepository(
             connectivityManager.ensureInternet()
             val user = userDao.getUserById(userId) ?: throw Exception("User not found.")
             userDao.updateUser(user.copy(shopStatus = status))
-            firebaseDatabase.getReference("users").child(userId).child("shopStatus").setValue(status.name).await()
+            withTimeout(5000)
+            {
+                firebaseDatabase.getReference("users").child(userId).child("shopStatus").setValue(status.name).await()
+            }
             Result.success(Unit)
         }
         catch (e: Exception)

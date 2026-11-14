@@ -8,11 +8,14 @@ import com.example.campus_eats_app_kt.data.entity.UserRole
 import com.example.campus_eats_app_kt.data.network.FakeRestaurantApiService
 import com.example.campus_eats_app_kt.data.network.MenuItemRequest
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 
 /**
  * MenuRepository manages food menu items and vendor discovery.
@@ -22,6 +25,7 @@ class MenuRepository(
     private val userDao: UserDao,
     private val apiService: FakeRestaurantApiService,
     private val connectivityManager: NetworkConnectivityManager,
+    private val firebaseDatabase: FirebaseDatabase? = null,
 )
 {
     /**
@@ -185,8 +189,72 @@ class MenuRepository(
             catch (_: Exception) {}
         }
         menuItemDao.insertMenuItem(item)
+
+        if (firebaseDatabase != null && connectivityManager.hasInternetConnection())
+        {
+            try
+            {
+                val menuMap = mapOf(
+                    "itemId" to item.itemId,
+                    "vendorId" to item.vendorId,
+                    "name" to item.name,
+                    "description" to item.description,
+                    "price" to item.price,
+                )
+                withTimeout(5000)
+                {
+                    firebaseDatabase.getReference("menus")
+                        .child(item.itemId.toString())
+                        .setValue(menuMap)
+                        .await()
+                }
+            }
+            catch (_: Exception) {}
+        }
     }
 
-    suspend fun updateMenuItem(item: MenuItemEntity) = menuItemDao.updateMenuItem(item)
-    suspend fun deleteMenuItem(item: MenuItemEntity) = menuItemDao.deleteMenuItem(item)
+    suspend fun updateMenuItem(item: MenuItemEntity)
+    {
+        menuItemDao.updateMenuItem(item)
+        if (firebaseDatabase != null && connectivityManager.hasInternetConnection())
+        {
+            try
+            {
+                val menuMap = mapOf(
+                    "itemId" to item.itemId,
+                    "vendorId" to item.vendorId,
+                    "name" to item.name,
+                    "description" to item.description,
+                    "price" to item.price,
+                )
+                withTimeout(5000)
+                {
+                    firebaseDatabase.getReference("menus")
+                        .child(item.itemId.toString())
+                        .setValue(menuMap)
+                        .await()
+                }
+            }
+            catch (_: Exception) {}
+        }
+    }
+
+    suspend fun deleteMenuItem(item: MenuItemEntity)
+    {
+        menuItemDao.deleteMenuItem(item)
+        if (firebaseDatabase != null && connectivityManager.hasInternetConnection())
+        {
+            try
+            {
+                withTimeout(5000)
+                {
+                    firebaseDatabase.getReference("menus")
+                        .child(item.itemId.toString())
+                        .removeValue()
+                        .await()
+                }
+            }
+            catch (_: Exception) {}
+        }
+    }
 }
