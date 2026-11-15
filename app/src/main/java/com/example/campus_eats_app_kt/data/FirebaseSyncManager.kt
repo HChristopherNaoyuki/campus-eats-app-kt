@@ -152,7 +152,6 @@ class FirebaseSyncManager(
     {
         val currentUser = firebaseAuth.currentUser ?: return
         val uid = currentUser.uid
-        val email = currentUser.email ?: ""
 
         val orderListener = object : ValueEventListener
         {
@@ -443,7 +442,7 @@ class FirebaseSyncManager(
                         .setValue(feedbackMap)
                         .await()
                 }
-                catch (e: Exception)
+                catch (_: Exception)
                 {
                     hasError = true
                 }
@@ -492,17 +491,15 @@ class FirebaseSyncManager(
                         .setValue(couponMap)
                         .await()
                 }
-                catch (e: Exception)
+                catch (_: Exception)
                 {
                     hasError = true
                 }
             }
         }
-        catch (e: Exception)
+        catch (_: Exception)
         {
             hasError = true
-            val parsedMessage = FirebaseExceptionHandler.parse(e)
-            Log.w(tag, "Failed coupon sync cycle: $parsedMessage")
         }
         return hasError
     }

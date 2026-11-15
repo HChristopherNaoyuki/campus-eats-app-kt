@@ -23,7 +23,7 @@
 
 ## 1. Introduction and Purpose
 
-Campus Eats is a production-quality Android application designed to modernize and streamline the dining experience within university ecosystems. Specifically tailored for Rosebank International South Africa, the platform facilitates seamless interaction between students, food vendors, and administrators.
+Campus Eats is an ordinary online food ordering application designed to streamline the dining experience. The platform facilitates seamless interaction between customers, food vendors, and administrators.
 
 The application addresses common campus dining inefficiencies, such as long queues and manual transaction recording, by providing a reliable, digital-first solution. It leverages a hybrid offline-first architecture powered by a local Room database, Firebase Realtime Database for cloud synchronization, Firebase Authentication for credentials, and a secondary REST API client for catalog integration.
 
