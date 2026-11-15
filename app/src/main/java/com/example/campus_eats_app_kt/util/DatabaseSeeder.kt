@@ -3,7 +3,6 @@ package com.example.campus_eats_app_kt.util
 import android.content.Context
 import android.util.Log
 import androidx.room.withTransaction
-import com.example.campus_eats_app_kt.BuildConfig
 import com.example.campus_eats_app_kt.data.CampusEatsDatabase
 import com.example.campus_eats_app_kt.data.entity.CouponEntity
 import com.example.campus_eats_app_kt.data.entity.MenuItemEntity
@@ -22,8 +21,8 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
 /**
- * DatabaseSeeder handles prepopulating the local database with sample data.
- * Adheres to build configuration flags to prevent demo data in release builds.
+ * DatabaseSeeder handles prepopulating the local database with static demo accounts and sample data.
+ * All demo accounts are statically hardcoded within the application codebase.
  */
 object DatabaseSeeder
 {
@@ -41,7 +40,7 @@ object DatabaseSeeder
     }
 
     /**
-     * Hashes passwords using PBKDF2WithHmacSHA256 with per-user salt (SEC-006).
+     * Hashes passwords using PBKDF2WithHmacSHA256 with per-user salt.
      */
     fun encryptPassword(password: String, userSalt: String? = null): String
     {
@@ -71,19 +70,16 @@ object DatabaseSeeder
         return digest.fold("") { str, it -> str + String.format("%02x", it) }
     }
 
+    /**
+     * Seeds the local database with hardcoded demo accounts and initial catalog data.
+     * Prevents duplicate account creation by checking for existing account records.
+     */
     suspend fun seed(context: Context) = withContext(Dispatchers.IO)
     {
-        // Guard database seeding using build configuration flags
-        if (!BuildConfig.ENABLE_DEMO_DATA)
-        {
-            Log.i(TAG, "Demo data seeding disabled in release build configuration.")
-            return@withContext
-        }
-
         val db = CampusEatsDatabase.getDatabase(context)
         val userDao = db.userDao()
 
-        // Check if demo accounts already exist
+        // Check if demo accounts already exist to prevent duplicate creation
         if (userDao.getUserByEmail("amara.nkosi@campuseats.test") != null)
         {
             return@withContext
@@ -95,7 +91,7 @@ object DatabaseSeeder
             val couponDao = db.couponDao()
             val orderDao = db.orderDao()
 
-            Log.d(TAG, "Seeding authoritative demo accounts...")
+            Log.d(TAG, "Seeding authoritative hardcoded demo accounts...")
             val users = listOf(
                 UserEntity("ADMN4K7P2Q9XRT5M", "Amara Nkosi", "amara.nkosi", "amara.nkosi@campuseats.test", encryptPassword("Adm1n#Amara"), UserRole.ADMINISTRATOR, UserStatus.ACTIVE, 500.0, isSynced = true, isDemo = true),
                 UserEntity("ADMN8B3W6Y1ZPL4N", "Pieter van Wyk", "pieter.vanwyk", "pieter.vanwyk@campuseats.test", encryptPassword("Adm1n#Pieter"), UserRole.ADMINISTRATOR, UserStatus.ACTIVE, 500.0, isSynced = true, isDemo = true),
@@ -150,6 +146,6 @@ object DatabaseSeeder
             )
             orders.forEach { orderDao.insertOrder(it) }
         }
-        Log.d(TAG, "Database demo data seeding finished.")
+        Log.d(TAG, "Database demo data seeding finished successfully.")
     }
 }

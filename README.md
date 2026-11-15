@@ -1,15 +1,13 @@
-# Campus Eats: Mobile Campus Dining Platform (v17.0.0)
+# Campus Eats: Mobile Campus Dining Platform (v18.0.0)
 
 ## Table of Contents
 
 - [1. Introduction and Purpose](#1-introduction-and-purpose)
 - [2. Project Team](#2-project-team)
   - [2.1 OPSC6312 Team](#21-opsc6312-team)
-  - [2.2 XISD6329 Team](#22-xisd6329-team)
 - [3. Project Demonstration Video](#3-project-demonstration-video)
-  - [3.1 XISD6329 Demonstration](#31-xisd6329-demonstration)
-  - [3.2 OPSC6312 Demonstration](#32-opsc6312-demonstration)
-  - [3.3 OPSC6312 Part 3 Demonstration](#33-opsc6312-part-3-demonstration)
+  - [3.1 OPSC6312 Part 2 Demonstration](#31-opsc6312-part-2-demonstration)
+  - [3.2 OPSC6312 Part 3 Demonstration](#32-opsc6312-part-3-demonstration)
 - [4. Technical Overview](#4-technical-overview)
 - [5. Demo Accounts](#5-demo-accounts)
 - [6. Testing Instructions](#6-testing-instructions)
@@ -29,16 +27,15 @@ Campus Eats is a production-quality Android application designed to modernize an
 
 The application addresses common campus dining inefficiencies, such as long queues and manual transaction recording, by providing a reliable, digital-first solution. It leverages a hybrid offline-first architecture powered by a local Room database, Firebase Realtime Database for cloud synchronization, Firebase Authentication for credentials, and a secondary REST API client for catalog integration.
 
-This repository supports the following academic modules:
+This repository supports the following academic module:
 
 * OPSC6312: Open Source Coding
-* XISD6329: Work Integrated Learning
 
 ---
 
 ## 2. Project Team
 
-This section lists the contributors for each academic module, together with their roles and student numbers.
+This section lists the contributors for the project, together with their roles and student numbers.
 
 ### 2.1 OPSC6312 Team
 
@@ -49,36 +46,13 @@ This section lists the contributors for each academic module, together with thei
 | Murendeni H. | Project Manager | ST10377430 |
 | Matome M. | UI/UX Designer | ST10341694 |
 
-### 2.2 XISD6329 Team
-
-| Name | Role | Student Number |
-| :--- | :--- | :--- |
-| Naoyuki Christopher H. | Lead Full Stack Engineer, UI/UX Designer | ST10462415 |
-| Makaya G. | Tester / QA, Project Manager | ST10404851 |
-
 ---
 
 ## 3. Project Demonstration Video
 
-Recorded video demonstrations and project metadata for each supported academic module are available below.
+Recorded video demonstrations and project metadata for the supported academic module are available below.
 
-### 3.1 XISD6329 Demonstration
-
-* **Title:** XISD6329: Part 2 Demo
-* **Module Code:** XISD6329
-* **Module Name:** Work Integrated Learning 3B
-* **Release Notes:** Campus Eats v5.0.0
-* **Release Version:** v5.0.0
-* **Release Date:** 2026-10-15
-* **Live Website Link:** https://campus-eats-platform.lovable.app/
-* **Website GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-platform.git
-* **Mobile App GitHub Link:** https://github.com/HChristopherNaoyuki/campus-eats-app-kt
-* **APK Installation Link:** https://github.com/HChristopherNaoyuki/campus-eats-app-kt/releases
-* **YouTube Demonstration Video:** https://youtu.be/FFEtJBy7guA
-
----
-
-### 3.2 OPSC6312 Demonstration
+### 3.1 OPSC6312 Part 2 Demonstration
 
 * **Title:** OPSC6312: Part 2 Demo
 * **Module Code:** OPSC6312
@@ -94,7 +68,7 @@ Recorded video demonstrations and project metadata for each supported academic m
 
 ---
 
-### 3.3 OPSC6312 Part 3 Demonstration
+### 3.2 OPSC6312 Part 3 Demonstration
 
 * **Title:** OPSC6312: Part 3 Demo
 * **Module Code:** OPSC6312
