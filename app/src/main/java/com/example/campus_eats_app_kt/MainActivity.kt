@@ -91,9 +91,11 @@ class MainActivity : ComponentActivity()
             orderDao = database.orderDao(),
             feedbackDao = database.feedbackDao(),
             couponDao = database.couponDao(),
+            menuItemDao = database.menuItemDao(),
             connectivityManager = connectivityManager,
             firebaseAuth = firebaseAuth,
             firebaseDatabase = firebaseDatabase,
+            context = applicationContext,
         )
 
         val menuRepository = MenuRepository(
@@ -101,6 +103,7 @@ class MainActivity : ComponentActivity()
             userDao = database.userDao(),
             apiService = apiService,
             connectivityManager = connectivityManager,
+            firebaseDatabase = firebaseDatabase,
         )
         val cartRepository = CartRepository(database.cartDao())
         val orderRepository = OrderRepository(

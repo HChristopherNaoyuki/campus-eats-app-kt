@@ -43,11 +43,12 @@ import kotlin.time.Duration.Companion.seconds
  *
  * Operational features:
  * 1. Executes a continuous loop targeted at approximately 10 second intervals.
- * 2. Checks active network connectivity before initiating database writes.
+ * 2. Checks active network connectivity and authentication state before initiating database writes.
  * 3. Applies error isolation per record so a single failure does not block the entire loop.
  * 4. Transmits unsynced user/order records identified by local pending flags.
  * 5. Pulls remote cloud orders, user profiles, feedback, and menu items into Room.
- * 6. Triggers local status notifications on customer devices when cloud order status changes.
+ * 6. Prevents cloud overwrite of local pending vendor order status changes (Finding 7).
+ * 7. Deduplicates admin feedback insertion using findByUserAndCreatedAt (Finding 5).
  */
 class FirebaseSyncManager(
     private val userDao: UserDao,
@@ -92,12 +93,21 @@ class FirebaseSyncManager(
 
                 try
                 {
+                    // Require active authenticated session before running sync cycle (Finding 8)
+                    if (firebaseAuth.currentUser == null)
+                    {
+                        Log.d(tag, "No authenticated Firebase user. Skipping current sync cycle.")
+                        delay(baseIntervalSeconds.seconds)
+                        continue
+                    }
+
                     if (connectivityManager.hasInternetConnection())
                     {
-                        syncUsersNode()
-                        syncOrdersNode()
-                        syncFeedbackNode()
-                        syncCouponsNode()
+                        val uErr = syncUsersNode()
+                        val oErr = syncOrdersNode()
+                        val fErr = syncFeedbackNode()
+                        val cErr = syncCouponsNode()
+                        cycleHasErrors = uErr || oErr || fErr || cErr
                     }
                     else
                     {
@@ -136,6 +146,7 @@ class FirebaseSyncManager(
 
     /**
      * Attaches Realtime Database event listeners to pull cloud updates into Room.
+     * Uses indexed queries for customer and vendor orders (Finding 4).
      */
     private fun setupInboundCloudListeners(scope: CoroutineScope)
     {
@@ -143,8 +154,7 @@ class FirebaseSyncManager(
         val uid = currentUser.uid
         val email = currentUser.email ?: ""
 
-        val ordersRef = firebaseDatabase.getReference("orders")
-        ordersRef.addValueEventListener(object : ValueEventListener
+        val orderListener = object : ValueEventListener
         {
             override fun onDataChange(snapshot: DataSnapshot)
             {
@@ -155,69 +165,85 @@ class FirebaseSyncManager(
                         {
                             val customerId = child.child("customerId").getValue(String::class.java) ?: ""
                             val vendorId = child.child("vendorId").getValue(String::class.java) ?: ""
+                            val orderId = child.child("orderId").getValue(String::class.java) ?: child.key ?: continue
+                            val statusStr = child.child("status").getValue(String::class.java) ?: "PENDING"
+                            val totalAmount = child.child("totalAmount").getValue(Double::class.java) ?: 0.0
+                            val itemsJson = child.child("itemsJson").getValue(String::class.java) ?: "[]"
+                            val paymentMethodStr = child.child("paymentMethod").getValue(String::class.java) ?: "CAMPUS_WALLET"
+                            val pickupTime = child.child("pickupTime").getValue(String::class.java) ?: ""
+                            val specialRequests = child.child("specialRequests").getValue(String::class.java)
+                            val timestamp = child.child("timestamp").getValue(Long::class.java) ?: System.currentTimeMillis()
 
-                            if (customerId == uid || customerId == email || vendorId == uid || vendorId == email)
+                            val status = try { OrderStatus.valueOf(statusStr) } catch (_: Exception) { OrderStatus.PENDING }
+                            val paymentMethod = try { PaymentMethod.valueOf(paymentMethodStr) } catch (_: Exception) { PaymentMethod.CAMPUS_WALLET }
+
+                            val existing = orderDao.getOrderById(orderId)
+                            if (existing == null)
                             {
-                                val orderId = child.child("orderId").getValue(String::class.java) ?: child.key ?: continue
-                                val statusStr = child.child("status").getValue(String::class.java) ?: "PENDING"
-                                val totalAmount = child.child("totalAmount").getValue(Double::class.java) ?: 0.0
-                                val itemsJson = child.child("itemsJson").getValue(String::class.java) ?: "[]"
-                                val paymentMethodStr = child.child("paymentMethod").getValue(String::class.java) ?: "CAMPUS_WALLET"
-                                val pickupTime = child.child("pickupTime").getValue(String::class.java) ?: ""
-
-                                val status = try { OrderStatus.valueOf(statusStr) } catch (_: Exception) { OrderStatus.PENDING }
-                                val paymentMethod = try { PaymentMethod.valueOf(paymentMethodStr) } catch (_: Exception) { PaymentMethod.CAMPUS_WALLET }
-
-                                val existing = orderDao.getOrderById(orderId)
-                                if (existing == null)
-                                {
-                                    val newOrder = OrderEntity(
-                                        orderId = orderId,
-                                        customerId = customerId,
-                                        vendorId = vendorId,
-                                        itemsJson = itemsJson,
-                                        totalAmount = totalAmount,
+                                val newOrder = OrderEntity(
+                                    orderId = orderId,
+                                    customerId = customerId,
+                                    vendorId = vendorId,
+                                    itemsJson = itemsJson,
+                                    totalAmount = totalAmount,
+                                    status = status,
+                                    paymentMethod = paymentMethod,
+                                    pickupTime = pickupTime,
+                                    specialRequests = specialRequests,
+                                    timestamp = timestamp,
+                                    isPendingSync = false,
+                                )
+                                orderDao.insertOrder(newOrder)
+                            }
+                            // Do not overwrite local order if local status is pending upload (Finding 7)
+                            else if (existing.status != status && !existing.isPendingSync)
+                            {
+                                orderDao.updateOrder(
+                                    existing.copy(
                                         status = status,
-                                        paymentMethod = paymentMethod,
-                                        pickupTime = pickupTime,
+                                        specialRequests = specialRequests ?: existing.specialRequests,
+                                        timestamp = timestamp,
                                         isPendingSync = false,
-                                    )
-                                    orderDao.insertOrder(newOrder)
-                                }
-                                else if (existing.status != status)
-                                {
-                                    orderDao.updateOrder(existing.copy(status = status, isPendingSync = false))
+                                    ),
+                                )
 
-                                    // Trigger status notification on customer device (Finding 11)
-                                    if (context != null && customerId == uid)
+                                if (context != null && customerId == uid)
+                                {
+                                    val message = when (status)
                                     {
-                                        val message = when (status)
-                                        {
-                                            OrderStatus.ACCEPTED -> "Your order has been accepted by the vendor."
-                                            OrderStatus.PREPARING -> "Your meal is currently being prepared!"
-                                            OrderStatus.READY -> "Your order is ready for pickup!"
-                                            OrderStatus.COMPLETED -> "Order completed. Thank you!"
-                                            else -> "Order status updated to $status."
-                                        }
-                                        NotificationHelper.showNotification(
-                                            context = context,
-                                            notificationId = orderId.hashCode(),
-                                            title = "Order #$orderId Status Update",
-                                            message = message,
-                                        )
+                                        OrderStatus.ACCEPTED -> "Your order has been accepted by the vendor."
+                                        OrderStatus.PREPARING -> "Your meal is currently being prepared!"
+                                        OrderStatus.READY -> "Your order is ready for pickup!"
+                                        OrderStatus.COMPLETED -> "Order completed. Thank you!"
+                                        else -> "Order status updated to $status."
                                     }
+                                    NotificationHelper.showNotification(
+                                        context = context,
+                                        notificationId = orderId.hashCode(),
+                                        title = "Order #$orderId Status Update",
+                                        message = message,
+                                    )
                                 }
                             }
                         }
-                        catch (_: Exception) {}
+                        catch (e: Exception)
+                        {
+                            Log.w(tag, "Inbound order processing error: ${e.message}")
+                        }
                     }
                 }
             }
 
-            override fun onCancelled(error: DatabaseError) {}
-        })
+            override fun onCancelled(error: DatabaseError)
+            {
+                Log.w(tag, "Orders inbound realtime listener cancelled: ${error.message}")
+            }
+        }
 
-        // Listen for menu updates
+        val ordersRef = firebaseDatabase.getReference("orders")
+        ordersRef.orderByChild("customerId").equalTo(uid).addValueEventListener(orderListener)
+        ordersRef.orderByChild("vendorId").equalTo(uid).addValueEventListener(orderListener)
+
         if (menuItemDao != null)
         {
             val menusRef = firebaseDatabase.getReference("menus")
@@ -236,14 +262,15 @@ class FirebaseSyncManager(
                                 val price = child.child("price").getValue(Double::class.java) ?: 0.0
                                 val vendorId = child.child("vendorId").getValue(String::class.java) ?: ""
 
+                                val existingItem = menuItemDao.getMenuItemById(itemId)
                                 val item = MenuItemEntity(
                                     itemId = itemId,
                                     vendorId = vendorId,
                                     name = name,
                                     description = description,
                                     price = price,
-                                    stock = 99,
-                                    category = "General",
+                                    stock = existingItem?.stock ?: 99,
+                                    category = existingItem?.category ?: "General",
                                 )
                                 menuItemDao.insertMenuItem(item)
                             }
@@ -252,21 +279,25 @@ class FirebaseSyncManager(
                     }
                 }
 
-                override fun onCancelled(error: DatabaseError) {}
+                override fun onCancelled(error: DatabaseError)
+                {
+                    Log.w(tag, "Menus inbound listener cancelled: ${error.message}")
+                }
             })
         }
     }
 
     /**
      * Synchronizes local unsynced user records to the 'users/$userId' node.
-     * Applies per-record error isolation (Finding 4).
+     * Reports write errors to trigger backoff state (Finding 8).
      */
-    private suspend fun syncUsersNode()
+    private suspend fun syncUsersNode(): Boolean
     {
+        var hasError = false
         val unsyncedUsers = userDao.getUnsyncedUsers()
         if (unsyncedUsers.isEmpty())
         {
-            return
+            return false
         }
 
         Log.d(tag, "Found ${unsyncedUsers.size} unsynced user records. Initiating cloud sync.")
@@ -286,24 +317,26 @@ class FirebaseSyncManager(
             }
             catch (e: Exception)
             {
+                hasError = true
                 val parsedMessage = FirebaseExceptionHandler.parse(e)
                 Log.w(tag, "Failed to sync user ID ${user.userId}: $parsedMessage")
             }
         }
+        return hasError
     }
 
     /**
      * Synchronizes orders that are pending sync to the 'orders/$orderId' node.
-     * Applies per-record error isolation (Finding 4).
      */
-    private suspend fun syncOrdersNode()
+    private suspend fun syncOrdersNode(): Boolean
     {
+        var hasError = false
         val orders = orderDao.getAllOrders().first()
         val pendingOrders = orders.filter { it.isPendingSync }
 
         if (pendingOrders.isEmpty())
         {
-            return
+            return false
         }
 
         Log.d(tag, "Found ${pendingOrders.size} pending orders. Initiating cloud sync.")
@@ -323,19 +356,21 @@ class FirebaseSyncManager(
             }
             catch (e: Exception)
             {
+                hasError = true
                 val parsedMessage = FirebaseExceptionHandler.parse(e)
                 Log.w(tag, "Failed to sync order ${order.orderId}: $parsedMessage")
             }
         }
+        return hasError
     }
 
     /**
-     * Synchronizes feedback records to the 'feedback/$feedbackId' node.
-     * Fixes admin feedback lookup by email (Finding 5).
+     * Synchronizes feedback records. Deduplicates admin feedback pull (Finding 5).
      */
-    private suspend fun syncFeedbackNode()
+    private suspend fun syncFeedbackNode(): Boolean
     {
-        val currentUser = firebaseAuth.currentUser ?: return
+        var hasError = false
+        val currentUser = firebaseAuth.currentUser ?: return false
 
         try
         {
@@ -362,18 +397,30 @@ class FirebaseSyncManager(
                         val type = if (typeStr.equals("complaint", ignoreCase = true)) FeedbackType.COMPLAINT else FeedbackType.COMPLIMENT
                         val status = if (statusStr.equals("resolved", ignoreCase = true)) FeedbackStatus.RESOLVED else FeedbackStatus.PENDING
 
-                        val feedbackEntity = FeedbackEntity(
-                            userId = userId,
-                            type = type,
-                            subject = subject,
-                            message = message,
-                            userName = userName,
-                            userEmail = userEmail,
-                            status = status,
-                            createdAt = createdAt,
-                            updatedAt = updatedAt,
-                        )
-                        feedbackDao.insertFeedback(feedbackEntity)
+                        // Deduplicate feedback pull using existing Room lookup query (Finding 5)
+                        val existing = feedbackDao.findByUserAndCreatedAt(userId, createdAt)
+                        if (existing != null)
+                        {
+                            if (existing.status != status)
+                            {
+                                feedbackDao.updateFeedbackStatus(existing.feedbackId, status, updatedAt)
+                            }
+                        }
+                        else
+                        {
+                            val feedbackEntity = FeedbackEntity(
+                                userId = userId,
+                                type = type,
+                                subject = subject,
+                                message = message,
+                                userName = userName,
+                                userEmail = userEmail,
+                                status = status,
+                                createdAt = createdAt,
+                                updatedAt = updatedAt,
+                            )
+                            feedbackDao.insertFeedback(feedbackEntity)
+                        }
                     }
                 }
                 catch (e: Exception)
@@ -396,37 +443,43 @@ class FirebaseSyncManager(
                         .setValue(feedbackMap)
                         .await()
                 }
-                catch (_: Exception) {}
+                catch (e: Exception)
+                {
+                    hasError = true
+                }
             }
         }
         catch (e: Exception)
         {
+            hasError = true
             val parsedMessage = FirebaseExceptionHandler.parse(e)
             Log.w(tag, "Failed feedback sync cycle: $parsedMessage")
         }
+        return hasError
     }
 
     /**
      * Synchronizes promotional coupons to the 'coupons/$code' node.
-     * Only admins execute coupon writes to prevent rule denial loops (Finding 4).
+     * Executed strictly by admin accounts (Finding 4).
      */
-    private suspend fun syncCouponsNode()
+    private suspend fun syncCouponsNode(): Boolean
     {
+        var hasError = false
         try
         {
-            val currentUser = firebaseAuth.currentUser ?: return
+            val currentUser = firebaseAuth.currentUser ?: return false
             val email = currentUser.email ?: ""
             val localUser = userDao.getUserByEmail(email)
 
             if (localUser?.role != UserRole.ADMINISTRATOR)
             {
-                return
+                return false
             }
 
             val coupons = couponDao.getAllCoupons().first()
             if (coupons.isEmpty())
             {
-                return
+                return false
             }
 
             for (coupon in coupons)
@@ -439,14 +492,19 @@ class FirebaseSyncManager(
                         .setValue(couponMap)
                         .await()
                 }
-                catch (_: Exception) {}
+                catch (e: Exception)
+                {
+                    hasError = true
+                }
             }
         }
         catch (e: Exception)
         {
+            hasError = true
             val parsedMessage = FirebaseExceptionHandler.parse(e)
             Log.w(tag, "Failed coupon sync cycle: $parsedMessage")
         }
+        return hasError
     }
 
     private fun handleDatabaseError(exception: DatabaseException)

@@ -33,7 +33,7 @@ interface UserDao
     suspend fun getUserByEmail(email: String): UserEntity?
 
     /**
-     * Retrieves a user by their unique 16-character User ID.
+     * Retrieves a user by their unique User ID.
      */
     @Query("SELECT * FROM users WHERE userId = :userId LIMIT 1")
     suspend fun getUserById(userId: String): UserEntity?
@@ -69,9 +69,9 @@ interface UserDao
     suspend fun markAsSynced(userId: String)
 
     /**
-     * Adds credits to a user's wallet balance.
+     * Adds credits to a user's wallet balance and flags record for cloud sync.
      */
-    @Query("UPDATE users SET walletBalance = walletBalance + :amount WHERE userId = :userId")
+    @Query("UPDATE users SET walletBalance = walletBalance + :amount, isSynced = 0 WHERE userId = :userId")
     suspend fun addCredits(userId: String, amount: Double)
 
     /**
@@ -81,16 +81,16 @@ interface UserDao
     suspend fun updateStatus(userId: String, status: UserStatus)
 
     /**
-     * Deducts credits from a user's wallet balance if sufficient funds exist.
+     * Deducts credits from a user's wallet balance if sufficient funds exist and flags record for cloud sync.
      * Returns the number of rows affected (1 if successful, 0 if insufficient funds).
      */
-    @Query("UPDATE users SET walletBalance = walletBalance - :amount WHERE userId = :userId AND walletBalance >= :amount")
+    @Query("UPDATE users SET walletBalance = walletBalance - :amount, isSynced = 0 WHERE userId = :userId AND walletBalance >= :amount")
     suspend fun debitWallet(userId: String, amount: Double): Int
 
     /**
      * Updates specific profile fields to avoid lost updates on other fields like walletBalance.
      */
-    @Query("UPDATE users SET fullName = :fullName, username = :username WHERE userId = :userId")
+    @Query("UPDATE users SET fullName = :fullName, username = :username, isSynced = 0 WHERE userId = :userId")
     suspend fun updateProfileFields(userId: String, fullName: String, username: String)
 
     /**

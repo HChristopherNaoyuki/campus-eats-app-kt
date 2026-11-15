@@ -27,8 +27,8 @@ import kotlinx.coroutines.withTimeout
  * Principles:
  * 1. User registration uses local-first insertion into Room database with isSynced set to false.
  * 2. Establishes Firebase Auth session and mirrors user profile to cloud database when online.
- * 3. Enforces 5-second timeout budget on external network calls for responsive UI.
- * 4. Supports password hashing migration and Google SSO authentication flows.
+ * 3. Enforces single combined 5-second timeout budget on external network auth operations.
+ * 4. Preserves unsynced local wallet balance on cloud profile resolution.
  */
 class AuthRepository(
     private val userDao: UserDao,
@@ -44,7 +44,7 @@ class AuthRepository(
 
     /**
      * Registers a new user locally in Room storage (offline-first architecture).
-     * Attempts online Firebase Auth creation and Realtime Database mirror if network is available.
+     * Attempts online Firebase Auth creation and Realtime Database mirror within a single 5-second timeout.
      */
     suspend fun register(
         fullName: String,
@@ -81,31 +81,29 @@ class AuthRepository(
             {
                 try
                 {
+                    // Single 5-second timeout for entire multi-step online creation (Finding 10)
                     withTimeout(5000)
                     {
                         val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
                         firebaseUid = authResult.user?.uid
-                    }
+                        val effectiveUid = firebaseUid ?: campusUserId
 
-                    val effectiveUid = firebaseUid ?: campusUserId
-                    val userMap = mapOf(
-                        "userId" to effectiveUid,
-                        "fullName" to fullName,
-                        "username" to username,
-                        "email" to email,
-                        "role" to if (role == UserRole.ADMINISTRATOR) "ADMIN" else role.name,
-                        "passwordHash" to "[FIREBASE_SSO]",
-                        "status" to UserStatus.ACTIVE.name,
-                        "walletBalance" to 0.0,
-                        "shopName" to if (role == UserRole.VENDOR) shopName else null,
-                        "shopStatus" to if (role == UserRole.VENDOR) ShopStatus.OPEN.name else null,
-                        "bankAccountInfo" to null,
-                        "registrationDate" to System.currentTimeMillis(),
-                        "usercode" to null,
-                    )
+                        val userMap = mapOf(
+                            "userId" to effectiveUid,
+                            "fullName" to fullName,
+                            "username" to username,
+                            "email" to email,
+                            "role" to if (role == UserRole.ADMINISTRATOR) "ADMIN" else role.name,
+                            "passwordHash" to "[FIREBASE_SSO]",
+                            "status" to UserStatus.ACTIVE.name,
+                            "walletBalance" to 0.0,
+                            "shopName" to if (role == UserRole.VENDOR) shopName else null,
+                            "shopStatus" to if (role == UserRole.VENDOR) ShopStatus.OPEN.name else null,
+                            "bankAccountInfo" to null,
+                            "registrationDate" to System.currentTimeMillis(),
+                            "usercode" to null,
+                        )
 
-                    withTimeout(5000)
-                    {
                         firebaseDatabase.getReference("users").child(effectiveUid).setValue(userMap).await()
                     }
                     isSyncedCloud = true
@@ -160,12 +158,12 @@ class AuthRepository(
         {
             connectivityManager.ensureInternet()
             val credential = GoogleAuthProvider.getCredential(idToken, null)
-            val authResult = withTimeout(5000)
+            val firebaseUser = withTimeout(5000)
             {
-                firebaseAuth.signInWithCredential(credential).await()
+                val authResult = firebaseAuth.signInWithCredential(credential).await()
+                authResult.user ?: throw Exception("SSO authentication failed.")
             }
 
-            val firebaseUser = authResult.user ?: throw Exception("SSO authentication failed.")
             val email = firebaseUser.email ?: throw Exception("Google account missing email address.")
             val firebaseUid = firebaseUser.uid
 
@@ -178,7 +176,10 @@ class AuthRepository(
                 null
             }
 
-            existingUser?.let { return@coroutineScope Result.success(it) }
+            if (existingUser != null)
+            {
+                return@coroutineScope Result.success(existingUser)
+            }
 
             val user = UserEntity(
                 userId = firebaseUid,
@@ -204,6 +205,7 @@ class AuthRepository(
         }
         catch (e: Exception)
         {
+            firebaseAuth.signOut()
             Result.failure(e)
         }
     }
@@ -233,7 +235,6 @@ class AuthRepository(
                     throw Exception("Account suspended.")
                 }
 
-                // Upgrade legacy hash format to salted hash upon successful login (SEC-006)
                 if (localUser.passwordHash == legacyHash || salt == null)
                 {
                     val newSalt = DatabaseSeeder.generateSalt()
@@ -241,7 +242,8 @@ class AuthRepository(
                     userDao.insertUser(localUser.copy(passwordHash = newHash))
                 }
 
-                if (connectivityManager.hasInternetConnection() && (firebaseAuth.currentUser == null))
+                // Check session email matching before skipping sign-in (Finding 12)
+                if (connectivityManager.hasInternetConnection() && (firebaseAuth.currentUser == null || firebaseAuth.currentUser?.email != email))
                 {
                     try
                     {
@@ -252,17 +254,7 @@ class AuthRepository(
                     }
                     catch (_: Exception)
                     {
-                        try
-                        {
-                            withTimeout(5000)
-                            {
-                                firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-                            }
-                        }
-                        catch (_: Exception)
-                        {
-                            Log.w(tag, "Firebase Auth session creation skipped during offline login.")
-                        }
+                        Log.w(tag, "Firebase Auth session creation skipped during offline login.")
                     }
                 }
 
@@ -304,7 +296,16 @@ class AuthRepository(
                 firebaseAuth.signInWithCredential(credential).await()
             }
             val email = firebaseAuth.currentUser?.email ?: throw Exception("Google account missing email address.")
-            val user = resolveUserRecord(email)
+            
+            val user = try
+            {
+                resolveUserRecord(email)
+            }
+            catch (e: Exception)
+            {
+                firebaseAuth.signOut()
+                throw e
+            }
 
             if (user.status == UserStatus.SUSPENDED)
             {
@@ -322,9 +323,12 @@ class AuthRepository(
 
     /**
      * Resolves user entity by checking Firebase Realtime Database and local database.
+     * Preserves local unsynced wallet balance during resolution (Finding 6).
      */
     private suspend fun resolveUserRecord(email: String): UserEntity
     {
+        val localUser = userDao.getUserByEmail(email)
+
         val snapshot = try
         {
             withTimeout(5000)
@@ -347,17 +351,22 @@ class AuthRepository(
 
         if (cloudUser != null)
         {
-            userDao.insertUser(cloudUser)
-            return cloudUser
+            // Preserve unsynced local wallet balance if pending sync (Finding 6)
+            val mergedUser = if (localUser != null && !localUser.isSynced)
+            {
+                cloudUser.copy(walletBalance = localUser.walletBalance, isSynced = false)
+            }
+            else
+            {
+                cloudUser
+            }
+            userDao.insertUser(mergedUser)
+            return mergedUser
         }
 
-        val localUser = userDao.getUserByEmail(email)
         return localUser ?: throw Exception("Profile record not found.")
     }
 
-    /**
-     * Maps UserEntity to a map suitable for Firebase Realtime Database serialization.
-     */
     private fun mapToFirebase(user: UserEntity): Map<String, Any?>
     {
         return mapOf(
@@ -377,9 +386,6 @@ class AuthRepository(
         )
     }
 
-    /**
-     * Maps Firebase Realtime Database dictionary map back into a local UserEntity.
-     */
     private fun mapFromFirebase(map: Map<Any?, Any?>): UserEntity
     {
         val stringMap = map.mapKeys { it.key.toString() }
@@ -424,9 +430,6 @@ class AuthRepository(
         )
     }
 
-    /**
-     * Determines if current authenticated user has administrator status.
-     */
     suspend fun isAdmin(): Boolean
     {
         val email = getCurrentUserEmail()
@@ -458,9 +461,6 @@ class AuthRepository(
 
     fun logout() = firebaseAuth.signOut()
 
-    /**
-     * Initiates password recovery email via Firebase Auth.
-     */
     suspend fun sendRecoveryEmail(email: String): Result<Unit>
     {
         return try
@@ -478,9 +478,6 @@ class AuthRepository(
         }
     }
 
-    /**
-     * Resets password locally by User ID.
-     */
     suspend fun resetPasswordByUserId(userId: String, newPassword: String): Result<Unit>
     {
         return try
@@ -497,7 +494,8 @@ class AuthRepository(
     }
 
     /**
-     * Updates user profile name and username in local Room database and Firebase Realtime Database.
+     * Updates user profile name, username, and password in local Room database and Firebase.
+     * Synchronizes password change with local PBKDF2 hash (Finding 11).
      */
     suspend fun updateProfile(
         userId: String,
@@ -515,9 +513,19 @@ class AuthRepository(
                 {
                     firebaseAuth.currentUser?.updatePassword(newPassword)?.await()
                 }
-            }
 
-            userDao.updateProfileFields(userId, fullName, username)
+                val localUser = userDao.getUserById(userId)
+                val newSalt = DatabaseSeeder.generateSalt()
+                val newHash = DatabaseSeeder.encryptPassword(newPassword, newSalt)
+                if (localUser != null)
+                {
+                    userDao.updateUser(localUser.copy(fullName = fullName, username = username, passwordHash = newHash, isSynced = false))
+                }
+            }
+            else
+            {
+                userDao.updateProfileFields(userId, fullName, username)
+            }
 
             val updates = mapOf<String, Any>("fullName" to fullName, "username" to username)
             withTimeout(5000)
@@ -532,16 +540,13 @@ class AuthRepository(
         }
     }
 
-    /**
-     * Links banking information to user account.
-     */
     suspend fun linkBankAccount(userId: String, bankInfo: String): Result<Unit>
     {
         return try
         {
             connectivityManager.ensureInternet()
             val user = userDao.getUserById(userId) ?: throw Exception("User not found.")
-            userDao.updateUser(user.copy(bankAccountInfo = bankInfo))
+            userDao.updateUser(user.copy(bankAccountInfo = bankInfo, isSynced = false))
 
             withTimeout(5000)
             {
@@ -556,16 +561,13 @@ class AuthRepository(
         }
     }
 
-    /**
-     * Updates vendor shop operating status.
-     */
     suspend fun updateShopStatus(userId: String, status: ShopStatus): Result<Unit>
     {
         return try
         {
             connectivityManager.ensureInternet()
             val user = userDao.getUserById(userId) ?: throw Exception("User not found.")
-            userDao.updateUser(user.copy(shopStatus = status))
+            userDao.updateUser(user.copy(shopStatus = status, isSynced = false))
             withTimeout(5000)
             {
                 firebaseDatabase.getReference("users").child(userId).child("shopStatus").setValue(status.name).await()
