@@ -15,16 +15,17 @@ import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 /**
- * FirebaseSyncManagerTest verifies sync loop initialization, conflict resolution, and feedback deduplication.
+ * FirebaseSyncManagerTest verifies sync logic and conflict resolution rules.
  */
 class FirebaseSyncManagerTest
 {
@@ -91,17 +92,26 @@ class FirebaseSyncManagerTest
                 isPendingSync = true,
             )
 
-            coEvery { orderDao.getOrderById("ORD-001") } returns pendingOrder
+            val shouldUpdate = FirebaseSyncManager.shouldUpdateLocalOrder(
+                pendingOrder,
+                OrderStatus.COMPLETED,
+            )
 
-            // Simulating conflict resolution behavior: pending sync items should not be overwritten
-            val existing = orderDao.getOrderById("ORD-001")
-            assertNotNull(existing)
-            org.junit.Assert.assertTrue(existing?.isPendingSync == true)
+            assertFalse(shouldUpdate)
+
+            val syncedOrder = pendingOrder.copy(isPendingSync = false)
+            val shouldUpdateSynced = FirebaseSyncManager
+                .shouldUpdateLocalOrder(
+                    syncedOrder,
+                    OrderStatus.COMPLETED,
+                )
+
+            assertTrue(shouldUpdateSynced)
         }
     }
 
     @Test
-    fun feedbackPull_deduplicatesExistingEntries()
+    fun feedbackPull_deduplicatesAndRespectsTimestamps()
     {
         runTest {
             val existingFeedback = FeedbackEntity(
@@ -112,16 +122,28 @@ class FirebaseSyncManagerTest
                 message = "Long wait time",
                 userName = "User",
                 userEmail = "user@test.com",
-                status = FeedbackStatus.PENDING,
+                status = FeedbackStatus.RESOLVED,
                 createdAt = "2026-11-15T10:00:00Z",
-                updatedAt = "2026-11-15T10:00:00Z",
+                updatedAt = "2026-11-15T12:00:00Z",
             )
 
-            coEvery { feedbackDao.findByUserAndCreatedAt("USER-1", "2026-11-15T10:00:00Z") } returns existingFeedback
+            val shouldUpdateOlderRemote = FirebaseSyncManager
+                .shouldUpdateLocalFeedback(
+                    existingFeedback,
+                    FeedbackStatus.PENDING,
+                    "2026-11-15T10:00:00Z",
+                )
 
-            val result = feedbackDao.findByUserAndCreatedAt("USER-1", "2026-11-15T10:00:00Z")
-            assertNotNull(result)
-            coVerify { feedbackDao.findByUserAndCreatedAt("USER-1", "2026-11-15T10:00:00Z") }
+            assertFalse(shouldUpdateOlderRemote)
+
+            val shouldUpdateNewerRemote = FirebaseSyncManager
+                .shouldUpdateLocalFeedback(
+                    existingFeedback,
+                    FeedbackStatus.RESOLVED,
+                    "2026-11-15T14:00:00Z",
+                )
+
+            assertFalse(shouldUpdateNewerRemote)
         }
     }
 }

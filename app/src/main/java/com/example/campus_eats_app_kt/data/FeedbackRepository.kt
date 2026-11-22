@@ -18,7 +18,6 @@ import java.util.TimeZone
 
 /**
  * FeedbackRepository manages user feedback collection and synchronization.
- * Handles validation, Room persistence, and Firebase Realtime Database sync.
  */
 class FeedbackRepository(
     private val feedbackDao: FeedbackDao,
@@ -28,20 +27,28 @@ class FeedbackRepository(
     private val firebaseAuth: FirebaseAuth? = null,
 )
 {
-    private fun getDateFormat() = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+    private fun getDateFormat() = SimpleDateFormat(
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        Locale.US,
+    ).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
 
     /**
      * Retrieves all feedback entries from local Room storage.
      */
-    fun getAllFeedback(): Flow<List<FeedbackEntity>> = feedbackDao.getAllFeedback()
+    fun getAllFeedback(): Flow<List<FeedbackEntity>> =
+        feedbackDao.getAllFeedback()
 
     /**
      * Submits a new user feedback entry.
-     * Validates input, saves to Room, and syncs to Firebase Realtime Database with a deterministic key.
      */
-    suspend fun submitFeedback(userId: String, subject: String, message: String, type: FeedbackType)
+    suspend fun submitFeedback(
+        userId: String,
+        subject: String,
+        message: String,
+        type: FeedbackType,
+    )
     {
         if (subject.length < 3)
         {
@@ -49,13 +56,15 @@ class FeedbackRepository(
         }
         if (message.length < 10)
         {
-            throw Exception("Feedback details must be at least 10 characters.")
+            throw Exception(
+                "Feedback details must be at least 10 characters.",
+            )
         }
 
-        val user = userDao.getUserById(userId) ?: throw Exception("User profile not found.")
+        val user = userDao.getUserById(userId)
+            ?: throw Exception("User profile not found.")
         val now = getDateFormat().format(Date())
 
-        // Align userId with active Firebase Auth uid when available (Finding 1)
         val activeUid = firebaseAuth?.currentUser?.uid ?: userId
 
         val feedback = FeedbackEntity(
@@ -84,25 +93,26 @@ class FeedbackRepository(
                     .await()
             }
         }
-        catch (_: Exception)
-        {
-            // Saved locally, will sync via FirebaseSyncManager
-        }
+        catch (_: Exception) {}
     }
 
     /**
      * Resolves a user feedback entry.
-     * Updates local Room status to RESOLVED and mirrors status change to Firebase Realtime Database.
      */
     suspend fun resolveFeedback(feedbackId: Long)
     {
         val now = getDateFormat().format(Date())
-        feedbackDao.updateFeedbackStatus(feedbackId, FeedbackStatus.RESOLVED, now)
+        feedbackDao.updateFeedbackStatus(
+            feedbackId,
+            FeedbackStatus.RESOLVED,
+            now,
+        )
 
         try
         {
             val entity = feedbackDao.getFeedbackById(feedbackId)
-            if ((entity != null) && connectivityManager.hasInternetConnection())
+            if ((entity != null) &&
+                connectivityManager.hasInternetConnection())
             {
                 val stableKey = FeedbackKeys.keyFor(entity)
                 val updates = mapOf<String, Any>(
@@ -118,18 +128,17 @@ class FeedbackRepository(
                 }
             }
         }
-        catch (_: Exception)
-        {
-            // Status update persists locally in Room
-        }
+        catch (_: Exception) {}
     }
 
     companion object
     {
         /**
-         * Maps FeedbackEntity to a Map matching Firebase Realtime Database validation rules.
+         * Maps FeedbackEntity to Map for Firebase Realtime Database.
          */
-        fun mapFeedbackToMap(feedback: FeedbackEntity): Map<String, Any?>
+        fun mapFeedbackToMap(
+            feedback: FeedbackEntity,
+        ): Map<String, Any?>
         {
             return mapOf(
                 "userId" to feedback.userId,

@@ -2,6 +2,7 @@ package com.example.campus_eats_app_kt.data.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
 import com.example.campus_eats_app_kt.data.entity.UserEntity
@@ -9,13 +10,13 @@ import com.example.campus_eats_app_kt.data.entity.UserStatus
 import kotlinx.coroutines.flow.Flow
 
 /**
- * UserDao provides the data access methods for the 'users' table.
+ * UserDao provides data access methods for the 'users' table.
  */
 @Dao
 interface UserDao
 {
     /**
-     * Upserts a user record without triggering foreign key CASCADE deletions on child orders (SEC-015 Fix).
+     * Upserts a user record without triggering foreign key CASCADE.
      */
     @Upsert
     suspend fun insertUser(user: UserEntity)
@@ -69,7 +70,45 @@ interface UserDao
     suspend fun markAsSynced(userId: String)
 
     /**
-     * Adds credits to a user's wallet balance and flags record for cloud sync.
+     * Marks a user as synced only if the wallet balance matches pushed.
+     */
+    @Query("UPDATE users SET isSynced = 1 WHERE userId = :userId AND walletBalance = :pushedWallet")
+    suspend fun markAsSyncedIfWalletMatches(
+        userId: String,
+        pushedWallet: Double,
+    ): Int
+
+    /**
+     * Updates the primary key of a user record.
+     */
+    @Query("UPDATE users SET userId = :newId, isSynced = 0 WHERE userId = :oldId")
+    suspend fun updateUserId(oldId: String, newId: String)
+
+    /**
+     * Updates customer ID on orders during user ID migration.
+     */
+    @Query("UPDATE orders SET customerId = :newId WHERE customerId = :oldId")
+    suspend fun updateOrderCustomerId(oldId: String, newId: String)
+
+    /**
+     * Updates vendor ID on orders during user ID migration.
+     */
+    @Query("UPDATE orders SET vendorId = :newId WHERE vendorId = :oldId")
+    suspend fun updateOrderVendorId(oldId: String, newId: String)
+
+    /**
+     * Migrates a user ID across users and orders tables.
+     */
+    @Transaction
+    suspend fun migrateUserId(oldId: String, newId: String)
+    {
+        updateOrderCustomerId(oldId, newId)
+        updateOrderVendorId(oldId, newId)
+        updateUserId(oldId, newId)
+    }
+
+    /**
+     * Adds credits to a user's wallet balance.
      */
     @Query("UPDATE users SET walletBalance = walletBalance + :amount, isSynced = 0 WHERE userId = :userId")
     suspend fun addCredits(userId: String, amount: Double)
@@ -81,17 +120,20 @@ interface UserDao
     suspend fun updateStatus(userId: String, status: UserStatus)
 
     /**
-     * Deducts credits from a user's wallet balance if sufficient funds exist and flags record for cloud sync.
-     * Returns the number of rows affected (1 if successful, 0 if insufficient funds).
+     * Deducts credits from a user's wallet balance.
      */
     @Query("UPDATE users SET walletBalance = walletBalance - :amount, isSynced = 0 WHERE userId = :userId AND walletBalance >= :amount")
     suspend fun debitWallet(userId: String, amount: Double): Int
 
     /**
-     * Updates specific profile fields to avoid lost updates on other fields like walletBalance.
+     * Updates specific profile fields.
      */
     @Query("UPDATE users SET fullName = :fullName, username = :username, isSynced = 0 WHERE userId = :userId")
-    suspend fun updateProfileFields(userId: String, fullName: String, username: String)
+    suspend fun updateProfileFields(
+        userId: String,
+        fullName: String,
+        username: String,
+    )
 
     /**
      * Deletes a user record.

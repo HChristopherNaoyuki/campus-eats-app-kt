@@ -12,6 +12,7 @@ import com.example.campus_eats_app_kt.util.IdGenerator
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
 import com.example.campus_eats_app_kt.util.ValidationEngine
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.GetTokenResult
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.FirebaseDatabase
@@ -22,13 +23,8 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
 
 /**
- * AuthRepository manages authentication, registration, user profile persistence, and credential security.
- *
- * Principles:
- * 1. User registration uses local-first insertion into Room database with isSynced set to false.
- * 2. Establishes Firebase Auth session and mirrors user profile to cloud database when online.
- * 3. Enforces single combined 5-second timeout budget on external network auth operations.
- * 4. Preserves unsynced local wallet balance on cloud profile resolution.
+ * AuthRepository manages authentication, registration, user profile
+ * persistence, and credential security.
  */
 class AuthRepository(
     private val userDao: UserDao,
@@ -43,8 +39,9 @@ class AuthRepository(
     private val tag = "AuthRepository"
 
     /**
-     * Registers a new user locally in Room storage (offline-first architecture).
-     * Attempts online Firebase Auth creation and Realtime Database mirror within a single 5-second timeout.
+     * Registers a new user locally in Room storage (offline-first).
+     * Attempts online Firebase Auth creation and Realtime Database mirror
+     * within a single 5-second timeout budget.
      */
     suspend fun register(
         fullName: String,
@@ -73,7 +70,8 @@ class AuthRepository(
                 throw Exception("Email already exists.")
             }
 
-            val campusUserId = userId.takeIf { !it.isNullOrBlank() } ?: IdGenerator.generateUserId()
+            val campusUserId = userId.takeIf { !it.isNullOrBlank() }
+                ?: IdGenerator.generateUserId()
             var isSyncedCloud = false
             var firebaseUid: String? = null
 
@@ -81,36 +79,66 @@ class AuthRepository(
             {
                 try
                 {
-                    // Single 5-second timeout for entire multi-step online creation (Finding 10)
                     withTimeout(5000)
                     {
-                        val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                        val authResult = firebaseAuth
+                            .createUserWithEmailAndPassword(email, password)
+                            .await()
                         firebaseUid = authResult.user?.uid
                         val effectiveUid = firebaseUid ?: campusUserId
+
+                        val roleStr = if (role == UserRole.ADMINISTRATOR)
+                        {
+                            "ADMIN"
+                        }
+                        else
+                        {
+                            role.name
+                        }
 
                         val userMap = mapOf(
                             "userId" to effectiveUid,
                             "fullName" to fullName,
                             "username" to username,
                             "email" to email,
-                            "role" to if (role == UserRole.ADMINISTRATOR) "ADMIN" else role.name,
+                            "role" to roleStr,
                             "passwordHash" to "[FIREBASE_SSO]",
                             "status" to UserStatus.ACTIVE.name,
                             "walletBalance" to 0.0,
-                            "shopName" to if (role == UserRole.VENDOR) shopName else null,
-                            "shopStatus" to if (role == UserRole.VENDOR) ShopStatus.OPEN.name else null,
+                            "shopName" to if (role == UserRole.VENDOR)
+                            {
+                                shopName
+                            }
+                            else
+                            {
+                                null
+                            },
+                            "shopStatus" to if (role == UserRole.VENDOR)
+                            {
+                                ShopStatus.OPEN.name
+                            }
+                            else
+                            {
+                                null
+                            },
                             "bankAccountInfo" to null,
                             "registrationDate" to System.currentTimeMillis(),
                             "usercode" to null,
                         )
 
-                        firebaseDatabase.getReference("users").child(effectiveUid).setValue(userMap).await()
+                        firebaseDatabase.getReference("users")
+                            .child(effectiveUid)
+                            .setValue(userMap)
+                            .await()
                     }
                     isSyncedCloud = true
                 }
                 catch (e: Exception)
                 {
-                    Log.w(tag, "Online Firebase registration mirror skipped: ${e.message}")
+                    Log.w(
+                        tag,
+                        "Online registration skipped: ${e.message}",
+                    )
                 }
             }
 
@@ -120,10 +148,20 @@ class AuthRepository(
                 fullName = fullName,
                 username = username,
                 email = email,
-                passwordHash = DatabaseSeeder.encryptPassword(password, salt),
+                passwordHash = DatabaseSeeder.encryptPassword(
+                    password,
+                    salt,
+                ),
                 role = role,
                 shopName = if (role == UserRole.VENDOR) shopName else null,
-                shopStatus = if (role == UserRole.VENDOR) ShopStatus.OPEN else null,
+                shopStatus = if (role == UserRole.VENDOR)
+                {
+                    ShopStatus.OPEN
+                }
+                else
+                {
+                    null
+                },
                 isSynced = isSyncedCloud,
             )
 
@@ -139,14 +177,21 @@ class AuthRepository(
     /**
      * Delegation shim for continuous background synchronization.
      */
-    fun startBackgroundSync(@Suppress("UNUSED_PARAMETER") userId: String, scope: CoroutineScope)
+    fun startBackgroundSync(
+        @Suppress("UNUSED_PARAMETER") userId: String,
+        scope: CoroutineScope,
+    )
     {
-        Log.i(tag, "Delegating continuous background sync loop to FirebaseSyncManager.")
+        Log.i(
+            tag,
+            "Delegating background sync loop to FirebaseSyncManager.",
+        )
         firebaseSyncManager?.startContinuousSync(scope)
     }
 
     /**
-     * Registers a new user authenticated via Google SSO credential token exchange.
+     * Registers a new user authenticated via Google SSO credentials.
+     * Enforces single 5-second timeout budget.
      */
     suspend fun registerWithGoogle(
         idToken: String,
@@ -158,49 +203,67 @@ class AuthRepository(
         {
             connectivityManager.ensureInternet()
             val credential = GoogleAuthProvider.getCredential(idToken, null)
-            val firebaseUser = withTimeout(5000)
+            val user = withTimeout(5000)
             {
-                val authResult = firebaseAuth.signInWithCredential(credential).await()
-                authResult.user ?: throw Exception("SSO authentication failed.")
-            }
-
-            val email = firebaseUser.email ?: throw Exception("Google account missing email address.")
-            val firebaseUid = firebaseUser.uid
-
-            val existingUser = try
-            {
-                resolveUserRecord(email)
-            }
-            catch (_: Exception)
-            {
-                null
-            }
-
-            if (existingUser != null)
-            {
-                return@coroutineScope Result.success(existingUser)
-            }
-
-            val user = UserEntity(
-                userId = firebaseUid,
-                fullName = firebaseUser.displayName ?: "Google User",
-                username = email.substringBefore("@"),
-                email = email,
-                passwordHash = "[FIREBASE_SSO]",
-                role = role,
-                shopName = if (role == UserRole.VENDOR) shopName else null,
-                shopStatus = if (role == UserRole.VENDOR) ShopStatus.OPEN else null,
-                isSynced = true,
-            )
-
-            withTimeout(5000)
-            {
-                firebaseDatabase.getReference("users").child(firebaseUid)
-                    .setValue(mapToFirebase(user))
+                val authResult = firebaseAuth
+                    .signInWithCredential(credential)
                     .await()
+                val firebaseUser = authResult.user
+                    ?: throw Exception("SSO authentication failed.")
+
+                val email = firebaseUser.email
+                    ?: throw Exception("Google account missing email.")
+                val firebaseUid = firebaseUser.uid
+
+                val existingUser = try
+                {
+                    resolveUserRecord(email)
+                }
+                catch (_: Exception)
+                {
+                    null
+                }
+
+                if (existingUser != null)
+                {
+                    return@withTimeout existingUser
+                }
+
+                val newUser = UserEntity(
+                    userId = firebaseUid,
+                    fullName = firebaseUser.displayName ?: "Google User",
+                    username = email.substringBefore("@"),
+                    email = email,
+                    passwordHash = "[FIREBASE_SSO]",
+                    role = role,
+                    shopName = if (role == UserRole.VENDOR)
+                    {
+                        shopName
+                    }
+                    else
+                    {
+                        null
+                    },
+                    shopStatus = if (role == UserRole.VENDOR)
+                    {
+                        ShopStatus.OPEN
+                    }
+                    else
+                    {
+                        null
+                    },
+                    isSynced = true,
+                )
+
+                firebaseDatabase.getReference("users")
+                    .child(firebaseUid)
+                    .setValue(mapToFirebase(newUser))
+                    .await()
+
+                userDao.insertUser(newUser)
+                newUser
             }
 
-            userDao.insertUser(user)
             Result.success(user)
         }
         catch (e: Exception)
@@ -212,23 +275,35 @@ class AuthRepository(
 
     /**
      * Authenticates an existing user using email and password credentials.
-     * Establishes a Firebase Auth session when online within a 5-second timeout budget.
+     * Restores missing Firebase Auth account for offline-registered users
+     * within a single 5-second timeout budget.
      */
-    suspend fun login(email: String, password: String): Result<UserEntity>
+    suspend fun login(
+        email: String,
+        password: String,
+    ): Result<UserEntity>
     {
         return try
         {
-            val localUser = userDao.getUserByEmail(email)
+            var localUser = userDao.getUserByEmail(email)
             val storedHash = localUser?.passwordHash ?: ""
-            val salt = if (storedHash.contains(":")) storedHash.substringBefore(":") else null
+            val salt = if (storedHash.contains(":"))
+            {
+                storedHash.substringBefore(":")
+            }
+            else
+            {
+                null
+            }
 
             val inputHash = DatabaseSeeder.encryptPassword(password, salt)
             val legacyHash = DatabaseSeeder.legacySha256Password(password)
 
             val passwordMatches = (localUser != null) &&
-                ((localUser.passwordHash == inputHash) || (localUser.passwordHash == legacyHash))
+                ((localUser.passwordHash == inputHash) ||
+                 (localUser.passwordHash == legacyHash))
 
-            if (passwordMatches)
+            if (passwordMatches && localUser != null)
             {
                 if (localUser.status == UserStatus.SUSPENDED)
                 {
@@ -238,23 +313,65 @@ class AuthRepository(
                 if (localUser.passwordHash == legacyHash || salt == null)
                 {
                     val newSalt = DatabaseSeeder.generateSalt()
-                    val newHash = DatabaseSeeder.encryptPassword(password, newSalt)
-                    userDao.insertUser(localUser.copy(passwordHash = newHash))
+                    val newHash = DatabaseSeeder.encryptPassword(
+                        password,
+                        newSalt,
+                    )
+                    localUser = localUser.copy(passwordHash = newHash)
+                    userDao.insertUser(localUser)
                 }
 
-                // Check session email matching before skipping sign-in (Finding 12)
-                if (connectivityManager.hasInternetConnection() && (firebaseAuth.currentUser == null || firebaseAuth.currentUser?.email != email))
+                if (connectivityManager.hasInternetConnection())
                 {
-                    try
+                    val currentUser = firebaseAuth.currentUser
+                    val needSignIn = currentUser == null ||
+                        !currentUser.email.equals(email, ignoreCase = true)
+
+                    if (needSignIn)
                     {
-                        withTimeout(5000)
+                        try
                         {
-                            firebaseAuth.signInWithEmailAndPassword(email, password).await()
+                            withTimeout(5000)
+                            {
+                                try
+                                {
+                                    firebaseAuth
+                                        .signInWithEmailAndPassword(
+                                            email,
+                                            password,
+                                        )
+                                        .await()
+                                }
+                                catch (e: FirebaseAuthInvalidUserException)
+                                {
+                                    val authResult = firebaseAuth
+                                        .createUserWithEmailAndPassword(
+                                            email,
+                                            password,
+                                        )
+                                        .await()
+                                    val newUid = authResult.user?.uid
+                                    if (newUid != null &&
+                                        localUser.userId != newUid)
+                                    {
+                                        userDao.migrateUserId(
+                                            localUser.userId,
+                                            newUid,
+                                        )
+                                        localUser = userDao.getUserById(
+                                            newUid,
+                                        ) ?: localUser.copy(userId = newUid)
+                                    }
+                                }
+                            }
                         }
-                    }
-                    catch (_: Exception)
-                    {
-                        Log.w(tag, "Firebase Auth session creation skipped during offline login.")
+                        catch (_: Exception)
+                        {
+                            Log.w(
+                                tag,
+                                "Firebase Auth session creation skipped.",
+                            )
+                        }
                     }
                 }
 
@@ -262,11 +379,12 @@ class AuthRepository(
             }
 
             connectivityManager.ensureInternet()
-            withTimeout(5000)
+            val user = withTimeout(5000)
             {
-                firebaseAuth.signInWithEmailAndPassword(email, password).await()
+                firebaseAuth.signInWithEmailAndPassword(email, password)
+                    .await()
+                resolveUserRecord(email)
             }
-            val user = resolveUserRecord(email)
 
             if (user.status == UserStatus.SUSPENDED)
             {
@@ -284,6 +402,7 @@ class AuthRepository(
 
     /**
      * Signs in an existing user using Google ID token credentials.
+     * Enforces single 5-second timeout budget.
      */
     suspend fun signInWithGoogle(idToken: String): Result<UserEntity>
     {
@@ -291,20 +410,12 @@ class AuthRepository(
         {
             connectivityManager.ensureInternet()
             val credential = GoogleAuthProvider.getCredential(idToken, null)
-            withTimeout(5000)
+            val user = withTimeout(5000)
             {
                 firebaseAuth.signInWithCredential(credential).await()
-            }
-            val email = firebaseAuth.currentUser?.email ?: throw Exception("Google account missing email address.")
-            
-            val user = try
-            {
+                val email = firebaseAuth.currentUser?.email
+                    ?: throw Exception("Google account missing email.")
                 resolveUserRecord(email)
-            }
-            catch (e: Exception)
-            {
-                firebaseAuth.signOut()
-                throw e
             }
 
             if (user.status == UserStatus.SUSPENDED)
@@ -317,13 +428,14 @@ class AuthRepository(
         }
         catch (e: Exception)
         {
+            firebaseAuth.signOut()
             Result.failure(e)
         }
     }
 
     /**
-     * Resolves user entity by checking Firebase Realtime Database and local database.
-     * Preserves local unsynced wallet balance during resolution (Finding 6).
+     * Resolves user entity from Firebase Realtime Database and Room.
+     * Preserves cloud wallet balance top-ups while respecting local spend.
      */
     private suspend fun resolveUserRecord(email: String): UserEntity
     {
@@ -346,15 +458,27 @@ class AuthRepository(
         }
 
         @Suppress("UNCHECKED_CAST")
-        val cloudMap = snapshot?.children?.firstOrNull()?.value as? Map<Any?, Any?>
+        val cloudMap = snapshot?.children?.firstOrNull()?.value
+            as? Map<Any?, Any?>
         val cloudUser = cloudMap?.let { mapFromFirebase(it) }
 
         if (cloudUser != null)
         {
-            // Preserve unsynced local wallet balance if pending sync (Finding 6)
             val mergedUser = if (localUser != null && !localUser.isSynced)
             {
-                cloudUser.copy(walletBalance = localUser.walletBalance, isSynced = false)
+                val effectiveWallet = if (cloudUser.walletBalance >
+                    localUser.walletBalance)
+                {
+                    cloudUser.walletBalance
+                }
+                else
+                {
+                    localUser.walletBalance
+                }
+                cloudUser.copy(
+                    walletBalance = effectiveWallet,
+                    isSynced = false,
+                )
             }
             else
             {
@@ -367,14 +491,26 @@ class AuthRepository(
         return localUser ?: throw Exception("Profile record not found.")
     }
 
+    /**
+     * Maps UserEntity instance into Map for Firebase Realtime Database.
+     */
     private fun mapToFirebase(user: UserEntity): Map<String, Any?>
     {
+        val roleStr = if (user.role == UserRole.ADMINISTRATOR)
+        {
+            "ADMIN"
+        }
+        else
+        {
+            user.role.name
+        }
+
         return mapOf(
             "userId" to user.userId,
             "fullName" to user.fullName,
             "username" to user.username,
             "email" to user.email,
-            "role" to if (user.role == UserRole.ADMINISTRATOR) "ADMIN" else user.role.name,
+            "role" to roleStr,
             "passwordHash" to "[FIREBASE_SSO]",
             "status" to user.status.name,
             "walletBalance" to user.walletBalance,
@@ -386,50 +522,70 @@ class AuthRepository(
         )
     }
 
+    /**
+     * Converts a raw Firebase Realtime Database Map into UserEntity.
+     */
     private fun mapFromFirebase(map: Map<Any?, Any?>): UserEntity
     {
         val stringMap = map.mapKeys { it.key.toString() }
+        val roleVal = when (stringMap["role"] as? String)
+        {
+            "ADMIN" -> UserRole.ADMINISTRATOR
+            "VENDOR" -> UserRole.VENDOR
+            "STUDENT" -> UserRole.STUDENT
+            else -> UserRole.STANDARD
+        }
+        val statusVal = try
+        {
+            UserStatus.valueOf(
+                (stringMap["status"] as? String) ?: "ACTIVE",
+            )
+        }
+        catch (_: Exception)
+        {
+            UserStatus.ACTIVE
+        }
+        val shopStatusStr = stringMap["shopStatus"] as? String
+        val shopStatusVal = if (shopStatusStr != null)
+        {
+            try
+            {
+                ShopStatus.valueOf(shopStatusStr)
+            }
+            catch (_: Exception)
+            {
+                null
+            }
+        }
+        else
+        {
+            null
+        }
+
         return UserEntity(
             userId = (stringMap["userId"] as? String) ?: "",
             fullName = (stringMap["fullName"] as? String) ?: "",
             username = (stringMap["username"] as? String) ?: "",
             email = (stringMap["email"] as? String) ?: "",
-            passwordHash = (stringMap["passwordHash"] as? String) ?: "[FIREBASE_SSO]",
-            role = when (stringMap["role"] as? String)
-            {
-                "ADMIN" -> UserRole.ADMINISTRATOR
-                "VENDOR" -> UserRole.VENDOR
-                "STUDENT" -> UserRole.STUDENT
-                else -> UserRole.STANDARD
-            },
-            status = try
-            {
-                UserStatus.valueOf((stringMap["status"] as? String) ?: "ACTIVE")
-            }
-            catch (_: Exception)
-            {
-                UserStatus.ACTIVE
-            },
-            walletBalance = (stringMap["walletBalance"] as? Number)?.toDouble() ?: 0.0,
+            passwordHash = (stringMap["passwordHash"] as? String)
+                ?: "[FIREBASE_SSO]",
+            role = roleVal,
+            status = statusVal,
+            walletBalance = (stringMap["walletBalance"] as? Number)
+                ?.toDouble() ?: 0.0,
             shopName = stringMap["shopName"] as? String,
-            shopStatus = (stringMap["shopStatus"] as? String)?.let
-            { statusStr ->
-                try
-                {
-                    ShopStatus.valueOf(statusStr)
-                }
-                catch (_: Exception)
-                {
-                    null
-                }
-            },
+            shopStatus = shopStatusVal,
             bankAccountInfo = stringMap["bankAccountInfo"] as? String,
-            registrationDate = (stringMap["registrationDate"] as? Number)?.toLong() ?: 0L,
+            registrationDate = (stringMap["registrationDate"] as? Number)
+                ?.toLong() ?: 0L,
             usercode = stringMap["usercode"] as? String,
             isSynced = true,
         )
     }
 
+    /**
+     * Determines whether the currently authenticated user is an admin.
+     */
     suspend fun isAdmin(): Boolean
     {
         val email = getCurrentUserEmail()
@@ -444,7 +600,9 @@ class AuthRepository(
         return try
         {
             val firebaseUser = firebaseAuth.currentUser ?: return false
-            val tokenResult: GetTokenResult = firebaseUser.getIdToken(false).await()
+            val tokenResult: GetTokenResult = firebaseUser
+                .getIdToken(false)
+                .await()
             tokenResult.claims["admin"] == true
         }
         catch (_: Exception)
@@ -453,14 +611,29 @@ class AuthRepository(
         }
     }
 
+    /**
+     * Checks if Firebase Auth session is currently active.
+     */
     fun isUserAuthenticated(): Boolean = firebaseAuth.currentUser != null
 
+    /**
+     * Returns email address of active Firebase user session.
+     */
     fun getCurrentUserEmail(): String? = firebaseAuth.currentUser?.email
 
+    /**
+     * Returns UID of active Firebase user session.
+     */
     fun getCurrentUserUid(): String? = firebaseAuth.currentUser?.uid
 
+    /**
+     * Signs out the active user session.
+     */
     fun logout() = firebaseAuth.signOut()
 
+    /**
+     * Sends password recovery email to specified user address.
+     */
     suspend fun sendRecoveryEmail(email: String): Result<Unit>
     {
         return try
@@ -478,13 +651,22 @@ class AuthRepository(
         }
     }
 
-    suspend fun resetPasswordByUserId(userId: String, newPassword: String): Result<Unit>
+    /**
+     * Resets password for specified User ID in local Room database.
+     */
+    suspend fun resetPasswordByUserId(
+        userId: String,
+        newPassword: String,
+    ): Result<Unit>
     {
         return try
         {
-            val user = userDao.getUserById(userId) ?: throw Exception("User ID not found.")
+            val user = userDao.getUserById(userId)
+                ?: throw Exception("User ID not found.")
             val newHash = DatabaseSeeder.encryptPassword(newPassword)
-            userDao.updateUser(user.copy(passwordHash = newHash, isSynced = false))
+            userDao.updateUser(
+                user.copy(passwordHash = newHash, isSynced = false),
+            )
             Result.success(Unit)
         }
         catch (e: Exception)
@@ -494,8 +676,7 @@ class AuthRepository(
     }
 
     /**
-     * Updates user profile name, username, and password in local Room database and Firebase.
-     * Synchronizes password change with local PBKDF2 hash (Finding 11).
+     * Updates user profile name, username, and password in Room and Firebase.
      */
     suspend fun updateProfile(
         userId: String,
@@ -511,15 +692,27 @@ class AuthRepository(
             {
                 withTimeout(5000)
                 {
-                    firebaseAuth.currentUser?.updatePassword(newPassword)?.await()
+                    firebaseAuth.currentUser
+                        ?.updatePassword(newPassword)
+                        ?.await()
                 }
 
                 val localUser = userDao.getUserById(userId)
                 val newSalt = DatabaseSeeder.generateSalt()
-                val newHash = DatabaseSeeder.encryptPassword(newPassword, newSalt)
+                val newHash = DatabaseSeeder.encryptPassword(
+                    newPassword,
+                    newSalt,
+                )
                 if (localUser != null)
                 {
-                    userDao.updateUser(localUser.copy(fullName = fullName, username = username, passwordHash = newHash, isSynced = false))
+                    userDao.updateUser(
+                        localUser.copy(
+                            fullName = fullName,
+                            username = username,
+                            passwordHash = newHash,
+                            isSynced = false,
+                        ),
+                    )
                 }
             }
             else
@@ -527,10 +720,16 @@ class AuthRepository(
                 userDao.updateProfileFields(userId, fullName, username)
             }
 
-            val updates = mapOf<String, Any>("fullName" to fullName, "username" to username)
+            val updates = mapOf<String, Any>(
+                "fullName" to fullName,
+                "username" to username,
+            )
             withTimeout(5000)
             {
-                firebaseDatabase.getReference("users").child(userId).updateChildren(updates).await()
+                firebaseDatabase.getReference("users")
+                    .child(userId)
+                    .updateChildren(updates)
+                    .await()
             }
             Result.success(Unit)
         }
@@ -540,18 +739,30 @@ class AuthRepository(
         }
     }
 
-    suspend fun linkBankAccount(userId: String, bankInfo: String): Result<Unit>
+    /**
+     * Links bank account information to user profile in Room and Firebase.
+     */
+    suspend fun linkBankAccount(
+        userId: String,
+        bankInfo: String,
+    ): Result<Unit>
     {
         return try
         {
             connectivityManager.ensureInternet()
-            val user = userDao.getUserById(userId) ?: throw Exception("User not found.")
-            userDao.updateUser(user.copy(bankAccountInfo = bankInfo, isSynced = false))
+            val user = userDao.getUserById(userId)
+                ?: throw Exception("User not found.")
+            userDao.updateUser(
+                user.copy(bankAccountInfo = bankInfo, isSynced = false),
+            )
 
             withTimeout(5000)
             {
-                firebaseDatabase.getReference("users").child(userId).child("bankAccountInfo")
-                    .setValue(bankInfo).await()
+                firebaseDatabase.getReference("users")
+                    .child(userId)
+                    .child("bankAccountInfo")
+                    .setValue(bankInfo)
+                    .await()
             }
             Result.success(Unit)
         }
@@ -561,16 +772,29 @@ class AuthRepository(
         }
     }
 
-    suspend fun updateShopStatus(userId: String, status: ShopStatus): Result<Unit>
+    /**
+     * Updates shop operational status for vendor profile.
+     */
+    suspend fun updateShopStatus(
+        userId: String,
+        status: ShopStatus,
+    ): Result<Unit>
     {
         return try
         {
             connectivityManager.ensureInternet()
-            val user = userDao.getUserById(userId) ?: throw Exception("User not found.")
-            userDao.updateUser(user.copy(shopStatus = status, isSynced = false))
+            val user = userDao.getUserById(userId)
+                ?: throw Exception("User not found.")
+            userDao.updateUser(
+                user.copy(shopStatus = status, isSynced = false),
+            )
             withTimeout(5000)
             {
-                firebaseDatabase.getReference("users").child(userId).child("shopStatus").setValue(status.name).await()
+                firebaseDatabase.getReference("users")
+                    .child(userId)
+                    .child("shopStatus")
+                    .setValue(status.name)
+                    .await()
             }
             Result.success(Unit)
         }
@@ -580,7 +804,15 @@ class AuthRepository(
         }
     }
 
-    fun getUserFlow(userId: String): Flow<UserEntity?> = userDao.getUserByIdFlow(userId)
+    /**
+     * Returns Flow of user profile from Room for specified User ID.
+     */
+    fun getUserFlow(userId: String): Flow<UserEntity?> =
+        userDao.getUserByIdFlow(userId)
 
-    suspend fun getUserByEmail(email: String): UserEntity? = userDao.getUserByEmail(email)
+    /**
+     * Retrieves UserEntity record by email address.
+     */
+    suspend fun getUserByEmail(email: String): UserEntity? =
+        userDao.getUserByEmail(email)
 }

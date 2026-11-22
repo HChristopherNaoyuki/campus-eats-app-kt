@@ -9,7 +9,7 @@ import com.example.campus_eats_app_kt.data.entity.OrderStatus
 import kotlinx.coroutines.flow.Flow
 
 /**
- * OrderDao defines the database operations for the 'orders' table.
+ * OrderDao defines database operations for the 'orders' table.
  */
 @Dao
 interface OrderDao
@@ -25,6 +25,15 @@ interface OrderDao
      */
     @Update
     suspend fun updateOrder(order: OrderEntity)
+
+    /**
+     * Clears pending sync flag if status matches pushed status.
+     */
+    @Query("UPDATE orders SET isPendingSync = 0 WHERE orderId = :orderId AND status = :status")
+    suspend fun clearPendingSyncIfStatusMatches(
+        orderId: String,
+        status: OrderStatus,
+    ): Int
 
     /**
      * Retrieves all orders for a specific customer, ordered by time.

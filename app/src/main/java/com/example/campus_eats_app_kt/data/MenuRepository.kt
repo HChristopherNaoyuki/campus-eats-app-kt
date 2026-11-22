@@ -41,7 +41,10 @@ class MenuRepository(
         (local + remote).distinctBy { it.itemId }
     }
 
-    private fun fetchRemoteMenu(vendorId: String, sortOrder: String?): Flow<List<MenuItemEntity>> = flow()
+    private fun fetchRemoteMenu(
+        vendorId: String,
+        sortOrder: String?,
+    ): Flow<List<MenuItemEntity>> = flow()
     {
         val numericId = vendorId.toIntOrNull()
         if ((numericId != null) && connectivityManager.hasInternetConnection())
@@ -94,7 +97,9 @@ class MenuRepository(
         (local + remote).distinctBy { it.itemId }
     }
 
-    private fun fetchRemoteSearch(query: String): Flow<List<MenuItemEntity>> = flow()
+    private fun fetchRemoteSearch(
+        query: String,
+    ): Flow<List<MenuItemEntity>> = flow()
     {
         if (connectivityManager.hasInternetConnection())
         {
@@ -131,7 +136,9 @@ class MenuRepository(
      * Retrieves all vendors.
      */
     fun getAllVendors(): Flow<List<UserEntity>> = combine(
-        userDao.getAllUsers().map { users -> users.filter { it.role == UserRole.VENDOR } },
+        userDao.getAllUsers().map { users ->
+            users.filter { it.role == UserRole.VENDOR }
+        },
         fetchRemoteVendors(),
     ) { local, remote ->
         (local + remote).distinctBy { it.userId }
@@ -148,11 +155,18 @@ class MenuRepository(
                 {
                     val vendors = response.body()?.map()
                     { restaurant ->
+                        val cleanName = restaurant.restaurantName
+                            .lowercase()
+                            .replace(" ", "_")
+                        val cleanDomain = restaurant.restaurantName
+                            .lowercase()
+                            .replace(" ", "")
+
                         UserEntity(
                             userId = restaurant.restaurantID.toString(),
                             fullName = restaurant.restaurantName,
-                            username = restaurant.restaurantName.lowercase().replace(" ", "_"),
-                            email = "contact@${restaurant.restaurantName.lowercase().replace(" ", "")}.com",
+                            username = cleanName,
+                            email = "contact@$cleanDomain.com",
                             passwordHash = "[REMOTE]",
                             role = UserRole.VENDOR,
                             shopName = restaurant.restaurantName,
@@ -169,6 +183,9 @@ class MenuRepository(
         }
     }.onStart { emit(emptyList()) }
 
+    /**
+     * Adds a new menu item to local storage and remote API.
+     */
     suspend fun addMenuItem(item: MenuItemEntity)
     {
         val numericVendorId = item.vendorId.toIntOrNull()
@@ -190,10 +207,12 @@ class MenuRepository(
         }
         menuItemDao.insertMenuItem(item)
 
-        if (firebaseDatabase != null && connectivityManager.hasInternetConnection())
+        if (firebaseDatabase != null &&
+            connectivityManager.hasInternetConnection())
         {
             try
             {
+                val cloudKey = "${item.vendorId}_${item.itemId}"
                 val menuMap = mapOf(
                     "itemId" to item.itemId,
                     "vendorId" to item.vendorId,
@@ -204,7 +223,7 @@ class MenuRepository(
                 withTimeout(5000)
                 {
                     firebaseDatabase.getReference("menus")
-                        .child(item.itemId.toString())
+                        .child(cloudKey)
                         .setValue(menuMap)
                         .await()
                 }
@@ -213,13 +232,18 @@ class MenuRepository(
         }
     }
 
+    /**
+     * Updates an existing menu item in local storage.
+     */
     suspend fun updateMenuItem(item: MenuItemEntity)
     {
         menuItemDao.updateMenuItem(item)
-        if (firebaseDatabase != null && connectivityManager.hasInternetConnection())
+        if (firebaseDatabase != null &&
+            connectivityManager.hasInternetConnection())
         {
             try
             {
+                val cloudKey = "${item.vendorId}_${item.itemId}"
                 val menuMap = mapOf(
                     "itemId" to item.itemId,
                     "vendorId" to item.vendorId,
@@ -230,7 +254,7 @@ class MenuRepository(
                 withTimeout(5000)
                 {
                     firebaseDatabase.getReference("menus")
-                        .child(item.itemId.toString())
+                        .child(cloudKey)
                         .setValue(menuMap)
                         .await()
                 }
@@ -239,17 +263,22 @@ class MenuRepository(
         }
     }
 
+    /**
+     * Deletes a menu item from local storage.
+     */
     suspend fun deleteMenuItem(item: MenuItemEntity)
     {
         menuItemDao.deleteMenuItem(item)
-        if (firebaseDatabase != null && connectivityManager.hasInternetConnection())
+        if (firebaseDatabase != null &&
+            connectivityManager.hasInternetConnection())
         {
             try
             {
+                val cloudKey = "${item.vendorId}_${item.itemId}"
                 withTimeout(5000)
                 {
                     firebaseDatabase.getReference("menus")
-                        .child(item.itemId.toString())
+                        .child(cloudKey)
                         .removeValue()
                         .await()
                 }

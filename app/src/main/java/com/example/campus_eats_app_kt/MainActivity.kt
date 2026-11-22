@@ -62,14 +62,14 @@ import com.example.campus_eats_app_kt.ui.theme.CampusEatsAppTheme
 import com.example.campus_eats_app_kt.util.DatabaseSeeder
 import com.example.campus_eats_app_kt.util.LanguageManager
 import com.example.campus_eats_app_kt.util.NetworkConnectivityManager
+import com.example.campus_eats_app_kt.util.NetworkConnectivityObserver
 import com.example.campus_eats_app_kt.util.NotificationHelper
 import com.example.campus_eats_app_kt.util.ThemeManager
-import com.example.campus_eats_app_kt.util.NetworkConnectivityObserver
 import com.google.firebase.auth.FirebaseAuth
 
 /**
  * MainActivity serves as the entry point for the Campus Eats application.
- * Manages dependency wiring, top-level navigation graphs, and UI theme initializations.
+ * Manages dependency wiring, top-level navigation, and UI themes.
  */
 class MainActivity : ComponentActivity()
 {
@@ -78,8 +78,12 @@ class MainActivity : ComponentActivity()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val connectivityManager = NetworkConnectivityManager(applicationContext)
-        val connectivityObserver = NetworkConnectivityObserver(applicationContext)
+        val connectivityManager = NetworkConnectivityManager(
+            applicationContext,
+        )
+        val connectivityObserver = NetworkConnectivityObserver(
+            applicationContext,
+        )
 
         val database = CampusEatsDatabase.getDatabase(this)
         val apiService = RetrofitClient.instance
@@ -91,7 +95,6 @@ class MainActivity : ComponentActivity()
             orderDao = database.orderDao(),
             feedbackDao = database.feedbackDao(),
             couponDao = database.couponDao(),
-            menuItemDao = database.menuItemDao(),
             connectivityManager = connectivityManager,
             firebaseAuth = firebaseAuth,
             firebaseDatabase = firebaseDatabase,
@@ -103,7 +106,6 @@ class MainActivity : ComponentActivity()
             userDao = database.userDao(),
             apiService = apiService,
             connectivityManager = connectivityManager,
-            firebaseDatabase = firebaseDatabase,
         )
         val cartRepository = CartRepository(database.cartDao())
         val orderRepository = OrderRepository(
@@ -142,7 +144,9 @@ class MainActivity : ComponentActivity()
             firebaseDatabase = firebaseDatabase,
         )
         val couponRepository = CouponRepository(database.couponDao())
-        val debitCardRepository = DebitCardRepository(database.debitCardDao())
+        val debitCardRepository = DebitCardRepository(
+            database.debitCardDao(),
+        )
 
         setContent()
         {
@@ -150,12 +154,16 @@ class MainActivity : ComponentActivity()
             {
                 LanguageManager.initialize(applicationContext)
                 ThemeManager.initialize(applicationContext)
-                NotificationHelper.createNotificationChannel(applicationContext)
+                NotificationHelper.createNotificationChannel(
+                    applicationContext,
+                )
                 DatabaseSeeder.seed(applicationContext)
             }
 
             val networkStatus by connectivityObserver.observe()
-                .collectAsState(initial = NetworkConnectivityObserver.Status.Available)
+                .collectAsState(
+                    initial = NetworkConnectivityObserver.Status.Available,
+                )
 
             val activeLanguage = LanguageManager.currentLanguage.value
             val darkTheme = ThemeManager.shouldFollowDarkTheme()
@@ -170,320 +178,459 @@ class MainActivity : ComponentActivity()
                     {
                         NetworkStatusBanner(status = networkStatus)
 
-                    NavDisplay(
-                        backStack = backStack,
-                        onBack = {
-                            if (backStack.size > 1)
-                            {
-                                backStack.removeLastOrNull()
-                            }
-                            else
-                            {
-                                finish()
-                            }
-                        },
-                        entryDecorators = listOf(
-                            rememberSaveableStateHolderNavEntryDecorator(),
-                            rememberViewModelStoreNavEntryDecorator(),
-                        ),
-                        modifier = Modifier.weight(1f),
-                        entryProvider = entryProvider()
-                        {
-                            entry<Route.Splash>()
-                            {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center,
-                                )
+                        NavDisplay(
+                            backStack = backStack,
+                            onBack = {
+                                if (backStack.size > 1)
                                 {
-                                    CircularProgressIndicator()
+                                    backStack.removeLastOrNull()
                                 }
-
-                                LaunchedEffect(Unit)
+                                else
                                 {
-                                    if (authRepository.isUserAuthenticated())
+                                    finish()
+                                }
+                            },
+                            entryDecorators = listOf(
+                                rememberSaveableStateHolderNavEntryDecorator(),
+                                rememberViewModelStoreNavEntryDecorator(),
+                            ),
+                            modifier = Modifier.weight(1f),
+                            entryProvider = entryProvider()
+                            {
+                                entry<Route.Splash>()
+                                {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment =
+                                            Alignment.Center,
+                                    )
                                     {
-                                        val email = authRepository.getCurrentUserEmail()
-                                        if (email != null)
-                                        {
-                                            val user = authRepository.getUserByEmail(email)
-                                            if (user?.status == UserStatus.SUSPENDED)
-                                            {
-                                                authRepository.logout()
-                                            }
-                                            else if (user != null)
-                                            {
-                                                backStack.add(Route.Main(user.userId, user.role.name))
-                                                backStack.removeAt(0)
-                                                return@LaunchedEffect
-                                            }
-                                        }
+                                        CircularProgressIndicator()
                                     }
-                                    backStack.add(Route.Landing)
-                                    backStack.removeAt(0)
-                                }
-                            }
 
-                            entry<Route.Landing>()
-                            {
-                                LandingScreen(
-                                    onLoginClick = { backStack.add(Route.Login) },
-                                    onRegisterClick = { backStack.add(Route.Register()) },
-                                    onForgotPasswordClick = { backStack.add(Route.ForgotPassword) },
-                                )
-                            }
-
-                            entry<Route.Login>()
-                            {
-                                val viewModel: LoginViewModel = viewModel(
-                                    factory = viewModelFactory
+                                    LaunchedEffect(Unit)
                                     {
-                                        initializer<LoginViewModel>
+                                        if (authRepository
+                                                .isUserAuthenticated())
                                         {
-                                            LoginViewModel(authRepository)
+                                            val email = authRepository
+                                                .getCurrentUserEmail()
+                                            if (email != null)
+                                            {
+                                                val user = authRepository
+                                                    .getUserByEmail(email)
+                                                if (user?.status ==
+                                                    UserStatus.SUSPENDED)
+                                                {
+                                                    authRepository.logout()
+                                                }
+                                                else if (user != null)
+                                                {
+                                                    backStack.add(
+                                                        Route.Main(
+                                                            user.userId,
+                                                            user.role.name,
+                                                        ),
+                                                    )
+                                                    backStack.removeAt(0)
+                                                    return@LaunchedEffect
+                                                }
+                                            }
                                         }
-                                    },
-                                )
-                                LoginScreen(
-                                    onLoginSuccess = { userId, role ->
-                                        val nextRoute = Route.Main(userId, role)
-                                        backStack.add(nextRoute)
-                                        while (backStack.size > 1)
-                                        {
-                                            backStack.removeAt(0)
-                                        }
-                                    },
-                                    onRegisterClick = { backStack.add(Route.Register()) },
-                                    onForgotPasswordClick = { backStack.add(Route.ForgotPassword) },
-                                    onBackClick = {
-                                        if (backStack.size > 1)
-                                        {
-                                            backStack.removeLastOrNull()
-                                        }
-                                        else
-                                        {
-                                            finish()
-                                        }
-                                    },
-                                    viewModel = viewModel,
-                                )
-                            }
-
-                            entry<Route.Register>()
-                            {
-                                val viewModel: RegistrationViewModel = viewModel(
-                                    factory = viewModelFactory
-                                    {
-                                        initializer<RegistrationViewModel>
-                                        {
-                                            RegistrationViewModel(authRepository)
-                                        }
-                                    },
-                                )
-                                RegistrationScreen(
-                                    onRegistrationSuccess = { userId, role ->
-                                        backStack.add(Route.Main(userId, role))
-                                        while (backStack.size > 1)
-                                        {
-                                            backStack.removeAt(0)
-                                        }
-                                    },
-                                    onBackClick = { backStack.removeLastOrNull() },
-                                    viewModel = viewModel,
-                                )
-                            }
-
-                            entry<Route.ForgotPassword>()
-                            {
-                                val viewModel: ForgotPasswordViewModel = viewModel(
-                                    factory = viewModelFactory
-                                    {
-                                        initializer<ForgotPasswordViewModel>
-                                        {
-                                            ForgotPasswordViewModel(authRepository)
-                                        }
-                                    },
-                                )
-                                ForgotPasswordScreen(
-                                    onResetSuccess = { backStack.removeLastOrNull() },
-                                    onBackClick = { backStack.removeLastOrNull() },
-                                    viewModel = viewModel,
-                                )
-                            }
-
-                            entry<Route.Main>()
-                            { route ->
-                                val adminViewModel: AdminViewModel = viewModel(
-                                    factory = viewModelFactory
-                                    {
-                                        initializer<AdminViewModel>
-                                        {
-                                            AdminViewModel(
-                                                adminRepository,
-                                                authRepository,
-                                                orderRepository,
-                                                couponRepository,
-                                                feedbackRepository,
-                                            )
-                                        }
-                                    },
-                                )
-                                MainScreen(
-                                    userId = route.userId,
-                                    role = route.role,
-                                    authRepository = authRepository,
-                                    menuRepository = menuRepository,
-                                    cartRepository = cartRepository,
-                                    orderRepository = orderRepository,
-                                    adminViewModel = adminViewModel,
-                                    statsRepository = statsRepository,
-                                    feedbackRepository = feedbackRepository,
-                                    couponRepository = couponRepository,
-                                    debitCardRepository = debitCardRepository,
-                                    firebaseSyncManager = firebaseSyncManager,
-                                    onLogout = {
-                                        authRepository.logout()
-                                        backStack.clear()
                                         backStack.add(Route.Landing)
-                                    },
-                                    onNavigateToCheckout = { backStack.add(Route.Checkout(route.userId)) },
-                                    onNavigateToVendorMenu = { vendorId -> backStack.add(Route.VendorMenuManagement(vendorId)) },
-                                    onNavigateToAddMenuItem = { vendorId, itemId -> backStack.add(Route.AddEditMenuItem(vendorId, itemId)) },
-                                )
-                                { userId, vendorId ->
-                                    backStack.add(Route.CustomerMenuBrowse(userId, vendorId))
+                                        backStack.removeAt(0)
+                                    }
                                 }
-                            }
 
-                            entry<Route.VendorMenuManagement>()
-                            { route ->
-                                val viewModel: VendorMenuViewModel = viewModel(
-                                    factory = viewModelFactory
-                                    {
-                                        initializer<VendorMenuViewModel>
-                                        {
-                                            VendorMenuViewModel(menuRepository, route.vendorId)
-                                        }
-                                    },
-                                )
-                                VendorMenuManagementScreen(
-                                    onBackClick = { backStack.removeLastOrNull() },
-                                    onAddItemClick = { backStack.add(Route.AddEditMenuItem(route.vendorId)) },
-                                    onEditItemClick = { itemId -> backStack.add(Route.AddEditMenuItem(route.vendorId, itemId)) },
-                                    viewModel = viewModel,
-                                )
-                            }
-
-                            entry<Route.AddEditMenuItem>()
-                            { route ->
-                                val viewModel: AddEditMenuViewModel = viewModel(
-                                    factory = viewModelFactory
-                                    {
-                                        initializer<AddEditMenuViewModel>
-                                        {
-                                            AddEditMenuViewModel(menuRepository, route.vendorId, route.itemId)
-                                        }
-                                    },
-                                )
-                                AddEditMenuItemScreen(
-                                    onBackClick = { backStack.removeLastOrNull() },
-                                    viewModel = viewModel,
-                                )
-                            }
-
-                            entry<Route.CustomerMenuBrowse>()
-                            { route ->
-                                val viewModel: MenuBrowseViewModel = viewModel(
-                                    factory = viewModelFactory
-                                    {
-                                        initializer<MenuBrowseViewModel>
-                                        {
-                                            MenuBrowseViewModel(menuRepository, cartRepository, route.userId, route.vendorId)
-                                        }
-                                    },
-                                )
-                                CustomerMenuBrowseScreen(
-                                    onBackClick = { backStack.removeLastOrNull() },
-                                    onCartClick = { backStack.add(Route.Cart(route.userId)) },
-                                    viewModel = viewModel,
-                                )
-                            }
-
-                            entry<Route.Cart>()
-                            { route ->
-                                val viewModel: CartViewModel = viewModel(
-                                    factory = viewModelFactory
-                                    {
-                                        initializer<CartViewModel>
-                                        {
-                                            CartViewModel(
-                                                cartRepository,
-                                                authRepository,
-                                                route.userId,
-                                            )
-                                        }
-                                    },
-                                )
-                                CartScreen(
-                                    onBackClick = { backStack.removeLastOrNull() },
-                                    onCheckoutClick = { backStack.add(Route.Checkout(route.userId)) },
-                                    viewModel = viewModel,
-                                )
-                            }
-
-                            entry<Route.Checkout>()
-                            { route ->
-                                val viewModel: CheckoutViewModel = viewModel(
-                                    factory = viewModelFactory
-                                    {
-                                        initializer<CheckoutViewModel>
-                                        {
-                                            CheckoutViewModel(
-                                                cartRepository,
-                                                orderRepository,
-                                                authRepository,
-                                                route.userId,
-                                            )
-                                        }
-                                    },
-                                )
-                                CheckoutScreen(
-                                    onBackClick = { backStack.removeLastOrNull() },
-                                    onOrderPlaced = { orderId ->
-                                        val nextRoute = Route.OrderConfirmation(
-                                            orderId,
-                                            route.userId,
-                                            viewModel.userRole.value.name,
-                                        )
-                                        backStack.add(nextRoute)
-                                        while (backStack.size > 1)
-                                        {
-                                            backStack.removeAt(0)
-                                        }
-                                    },
-                                    viewModel = viewModel,
-                                )
-                            }
-
-                            entry<Route.OrderConfirmation>()
-                            { route ->
-                                OrderConfirmationScreen(
-                                    orderId = route.orderId,
-                                    onTrackOrder = {
-                                        backStack.clear()
-                                        backStack.add(Route.Main(route.userId, route.role))
-                                    },
-                                )
+                                entry<Route.Landing>()
                                 {
-                                    backStack.clear()
-                                    backStack.add(Route.Main(route.userId, route.role))
+                                    LandingScreen(
+                                        onLoginClick = {
+                                            backStack.add(Route.Login)
+                                        },
+                                        onRegisterClick = {
+                                            backStack.add(Route.Register())
+                                        },
+                                        onForgotPasswordClick = {
+                                            backStack.add(
+                                                Route.ForgotPassword,
+                                            )
+                                        },
+                                    )
                                 }
-                            }
-                        },
-                    )
+
+                                entry<Route.Login>()
+                                {
+                                    val viewModel: LoginViewModel =
+                                        viewModel(
+                                            factory = viewModelFactory
+                                            {
+                                                initializer<LoginViewModel>
+                                                {
+                                                    LoginViewModel(
+                                                        authRepository,
+                                                    )
+                                                }
+                                            },
+                                        )
+                                    LoginScreen(
+                                        onLoginSuccess = { userId, role ->
+                                            val nextRoute = Route.Main(
+                                                userId,
+                                                role,
+                                            )
+                                            backStack.add(nextRoute)
+                                            while (backStack.size > 1)
+                                            {
+                                                backStack.removeAt(0)
+                                            }
+                                        },
+                                        onRegisterClick = {
+                                            backStack.add(Route.Register())
+                                        },
+                                        onForgotPasswordClick = {
+                                            backStack.add(
+                                                Route.ForgotPassword,
+                                            )
+                                        },
+                                        onBackClick = {
+                                            if (backStack.size > 1)
+                                            {
+                                                backStack.removeLastOrNull()
+                                            }
+                                            else
+                                            {
+                                                finish()
+                                            }
+                                        },
+                                        viewModel = viewModel,
+                                    )
+                                }
+
+                                entry<Route.Register>()
+                                {
+                                    val viewModel: RegistrationViewModel =
+                                        viewModel(
+                                            factory = viewModelFactory
+                                            {
+                                                initializer<RegistrationViewModel>
+                                                {
+                                                    RegistrationViewModel(
+                                                        authRepository,
+                                                    )
+                                                }
+                                            },
+                                        )
+                                    RegistrationScreen(
+                                        onRegistrationSuccess =
+                                            { userId, role ->
+                                                backStack.add(
+                                                    Route.Main(
+                                                        userId,
+                                                        role,
+                                                    ),
+                                                )
+                                                while (backStack.size > 1)
+                                                {
+                                                    backStack.removeAt(0)
+                                                }
+                                            },
+                                        onBackClick = {
+                                            backStack.removeLastOrNull()
+                                        },
+                                        viewModel = viewModel,
+                                    )
+                                }
+
+                                entry<Route.ForgotPassword>()
+                                {
+                                    val viewModel: ForgotPasswordViewModel =
+                                        viewModel(
+                                            factory = viewModelFactory
+                                            {
+                                                initializer<ForgotPasswordViewModel>
+                                                {
+                                                    ForgotPasswordViewModel(
+                                                        authRepository,
+                                                    )
+                                                }
+                                            },
+                                        )
+                                    ForgotPasswordScreen(
+                                        onResetSuccess = {
+                                            backStack.removeLastOrNull()
+                                        },
+                                        onBackClick = {
+                                            backStack.removeLastOrNull()
+                                        },
+                                        viewModel = viewModel,
+                                    )
+                                }
+
+                                entry<Route.Main>()
+                                { route ->
+                                    val adminViewModel: AdminViewModel =
+                                        viewModel(
+                                            factory = viewModelFactory
+                                            {
+                                                initializer<AdminViewModel>
+                                                {
+                                                    AdminViewModel(
+                                                        adminRepository,
+                                                        authRepository,
+                                                        orderRepository,
+                                                        couponRepository,
+                                                        feedbackRepository,
+                                                    )
+                                                }
+                                            },
+                                        )
+                                    MainScreen(
+                                        userId = route.userId,
+                                        role = route.role,
+                                        authRepository = authRepository,
+                                        menuRepository = menuRepository,
+                                        cartRepository = cartRepository,
+                                        orderRepository = orderRepository,
+                                        adminViewModel = adminViewModel,
+                                        statsRepository = statsRepository,
+                                        feedbackRepository =
+                                            feedbackRepository,
+                                        couponRepository = couponRepository,
+                                        debitCardRepository =
+                                            debitCardRepository,
+                                        firebaseSyncManager =
+                                            firebaseSyncManager,
+                                        onLogout = {
+                                            authRepository.logout()
+                                            backStack.clear()
+                                            backStack.add(Route.Landing)
+                                        },
+                                        onNavigateToCheckout = {
+                                            backStack.add(
+                                                Route.Checkout(
+                                                    route.userId,
+                                                ),
+                                            )
+                                        },
+                                        onNavigateToVendorMenu = { vId ->
+                                            backStack.add(
+                                                Route.VendorMenuManagement(
+                                                    vId,
+                                                ),
+                                            )
+                                        },
+                                        onNavigateToAddMenuItem =
+                                            { vId, itemId ->
+                                                backStack.add(
+                                                    Route.AddEditMenuItem(
+                                                        vId,
+                                                        itemId,
+                                                    ),
+                                                )
+                                            },
+                                    )
+                                    { userId, vendorId ->
+                                        backStack.add(
+                                            Route.CustomerMenuBrowse(
+                                                userId,
+                                                vendorId,
+                                            ),
+                                        )
+                                    }
+                                }
+
+                                entry<Route.VendorMenuManagement>()
+                                { route ->
+                                    val viewModel: VendorMenuViewModel =
+                                        viewModel(
+                                            factory = viewModelFactory
+                                            {
+                                                initializer<VendorMenuViewModel>
+                                                {
+                                                    VendorMenuViewModel(
+                                                        menuRepository,
+                                                        route.vendorId,
+                                                    )
+                                                }
+                                            },
+                                        )
+                                    VendorMenuManagementScreen(
+                                        onBackClick = {
+                                            backStack.removeLastOrNull()
+                                        },
+                                        onAddItemClick = {
+                                            backStack.add(
+                                                Route.AddEditMenuItem(
+                                                    route.vendorId,
+                                                ),
+                                            )
+                                        },
+                                        onEditItemClick = { itemId ->
+                                            backStack.add(
+                                                Route.AddEditMenuItem(
+                                                    route.vendorId,
+                                                    itemId,
+                                                ),
+                                            )
+                                        },
+                                        viewModel = viewModel,
+                                    )
+                                }
+
+                                entry<Route.AddEditMenuItem>()
+                                { route ->
+                                    val viewModel: AddEditMenuViewModel =
+                                        viewModel(
+                                            factory = viewModelFactory
+                                            {
+                                                initializer<AddEditMenuViewModel>
+                                                {
+                                                    AddEditMenuViewModel(
+                                                        menuRepository,
+                                                        route.vendorId,
+                                                        route.itemId,
+                                                    )
+                                                }
+                                            },
+                                        )
+                                    AddEditMenuItemScreen(
+                                        onBackClick = {
+                                            backStack.removeLastOrNull()
+                                        },
+                                        viewModel = viewModel,
+                                    )
+                                }
+
+                                entry<Route.CustomerMenuBrowse>()
+                                { route ->
+                                    val viewModel: MenuBrowseViewModel =
+                                        viewModel(
+                                            factory = viewModelFactory
+                                            {
+                                                initializer<MenuBrowseViewModel>
+                                                {
+                                                    MenuBrowseViewModel(
+                                                        menuRepository,
+                                                        cartRepository,
+                                                        route.userId,
+                                                        route.vendorId,
+                                                    )
+                                                }
+                                            },
+                                        )
+                                    CustomerMenuBrowseScreen(
+                                        onBackClick = {
+                                            backStack.removeLastOrNull()
+                                        },
+                                        onCartClick = {
+                                            backStack.add(
+                                                Route.Cart(route.userId),
+                                            )
+                                        },
+                                        viewModel = viewModel,
+                                    )
+                                }
+
+                                entry<Route.Cart>()
+                                { route ->
+                                    val viewModel: CartViewModel =
+                                        viewModel(
+                                            factory = viewModelFactory
+                                            {
+                                                initializer<CartViewModel>
+                                                {
+                                                    CartViewModel(
+                                                        cartRepository,
+                                                        authRepository,
+                                                        route.userId,
+                                                    )
+                                                }
+                                            },
+                                        )
+                                    CartScreen(
+                                        onBackClick = {
+                                            backStack.removeLastOrNull()
+                                        },
+                                        onCheckoutClick = {
+                                            backStack.add(
+                                                Route.Checkout(
+                                                    route.userId,
+                                                ),
+                                            )
+                                        },
+                                        viewModel = viewModel,
+                                    )
+                                }
+
+                                entry<Route.Checkout>()
+                                { route ->
+                                    val viewModel: CheckoutViewModel =
+                                        viewModel(
+                                            factory = viewModelFactory
+                                            {
+                                                initializer<CheckoutViewModel>
+                                                {
+                                                    CheckoutViewModel(
+                                                        cartRepository,
+                                                        orderRepository,
+                                                        authRepository,
+                                                        route.userId,
+                                                    )
+                                                }
+                                            },
+                                        )
+                                    CheckoutScreen(
+                                        onBackClick = {
+                                            backStack.removeLastOrNull()
+                                        },
+                                        onOrderPlaced = { orderId ->
+                                            val nextRoute =
+                                                Route.OrderConfirmation(
+                                                    orderId,
+                                                    route.userId,
+                                                    viewModel.userRole
+                                                        .value.name,
+                                                )
+                                            backStack.add(nextRoute)
+                                            while (backStack.size > 1)
+                                            {
+                                                backStack.removeAt(0)
+                                            }
+                                        },
+                                        viewModel = viewModel,
+                                    )
+                                }
+
+                                entry<Route.OrderConfirmation>()
+                                { route ->
+                                    OrderConfirmationScreen(
+                                        orderId = route.orderId,
+                                        onTrackOrder = {
+                                            backStack.clear()
+                                            backStack.add(
+                                                Route.Main(
+                                                    route.userId,
+                                                    route.role,
+                                                ),
+                                            )
+                                        },
+                                    )
+                                    {
+                                        backStack.clear()
+                                        backStack.add(
+                                            Route.Main(
+                                                route.userId,
+                                                route.role,
+                                            ),
+                                        )
+                                    }
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
     }
-}
 }
