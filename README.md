@@ -348,11 +348,13 @@ dedicated folder within the project directory.
 
 ## 13. Support and Issue Reporting
 
+```
 The author is not liable or responsible for any malfunctions, defects,
 or issues that may occur from copying, modifying, or using this
 software. If you find a problem or error, submit a pull request or open
 an issue on the corresponding GitHub repository so the maintainers or
 contributors can address it.
+```
 
 ---
 
